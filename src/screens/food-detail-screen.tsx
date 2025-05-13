@@ -22,7 +22,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
-  const [servings, setServings] = useState('1');
+  const [servings, setServings] = useState('100.00'); // Default to 100g mit 2 Nachkommastellen
   
   // Set selected meal based on navigation parameter or default to Lunch
   const [selectedMeal, setSelectedMeal] = useState<MealType>(
@@ -32,7 +32,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const [customName, setCustomName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Load food data when component mounts
+  // Load food data when component mounts or create empty food item for manual entry
   useEffect(() => {
     const loadFoodData = async () => {
       if (barcode) {
@@ -40,19 +40,51 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         try {
           const data = await getFoodDataByBarcode(barcode);
           if (data) {
-            setFoodItem(data);
+            // Entferne das Bild aus dem Food Item
+            const foodWithoutImage = {
+              ...data,
+              image: undefined
+            };
+            setFoodItem(foodWithoutImage);
             setCustomName(data.name);
           } else {
-            setError('Product not found. Please enter details manually.');
+            setError('Produkt nicht gefunden. Bitte Details manuell eingeben.');
+            // Leeres Food Item erstellen
+            createEmptyFoodItem();
           }
         } catch (err) {
-          setError('Error fetching product data');
+          setError('Fehler beim Abrufen der Produktdaten');
           console.error(err);
+          // Leeres Food Item erstellen bei Fehler
+          createEmptyFoodItem();
         } finally {
           setIsLoading(false);
         }
+      } else {
+        // Wenn kein Barcode übergeben wurde (manuelles Eingeben), erstelle ein leeres Food Item
+        createEmptyFoodItem();
+        setIsLoading(false);
       }
-      // Add logic to load from storage if foodId is provided
+    };
+
+    // Funktion zum Erstellen eines leeren Food Items
+    const createEmptyFoodItem = () => {
+      const emptyFood: FoodItem = {
+        id: `food_${Date.now()}`,
+        name: '',
+        brand: '',
+        barcode: '',
+        nutrition: {
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+          servingSize: '100g',
+          servingSizeGrams: 100
+        }
+      };
+      setFoodItem(emptyFood);
+      setCustomName('');
     };
 
     loadFoodData();
@@ -184,18 +216,16 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           </View>
         ) : (
           <>
-            {/* Food image */}
-            {foodItem?.image ? (
-              <Image source={{ uri: foodItem.image }} style={styles.productImage} />
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <Text style={styles.placeholderText}>No Image Available</Text>
-              </View>
-            )}
+            {/* Kein Bild mehr anzeigen */}
+            <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
+              <Text style={[styles.placeholderText, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                Nährwertangaben
+              </Text>
+            </View>
 
             {/* Food name input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Food Name:</Text>
+              <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>Produktname:</Text>
               <TextInput
                 style={[
                   styles.textInput,
@@ -208,7 +238,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 ]}
                 value={customName}
                 onChangeText={setCustomName}
-                placeholder="Enter food name"
+                placeholder="Produktname eingeben"
+                placeholderTextColor={theme.colors.textLight}
               />
             </View>
 
@@ -232,20 +263,42 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             {foodItem?.nutrition && (
               <>
                 <View style={styles.servingsContainer}>
-                  <Text style={styles.servingsLabel}>Number of Servings:</Text>
+                  <Text style={[styles.servingsLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>Menge in Gramm:</Text>
                   <TextInput
                     style={[
-                      styles.servingsInput,
-                      {
-                        backgroundColor: theme.colors.background,
+                      styles.textInput,
+                      { 
+                        backgroundColor: theme.colors.card,
                         borderColor: theme.colors.border,
                         color: theme.colors.text,
                         fontFamily: theme.typography.fontFamily.regular,
                       },
                     ]}
                     value={servings}
-                    onChangeText={setServings}
-                    keyboardType="numeric"
+                    onChangeText={(text) => {
+                      // Validiere und formatiere die Eingabe für Nachkommastellen
+                      const filteredText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
+                      if (filteredText === '') {
+                        setServings('');
+                        return;
+                      }
+                      
+                      // Verarbeite die Zahl mit bis zu 2 Nachkommastellen
+                      const number = parseFloat(filteredText);
+                      if (!isNaN(number)) {
+                        // Limitiere auf 2 Nachkommastellen
+                        if (filteredText.includes('.')) {
+                          const parts = filteredText.split('.');
+                          if (parts[1].length > 2) {
+                            // Wenn mehr als 2 Nachkommastellen, kürze sie
+                            setServings(`${parts[0]}.${parts[1].substring(0, 2)}`);
+                            return;
+                          }
+                        }
+                        setServings(filteredText);
+                      }
+                    }}
+                    keyboardType="decimal-pad"
                   />
                 </View>
 
@@ -253,12 +306,21 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                   nutrition={foodItem.nutrition}
                   servingMultiplier={parseFloat(servings) || 1}
                 />
+                <Text style={[{
+                  textAlign: 'center',
+                  marginTop: 4,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  color: theme.colors.textLight,
+                  fontSize: 12
+                }]}>
+                  Sie können Nachkommastellen eingeben (z.B. 125.75g)
+                </Text>
               </>
             )}
 
             {/* Meal type selection */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Add to Meal:</Text>
+              <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>Mahlzeitkategorie</Text>
               <View style={styles.mealTypeContainer}>
                 {Object.entries(MealType).map(([key, type]) => (
                   <TouchableOpacity
@@ -297,8 +359,13 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             </View>
 
             {/* Add to log button */}
-            <TouchableOpacity style={styles.addButton} onPress={handleAddToLog}>
-              <Text style={styles.addButtonText}>Add to Daily Log</Text>
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.medium }]}
+              onPress={handleAddToLog}
+            >
+              <Text style={[styles.addButtonText, { fontFamily: theme.typography.fontFamily.bold, color: 'white' }]}>
+                Zur Tagesübersicht hinzufügen
+              </Text>
             </TouchableOpacity>
           </>
         )}
