@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "calories_training_tracker",
-    "slug": "calories_training_tracker",
+    "name": "Calories Calculator",
+    "slug": "calories-calculator",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,14 +12,33 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-barcode-scanner",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan food barcodes."
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan barcodes from food products.",
+        "NSHealthShareUsageDescription": "This app requires access to your health data to track your fitness activities and sync with your nutritional intake.",
+        "NSHealthUpdateUsageDescription": "This app requires permission to update your health data."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
+        "android.permission.ACTIVITY_RECOGNITION"
+      ],
       "edgeToEdgeEnabled": true
     },
     "web": {
