@@ -123,11 +123,11 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         <Text style={[
           styles.dateHeader, 
           { 
-            fontFamily: theme.theme.typography.fontFamily.medium,
+            fontFamily: theme.theme.typography.fontFamily.bold,
             color: theme.theme.colors.text
           }
         ]}>
-          {new Date().toLocaleDateString(undefined, { 
+          {new Date().toLocaleDateString('de-DE', { 
             weekday: 'long', 
             year: 'numeric', 
             month: 'long', 
@@ -156,38 +156,38 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             fontFamily: theme.theme.typography.fontFamily.bold,
             color: theme.theme.colors.text
           }
-        ]}>Today's Nutrition</Text>
+        ]}>Heutige Nährwerte</Text>
         
         <ProgressBar 
-          label="Calories"
+          label="🔥 Kalorien"
           current={Math.round(totals.calories)}
           target={goals.dailyCalories}
           color="#FF5722"
         />
         
         <ProgressBar 
-          label="Protein"
+          label="🍗 Protein"
           current={Math.round(totals.protein)}
           target={goals.dailyProtein || 50}
           color="#2196F3"
         />
         
         <ProgressBar 
-          label="Carbs"
+          label="🍞 Kohlenhydrate"
           current={Math.round(totals.carbs)}
           target={goals.dailyCarbs || 250}
           color="#4CAF50"
         />
         
         <ProgressBar 
-          label="Fat"
+          label="🧈 Fette"
           current={Math.round(totals.fat)}
           target={goals.dailyFat || 70}
           color="#FFC107"
         />
         
         <ProgressBar 
-          label="Water (ml)"
+          label="💧 Wasser"
           current={totals.water}
           target={goals.dailyWater || 2000}
           color="#03A9F4"
@@ -210,7 +210,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               fontFamily: theme.theme.typography.fontFamily.bold,
               color: theme.theme.colors.text
             }
-          ]}>Activity</Text>
+          ]}>Aktivität</Text>
           
           <View style={styles.statRow}>
             <View style={styles.stat}>
@@ -218,7 +218,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                 {healthData.steps}
               </Text>
               <Text style={[styles.statLabel, { fontFamily: theme.theme.typography.fontFamily.regular, color: theme.theme.colors.textLight }]}>
-                Steps
+                Schritte
               </Text>
             </View>
             
@@ -227,32 +227,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                 {caloriesBurned}
               </Text>
               <Text style={[styles.statLabel, { fontFamily: theme.theme.typography.fontFamily.regular, color: theme.theme.colors.textLight }]}>
-                Calories Burned
+                Kalorien verbrannt
               </Text>
             </View>
-            
-            {healthData.heartRate && (
-              <View style={styles.stat}>
-                <Text style={[styles.statValue, { fontFamily: theme.theme.typography.fontFamily.bold, color: theme.theme.colors.text }]}>
-                  {healthData.heartRate}
-                </Text>
-                <Text style={[styles.statLabel, { fontFamily: theme.theme.typography.fontFamily.regular, color: theme.theme.colors.textLight }]}>
-                  Heart Rate
-                </Text>
-              </View>
-            )}
           </View>
-          
-          {healthData.sleepHours && (
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { fontFamily: theme.theme.typography.fontFamily.bold, color: theme.theme.colors.text }]}>
-                {healthData.sleepHours}h
-              </Text>
-              <Text style={[styles.statLabel, { fontFamily: theme.theme.typography.fontFamily.regular, color: theme.theme.colors.textLight }]}>
-                Sleep
-              </Text>
-            </View>
-          )}
         </View>
       )}
       </ScrollView>

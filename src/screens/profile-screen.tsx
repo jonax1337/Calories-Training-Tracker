@@ -191,7 +191,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             }
           ]}
         >
-          Personal Information
+          Persönliche Daten
         </Text>
 
         <Text
@@ -231,7 +231,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       {/* Age */}
       <View style={styles.inputContainer}>
         <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-          Age
+          Alter
         </Text>
         <TextInput
           style={[styles.textInput, { 
@@ -253,7 +253,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         {/* Weight */}
         <View style={[styles.inputContainer, styles.halfInput]}>
           <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Weight (kg)
+            Gewicht (kg)
           </Text>
           <TextInput
             style={[styles.textInput, { 
@@ -274,7 +274,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         {/* Height */}
         <View style={[styles.inputContainer, styles.halfInput]}>
           <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Height (cm)
+            Größe (cm)
           </Text>
           <TextInput
             style={[styles.textInput, { 
@@ -295,36 +295,36 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       
       {/* Activity Level */}
       <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-        Activity Level
+        Aktivitätsstufe
       </Text>
       <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-        Choose your typical activity level to help calculate your calorie needs
+        Wählen Sie Ihre typische Aktivitätsstufe, um Ihre Kalorienbedarf zu berechnen
       </Text>
       <View style={styles.activityContainer}>
         {renderActivityButton(
           ActivityLevel.Sedentary,
-          'Sedentary',
-          'Little to no exercise'
+          'Sedentär',
+          'Keine oder wenig Aktivität'
         )}
         {renderActivityButton(
           ActivityLevel.LightlyActive,
-          'Lightly Active',
-          'Light exercise 1-3 days/week'
+          'Leicht aktiv',
+          'Leichtes Training 1-3 Tage pro Woche'
         )}
         {renderActivityButton(
           ActivityLevel.ModeratelyActive,
-          'Moderately Active',
-          'Moderate exercise 3-5 days/week'
+          'Mäßig aktiv',
+          'Mittlere Aktivität 3-5 Tage pro Woche'
         )}
         {renderActivityButton(
           ActivityLevel.VeryActive,
-          'Very Active',
-          'Hard exercise 6-7 days/week'
+          'Sehr aktiv',
+          'Harte Aktivität 6-7 Tage pro Woche'
         )}
         {renderActivityButton(
           ActivityLevel.ExtremelyActive,
-          'Extremely Active',
-          'Hard daily exercise & physical job'
+          'Extrem aktiv',
+          'Harte tägliche Aktivität & physischer Job'
         )}
       </View>
       
@@ -341,7 +341,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           }
         ]}
       >
-        Daily Nutritional Goals
+        Tägliche Ziele
       </Text>
       
       <Text
@@ -362,7 +362,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       {/* Calories */}
       <View style={styles.inputContainer}>
         <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-          Calories
+          Kalorien
         </Text>
         <TextInput
           style={[styles.textInput, { 
@@ -405,7 +405,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         {/* Carbs */}
         <View style={[styles.inputContainer, styles.thirdInput]}>
           <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Carbs (g)
+            Kohlenhydrate (g)
           </Text>
           <TextInput
             style={[styles.textInput, { 
@@ -426,7 +426,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         {/* Fat */}
         <View style={[styles.inputContainer, styles.thirdInput]}>
           <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Fat (g)
+            Fett (g)
           </Text>
           <TextInput
             style={[styles.textInput, { 
@@ -448,7 +448,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       {/* Water */}
       <View style={styles.inputContainer}>
         <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-          Water (ml)
+          Wasser (ml)
         </Text>
         <TextInput
           style={[styles.textInput, { 
@@ -479,7 +479,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           }
         ]}
       >
-        Health Integration
+        Gesundheitsintegrierung
       </Text>
       
       <Text
@@ -511,12 +511,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         onPress={handleRequestPermissions}
       >
         <Text style={[styles.connectButtonText, { fontFamily: theme.typography.fontFamily.bold, color: 'white' }]}>
-          {healthPermission ? 'Health Permissions Granted ✓' : 'Request Health Permissions'}
+          {healthPermission ? 'Gesundheitsdaten zugeordnet ✓' : 'Gesundheitsdaten zugeordnet'}
         </Text>
       </TouchableOpacity>
       
       <Text style={[styles.permissionInfo, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-        This will allow the app to access your health data such as steps, heart rate, and activity.
+        Dies wird erlauben, dass die App auf Ihre Gesundheitsdaten zugreift, wie z.B. Schritte, Herzfrequenz und Aktivität.
       </Text>
       
       {/* Save Button */}

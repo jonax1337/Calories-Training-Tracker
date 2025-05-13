@@ -51,29 +51,9 @@ export default function ManualBarcodeScreen({ navigation, route }: AddTabScreenP
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Sticky Header */}
-      <View style={[
-        styles.stickyHeader, 
-        { 
-          paddingTop: insets.top,
-          backgroundColor: theme.colors.background,
-          borderBottomColor: theme.colors.border,
-          borderBottomWidth: 1,
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.05,
-          shadowRadius: 2,
-          elevation: 1,
-        }
-      ]}>
-        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-          {mealType ? `${getMealTypeEmoji(mealType)} ${getMealTypeLabel(mealType)} hinzufügen` : '🔍 Produkt finden'}
-        </Text>
-      </View>
-      
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={[styles.content, { backgroundColor: theme.colors.background }]}
+        style={styles.content}
       >
         <Text style={[styles.instructionText, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
           Bitte gib den Barcode manuell ein oder suche nach einem Produkt
@@ -188,8 +168,6 @@ function getMealTypeLabel(mealType: string): string {
 
 interface Styles {
   container: ViewStyle;
-  stickyHeader: ViewStyle;
-  headerText: TextStyle;
   content: ViewStyle;
   instructionText: TextStyle;
   inputContainer: ViewStyle;
@@ -206,17 +184,8 @@ interface Styles {
 const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
-  },
-  stickyHeader: {
-    width: '100%',
     paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-    paddingBottom: 8, // 1 Grid-Punkt (8px)
-    zIndex: 10,
-  },
-  headerText: {
-    fontSize: 20,
-    textAlign: 'center',
-    marginVertical: 8, // 1 Grid-Punkt (8px)
+    paddingTop: 16, // 2 Grid-Punkte (16px)
   },
   content: {
     flex: 1,

@@ -91,9 +91,6 @@ function TabNavigator() {
             case 'Journal':
               iconName = focused ? 'journal' : 'journal-outline';
               break;
-            case 'Add':
-              iconName = focused ? 'barcode' : 'barcode-outline';
-              break;
             case 'Profile':
               iconName = focused ? 'person' : 'person-outline';
               break;
@@ -113,10 +110,6 @@ function TabNavigator() {
       <Tab.Screen 
         name="Journal" 
         component={DailyLogScreen as React.ComponentType<any>} 
-      />
-      <Tab.Screen 
-        name="Add" 
-        component={BarcodeScannerScreen as React.ComponentType<any>} 
       />
       <Tab.Screen 
         name="Profile" 
@@ -160,7 +153,36 @@ function NavigationContent() {
       <Stack.Screen 
         name="BarcodeScanner" 
         component={BarcodeScannerScreen as React.ComponentType<any>} 
-        options={{ title: 'Produkt scannen', animation: 'slide_from_bottom' }} 
+        options={({ route }) => {
+          const { mealType } = route.params || {};
+          let title = 'Produkt scannen';
+          
+          if (mealType) {
+            const mealEmojis = {
+              breakfast: '🥞',
+              lunch: '🍝',
+              dinner: '🍲',
+              snack: '🍪'
+            };
+            
+            const mealLabels = {
+              breakfast: 'Frühstück',
+              lunch: 'Mittagessen',
+              dinner: 'Abendessen',
+              snack: 'Snack'
+            };
+            
+            const emoji = mealEmojis[mealType as keyof typeof mealEmojis] || '';
+            const label = mealLabels[mealType as keyof typeof mealLabels] || '';
+            
+            title = `${emoji} ${label} hinzufügen`;
+          }
+          
+          return { 
+            title,
+            animation: 'slide_from_bottom'
+          };
+        }} 
       />
       <Stack.Screen 
         name="FoodDetail" 

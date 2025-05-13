@@ -19,7 +19,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Format the date for display
-  const formattedDate = new Date(date).toLocaleDateString(undefined, {
+  const formattedDate = new Date(date).toLocaleDateString('de-DE', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -324,7 +324,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         {/* Daily summary */}
         <View style={[styles.summaryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, marginBottom: 24 }]}>
           <Text style={[styles.summaryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-            📈 Tagesübersicht
+            Tagesübersicht
           </Text>
           
           <View style={styles.summaryContent}>
@@ -333,7 +333,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                 {Math.round(totals.calories)}
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                Calories
+                Kalorien
               </Text>
             </View>
             
@@ -351,7 +351,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                 {Math.round(totals.carbs)}g
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                Carbs
+                Kohlenhydrate
               </Text>
             </View>
             
@@ -360,7 +360,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                 {Math.round(totals.fat)}g
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                Fat
+                Fette
               </Text>
             </View>
           </View>
@@ -370,7 +370,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         <View style={[styles.waterCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
           <View style={styles.waterHeader}>
             <Text style={[styles.waterTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-              💧 Wasser
+              Wasser
             </Text>
             <Text style={[styles.waterValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
               {dailyLog?.waterIntake || 0} ml
@@ -415,7 +415,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         {/* Fru00fchstu00fcck */}
         <TouchableOpacity 
           style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.navigate('Add', { mealType: 'breakfast' })}
+          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'breakfast' })}
         >
           <View style={styles.mealCategoryContent}>
             <View>
@@ -441,7 +441,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         {/* Mittagessen */}
         <TouchableOpacity 
           style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.navigate('Add', { mealType: 'lunch' })}
+          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'lunch' })}
         >
           <View style={styles.mealCategoryContent}>
             <View>
@@ -467,7 +467,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         {/* Abendessen */}
         <TouchableOpacity 
           style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.navigate('Add', { mealType: 'dinner' })}
+          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'dinner' })}
         >
           <View style={styles.mealCategoryContent}>
             <View>
@@ -493,7 +493,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         {/* Snacks */}
         <TouchableOpacity 
           style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.navigate('Add', { mealType: 'snack' })}
+          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'snack' })}
         >
           <View style={styles.mealCategoryContent}>
             <View>
