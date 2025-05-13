@@ -114,9 +114,15 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
       // Show success message
       Alert.alert(
-        'Success',
-        `Added ${updatedFoodItem.name} to your ${selectedMeal} log`,
-        [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
+        'Erfolg',
+        `${updatedFoodItem.name} wurde zu deiner ${getMealTypeLabel(selectedMeal.toString())} Liste hinzugefügt`,
+        [{ 
+          text: 'OK', 
+          onPress: () => {
+            // Zurück zum vorherigen Screen
+            navigation.goBack();
+          }
+        }]
       );
     } catch (err) {
       console.error('Error adding food to log:', err);
