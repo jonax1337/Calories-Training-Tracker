@@ -50,7 +50,7 @@ export interface UserProfile {
   age?: number;
   weight?: number; // in kg
   height?: number; // in cm
-  gender?: 'male' | 'female' | 'other';
+  gender?: 'male' | 'female' | 'divers';
   activityLevel?: ActivityLevel;
   goals: UserGoals;
 }

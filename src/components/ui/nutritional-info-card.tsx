@@ -30,15 +30,6 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
         fontSize: theme.typography.fontSize.l,
         marginBottom: theme.spacing.m
       }]}>Nährwertangaben</Text>
-      <Text style={[styles.servingInfo, { 
-        color: theme.colors.textLight,
-        fontFamily: theme.typography.fontFamily.regular,
-        fontSize: theme.typography.fontSize.s,
-        marginBottom: theme.spacing.m
-      }]}>
-        {servingMultiplier > 1 ? `${servingMultiplier} x ` : ''}
-        {nutrition.servingSize} ({nutrition.servingSizeGrams * servingMultiplier}g)
-      </Text>
       
       <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
         <Text style={[styles.nutrientName, { 

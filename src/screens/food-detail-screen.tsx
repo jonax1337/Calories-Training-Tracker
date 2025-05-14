@@ -224,15 +224,16 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             <View style={{
               flexDirection: 'column', 
               width: '100%',          
-              padding: theme.spacing.m,
-              marginBottom: theme.spacing.xl,
+              padding: theme.spacing.s,
+              marginTop: theme.spacing.s,
+              marginBottom: theme.spacing.s,
               borderRadius: theme.borderRadius.medium,
               backgroundColor: theme.colors.surfaceVariant
             }}>
               {/* Überschrift */}
               <View style={{
                 width: '100%',        
-                marginBottom: theme.spacing.m
+                marginBottom: theme.spacing.s
               }}>
                 <Text style={{
                   color: theme.colors.text,
@@ -245,7 +246,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               <View style={{
                 width: '100%',        
                 alignItems: 'center',
-                marginBottom: theme.spacing.m
+                marginBottom: theme.spacing.xs
               }}>
                 <TextInput
                   style={{
@@ -254,7 +255,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                     fontSize: theme.typography.fontSize.xxl,
                     textAlign: 'center',
                     minWidth: 120,
-                    padding: theme.spacing.s
+                    padding: theme.spacing.xs
                   }}
                   value={`${servings}`}
                   onChangeText={(text) => {

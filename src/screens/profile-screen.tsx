@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
+import Slider from '@react-native-community/slider';
+import { Picker } from '@react-native-picker/picker';
 import { ProfileTabScreenProps } from '../types/navigation-types';
 import { ActivityLevel, UserProfile } from '../types';
 import { getUserProfile, saveUserProfile } from '../services/storage-service';
@@ -176,7 +178,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         style={styles.scrollContent}
         contentContainerStyle={{
           paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-          paddingTop: 16, // 2 Grid-Punkte (16px)
           paddingBottom: 16 // 2 Grid-Punkte (16px)
         }}
       >
@@ -229,67 +230,395 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       </View>
       
       {/* Age */}
-      <View style={styles.inputContainer}>
-        <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-          Alter
-        </Text>
-        <TextInput
-          style={[styles.textInput, { 
-            fontFamily: theme.typography.fontFamily.regular, 
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.xs,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: theme.colors.card,
+        borderWidth: 1,
+        borderColor: theme.colors.border
+      }]}>
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.s
+        }}>
+          <Text style={[styles.inputLabel, { 
+            fontFamily: theme.typography.fontFamily.medium, 
             color: theme.colors.text,
-            backgroundColor: theme.colors.card,
-            borderColor: theme.colors.border,
-            borderRadius: theme.borderRadius.medium
-          }]}
-          value={profile.age?.toString() || ''}
-          onChangeText={(value) => handleTextChange('age', value)}
-          placeholder="Enter your age"
-          placeholderTextColor={theme.colors.placeholder}
-          keyboardType="numeric"
-        />
-      </View>
-      
-      <View style={styles.rowInputs}>
-        {/* Weight */}
-        <View style={[styles.inputContainer, styles.halfInput]}>
-          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Gewicht (kg)
+            marginTop: theme.spacing.xs,
+            marginLeft: theme.spacing.xs,
+            }]}>
+            Alter
+          </Text>
+        </View>
+        
+        {/* Age value display */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          paddingHorizontal: theme.spacing.xs,
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textLight
+          }}>
+            Jahre
           </Text>
           <TextInput
-            style={[styles.textInput, { 
-              fontFamily: theme.typography.fontFamily.regular, 
-              color: theme.colors.text,
+            style={{
+              color: theme.colors.primary,
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.l,
+              textAlign: 'center',
+              minWidth: 50,
+              padding: theme.spacing.xs,
               backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.medium
-            }]}
-            value={profile.weight?.toString() || ''}
-            onChangeText={(value) => handleTextChange('weight', value)}
-            placeholder="Weight"
-            placeholderTextColor={theme.colors.placeholder}
-            keyboardType="numeric"
+              borderRadius: theme.borderRadius.small,
+              borderWidth: 1,
+              borderColor: theme.colors.border
+            }}
+            value={profile.age?.toString() || '18'}
+            onChangeText={(text) => {
+              const validText = text.replace(/[^0-9]/g, '');
+              const numValue = parseInt(validText);
+              if (!isNaN(numValue) && numValue >= 12 && numValue <= 120) {
+                handleTextChange('age', validText);
+              }
+            }}
+            keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
           />
         </View>
         
-        {/* Height */}
-        <View style={[styles.inputContainer, styles.halfInput]}>
+        {/* Age slider */}
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.xs,
+          paddingHorizontal: theme.spacing.xs
+        }}>
+          <Slider
+            style={{ width: '100%', height: 30 }}
+            minimumValue={12}
+            maximumValue={120}
+            step={1}
+            value={profile.age || 18}
+            minimumTrackTintColor={theme.colors.primary}
+            maximumTrackTintColor={theme.colors.border}
+            thumbTintColor={theme.colors.primary}
+            onValueChange={(value: number) => {
+              const intValue = Math.round(value);
+              handleTextChange('age', intValue.toString());
+            }}
+          />
+        </View>
+        
+        {/* Slider labels */}
+        <View style={{
+          width: '100%',         
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingHorizontal: theme.spacing.xs,
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>12</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>65</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>120</Text>
+        </View>
+      </View>
+      
+      {/* Weight */}
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.xs,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.small,
+        backgroundColor: theme.colors.surfaceVariant,
+        borderWidth: 1,
+        borderColor: theme.colors.border
+      }]}>
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
+            Gewicht (kg)
+          </Text>
+        </View>
+        
+        {/* Weight value display */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          paddingHorizontal: theme.spacing.xs,
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textLight
+          }}>
+            Kilogramm
+          </Text>
+          <TextInput
+            style={{
+              color: theme.colors.primary,
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.l,
+              textAlign: 'center',
+              minWidth: 50,
+              padding: theme.spacing.xs,
+              backgroundColor: theme.colors.card,
+              borderRadius: theme.borderRadius.small,
+              borderWidth: 1,
+              borderColor: theme.colors.border
+            }}
+            value={profile.weight?.toString() || '70'}
+            onChangeText={(text) => {
+              // Remove non-numeric characters except for decimal point, replace comma with dot
+              const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
+              const numValue = parseFloat(validText);
+              if (!isNaN(numValue) && numValue >= 30 && numValue <= 200) {
+                handleTextChange('weight', validText);
+              }
+            }}
+            keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
+          />
+        </View>
+        
+        {/* Weight slider */}
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.xs,
+          paddingHorizontal: theme.spacing.xs
+        }}>
+          <Slider
+            style={{ width: '100%', height: 30 }}
+            minimumValue={30}
+            maximumValue={200}
+            step={0.5}
+            value={profile.weight || 70}
+            minimumTrackTintColor={theme.colors.primary}
+            maximumTrackTintColor={theme.colors.border}
+            thumbTintColor={theme.colors.primary}
+            onValueChange={(value: number) => {
+              handleTextChange('weight', value.toString());
+            }}
+          />
+        </View>
+        
+        {/* Slider labels */}
+        <View style={{
+          width: '100%',         
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingHorizontal: theme.spacing.xs,
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>30</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>115</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>200</Text>
+        </View>
+      </View>
+      
+      {/* Height */}
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.xs,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.small,
+        backgroundColor: theme.colors.surfaceVariant,
+        borderWidth: 1,
+        borderColor: theme.colors.border
+      }]}>
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.xs
+        }}>
           <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
             Größe (cm)
           </Text>
+        </View>
+        
+        {/* Height value display */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          paddingHorizontal: theme.spacing.xs,
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textLight
+          }}>
+            Zentimeter
+          </Text>
           <TextInput
-            style={[styles.textInput, { 
-              fontFamily: theme.typography.fontFamily.regular, 
-              color: theme.colors.text,
+            style={{
+              color: theme.colors.primary,
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.l,
+              textAlign: 'center',
+              minWidth: 50,
+              padding: theme.spacing.xs,
               backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.medium
-            }]}
-            value={profile.height?.toString() || ''}
-            onChangeText={(value) => handleTextChange('height', value)}
-            placeholder="Height"
-            placeholderTextColor={theme.colors.placeholder}
-            keyboardType="numeric"
+              borderRadius: theme.borderRadius.small,
+              borderWidth: 1,
+              borderColor: theme.colors.border
+            }}
+            value={profile.height?.toString() || '170'}
+            onChangeText={(text) => {
+              const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
+              const numValue = parseFloat(validText);
+              if (!isNaN(numValue) && numValue >= 120 && numValue <= 240) {
+                handleTextChange('height', validText);
+              }
+            }}
+            keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
           />
+        </View>
+        
+        {/* Height slider */}
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.xs,
+          paddingHorizontal: theme.spacing.xs
+        }}>
+          <Slider
+            style={{ width: '100%', height: 30 }}
+            minimumValue={120}
+            maximumValue={240}
+            step={1}
+            value={profile.height || 170}
+            minimumTrackTintColor={theme.colors.primary}
+            maximumTrackTintColor={theme.colors.border}
+            thumbTintColor={theme.colors.primary}
+            onValueChange={(value: number) => {
+              const intValue = Math.round(value);
+              handleTextChange('height', intValue.toString());
+            }}
+          />
+        </View>
+        
+        {/* Slider labels */}
+        <View style={{
+          width: '100%',         
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingHorizontal: theme.spacing.xs,
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>120</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>180</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>240</Text>
+        </View>
+      </View>
+      
+      {/* Gender Selection */}
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.xs,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.small,
+        backgroundColor: theme.colors.surfaceVariant,
+        borderWidth: 1,
+        borderColor: theme.colors.border
+      }]}>
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
+            Geschlecht
+          </Text>
+        </View>
+        
+        {/* Gender dropdown */}
+        <View style={{
+          width: '100%',
+          borderColor: theme.colors.border,
+          borderWidth: 1,
+          borderRadius: theme.borderRadius.small,
+          marginTop: theme.spacing.xs,
+          marginBottom: theme.spacing.xs,
+          backgroundColor: theme.colors.card,
+          overflow: 'hidden',
+          height: 40 // Feste Höhe für bessere Konsistenz
+        }}>
+          <Picker
+            selectedValue={profile.gender || 'male'}
+            onValueChange={(itemValue) => handleTextChange('gender', itemValue)}
+            style={{
+              width: '100%',
+              color: theme.colors.text,
+              backgroundColor: 'transparent',
+              height: 38
+            }}
+            dropdownIconColor={theme.colors.primary}
+          >
+            <Picker.Item label="Männlich" value="male" />
+            <Picker.Item label="Weiblich" value="female" />
+            <Picker.Item label="Divers" value="divers" />
+          </Picker>
+        </View>
+        
+        {/* Description */}
+        <View style={{
+          width: '100%',         
+          marginTop: theme.spacing.xs,
+          marginBottom: theme.spacing.xs
+        }}>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontFamily: theme.typography.fontFamily.regular,
+            fontSize: theme.typography.fontSize.xs,
+            textAlign: 'center'
+          }}>
+            Für genauere Kalorienberechnungen
+          </Text>
         </View>
       </View>
       
