@@ -220,53 +220,88 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             )}
 
             {/* Servings input */}
-            {/* Mengeneingabe mit Slider */}
+            {/* Mengeneingabe mit Slider - angepasst an Profile-Screen-Stil */}
             <View style={{
               flexDirection: 'column', 
               width: '100%',          
-              padding: theme.spacing.s,
+              padding: theme.spacing.xs,
               marginTop: theme.spacing.s,
               marginBottom: theme.spacing.s,
               borderRadius: theme.borderRadius.medium,
-              backgroundColor: theme.colors.surfaceVariant
+              backgroundColor: theme.colors.card,
+              borderWidth: 1,
+              borderColor: theme.colors.border
             }}>
               {/* Überschrift */}
               <View style={{
-                width: '100%',        
-                marginBottom: theme.spacing.s
+                width: '100%'      
               }}>
-                <Text style={{
+                <Text style={{ 
+                  fontFamily: theme.typography.fontFamily.medium, 
                   color: theme.colors.text,
-                  fontFamily: theme.typography.fontFamily.bold,
-                  fontSize: theme.typography.fontSize.l
-                }}>Menge (g)</Text>
+                  marginTop: theme.spacing.xs,
+                  marginLeft: theme.spacing.xs,
+                  fontSize: theme.typography.fontSize.m
+                }}>
+                  Menge
+                </Text>
               </View>
               
               {/* Wertanzeige - Klickbare/Editierbare Grammzahl */}
               <View style={{
-                width: '100%',        
+                flexDirection: 'row',
+                justifyContent: 'space-between',
                 alignItems: 'center',
+                width: '100%',
+                paddingHorizontal: theme.spacing.xs,
                 marginBottom: theme.spacing.xs
               }}>
+                <Text style={{
+                  fontFamily: theme.typography.fontFamily.medium,
+                  fontSize: theme.typography.fontSize.s,
+                  color: theme.colors.textLight
+                }}>
+                  Gramm
+                </Text>
                 <TextInput
                   style={{
                     color: theme.colors.primary,
                     fontFamily: theme.typography.fontFamily.bold,
-                    fontSize: theme.typography.fontSize.xxl,
+                    fontSize: theme.typography.fontSize.l,
                     textAlign: 'center',
-                    minWidth: 120,
-                    padding: theme.spacing.xs
+                    minWidth: 80,
+                    padding: theme.spacing.xs,
+                    backgroundColor: theme.colors.card,
+                    borderRadius: theme.borderRadius.small,
+                    borderWidth: 1,
+                    borderColor: theme.colors.primary,
+                    elevation: 2,
+                    shadowColor: theme.colors.shadow,
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 1
                   }}
-                  value={`${servings}`}
+                  value={servings}
+                  placeholder="100"
+                  selectTextOnFocus={true}
                   onChangeText={(text) => {
-                    // Entferne das 'g' und andere nicht-numerische Zeichen (außer Punkt und Komma)
+                    // Validiere und formatiere die Eingabe
                     const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
                     setServings(validText);
                     
                     // Aktualisiere auch den Slider, falls der Wert im gültigen Bereich liegt
                     const numValue = parseFloat(validText);
-                    if (!isNaN(numValue) && numValue >= 1 && numValue <= 500) {
-                      setSliderValue(Math.round(numValue));
+                    if (!isNaN(numValue)) {
+                      if (numValue > 500) {
+                        // Bei höheren Werten, setze Slider auf Maximum
+                        setSliderValue(500);
+                      } else if (numValue < 1) {
+                        // Bei niedrigeren Werten, setze Slider auf Minimum
+                        setSliderValue(1);
+                      } else {
+                        // Bei Werten im gültigen Bereich, setze exakten Wert
+                        setSliderValue(Math.round(numValue));
+                      }
                     }
                   }}
                   keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
@@ -276,21 +311,23 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               {/* Slider */}
               <View style={{
                 width: '100%',        
-                marginBottom: theme.spacing.m
+                marginBottom: theme.spacing.xs,
+                paddingHorizontal: theme.spacing.xs
               }}>
                 <Slider
-                  style={{ width: '100%', height: 40 }}
+                  style={{ width: '100%', height: 30 }}
                   minimumValue={1}
                   maximumValue={500}
                   step={1}
-                  value={sliderValue}
+                  value={Math.min(Math.max(sliderValue, 1), 500)}
                   minimumTrackTintColor={theme.colors.primary}
                   maximumTrackTintColor={theme.colors.border}
                   thumbTintColor={theme.colors.primary}
                   onValueChange={(value: number) => {
-                    const intValue = Math.round(value);
-                    setSliderValue(intValue);
-                    setServings(intValue.toString());
+                    // Runde auf ganze Zahlen für bessere Anzeige
+                    const roundedValue = Math.round(value);
+                    setSliderValue(roundedValue);
+                    setServings(roundedValue.toString());
                   }}
                 />
               </View>
@@ -300,28 +337,21 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 width: '100%',         
                 flexDirection: 'row',
                 justifyContent: 'space-between',
-                paddingHorizontal: theme.spacing.s,
-                marginBottom: theme.spacing.m
-              }}>
-                <Text style={{color: theme.colors.textLight}}>001</Text>
-                <Text style={{color: theme.colors.textLight}}>250</Text>
-                <Text style={{color: theme.colors.textLight}}>500</Text>
-              </View>
-              
-              {/* Zusätzlicher Hinweis unter der Skala */}
-              <View style={{
-                width: '100%',         
-                marginTop: theme.spacing.s,
-                marginBottom: theme.spacing.s
+                paddingHorizontal: theme.spacing.xs,
+                marginBottom: theme.spacing.xs
               }}>
                 <Text style={{
                   color: theme.colors.textLight,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  fontSize: theme.typography.fontSize.s,
-                  textAlign: 'center'
-                }}>
-                  Tippen Sie auf den Wert oben, um eine exakte Menge einzugeben
-                </Text>
+                  fontSize: theme.typography.fontSize.xs
+                }}>1</Text>
+                <Text style={{
+                  color: theme.colors.textLight,
+                  fontSize: theme.typography.fontSize.xs
+                }}>250</Text>
+                <Text style={{
+                  color: theme.colors.textLight,
+                  fontSize: theme.typography.fontSize.xs
+                }}>500</Text>
               </View>
             </View>
 

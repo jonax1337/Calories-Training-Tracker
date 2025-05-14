@@ -36,7 +36,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   
   // State für Geburtsdatum
   const [birthDate, setBirthDate] = useState<Date>(new Date(new Date().getFullYear() - 25, 0, 1)); // Default 25 Jahre alt
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [tempBirthDate, setTempBirthDate] = useState<Date | null>(null);
   
   // State für ausgeklapptes Ziel-Menü und ausgewähltes Ziel
   const [goalsExpanded, setGoalsExpanded] = useState(false);
@@ -51,6 +52,25 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       age--;
     }
     return age;
+  };
+  
+  // Funktionen für den Datepicker-Modal
+  const openDatePickerModal = () => {
+    setTempBirthDate(birthDate);
+    setShowDatePickerModal(true);
+  };
+  
+  const cancelDatePickerModal = () => {
+    setShowDatePickerModal(false);
+    setTempBirthDate(null);
+  };
+  
+  const confirmDatePickerModal = () => {
+    if (tempBirthDate) {
+      setBirthDate(tempBirthDate);
+      updateBirthDate(tempBirthDate);
+    }
+    setShowDatePickerModal(false);
   };
   
   // Aktualisiert das Geburtsdatum im Profil
@@ -302,8 +322,148 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     </TouchableOpacity>
   );
 
+  // Modal-Komponente für DateTimePicker
+  const renderDatePickerModal = () => {
+    if (!showDatePickerModal) return null;
+    
+    return (
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      }}>
+        <View style={{
+          width: '90%',
+          backgroundColor: theme.colors.card,
+          borderRadius: theme.borderRadius.medium,
+          padding: theme.spacing.m,
+          alignItems: 'center',
+          elevation: 5,
+          shadowColor: theme.colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.bold,
+            fontSize: theme.typography.fontSize.l,
+            color: theme.colors.text,
+            marginBottom: theme.spacing.m,
+            textAlign: 'center'
+          }}>
+            Geburtsdatum auswählen
+          </Text>
+          
+          {/* DatePicker */}
+          {Platform.OS === 'web' ? (
+            <input
+              type="date"
+              value={(tempBirthDate || birthDate).toISOString().split('T')[0]}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const newDate = new Date(e.target.value);
+                  setTempBirthDate(newDate);
+                }
+              }}
+              style={{
+                width: '100%',
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '4px',
+                backgroundColor: theme.colors.background,
+                fontSize: '16px',
+                padding: '10px',
+                color: theme.colors.text,
+                outline: 'none',
+                marginBottom: theme.spacing.m
+              }}
+              max={new Date().toISOString().split('T')[0]}
+              min="1900-01-01"
+            />
+          ) : (
+            <DateTimePicker
+              testID="dateTimePickerModal"
+              value={tempBirthDate || birthDate}
+              mode="date"
+              display="spinner"
+              onChange={(event, selectedDate) => {
+                if (selectedDate) {
+                  setTempBirthDate(selectedDate);
+                }
+              }}
+              maximumDate={new Date()}
+              minimumDate={new Date(1900, 0, 1)}
+              themeVariant={theme.dark ? 'dark' : 'light'}
+              style={{
+                width: '100%',
+                height: 200,
+                marginBottom: theme.spacing.m
+              }}
+            />
+          )}
+          
+          {/* Buttons */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: '100%'
+          }}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                padding: theme.spacing.m,
+                backgroundColor: theme.colors.card,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                borderRadius: theme.borderRadius.small,
+                marginRight: theme.spacing.s,
+                alignItems: 'center'
+              }}
+              onPress={cancelDatePickerModal}
+            >
+              <Text style={{
+                fontFamily: theme.typography.fontFamily.medium,
+                fontSize: theme.typography.fontSize.m,
+                color: theme.colors.text
+              }}>
+                Abbrechen
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                padding: theme.spacing.m,
+                backgroundColor: theme.colors.primary,
+                borderRadius: theme.borderRadius.small,
+                alignItems: 'center'
+              }}
+              onPress={confirmDatePickerModal}
+            >
+              <Text style={{
+                fontFamily: theme.typography.fontFamily.medium,
+                fontSize: theme.typography.fontSize.m,
+                color: 'white'
+              }}>
+                Bestätigen
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* DatePicker-Modal */}
+      {renderDatePickerModal()}
+      
       {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
@@ -414,71 +574,42 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           </Text>
         </View>
           
-          {/* Plattformabhängige Datumseingabe */}
-          {Platform.OS === 'web' ? (
-            // Für Web: Nativer Datums-Input wie in Ihrem Beispiel
-            <View style={{
+          {/* Anklickbare Datums-Anzeige */}
+          <TouchableOpacity
+            style={{
               width: '100%',
+              backgroundColor: theme.colors.background,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              borderRadius: theme.borderRadius.medium,
+              padding: theme.spacing.m,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+            onPress={openDatePickerModal}
+          >
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.medium,
+              fontSize: theme.typography.fontSize.m,
+              color: theme.colors.text
             }}>
-              <input
-                type="date"
-                value={birthDate.toISOString().split('T')[0]}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    const newDate = new Date(e.target.value);
-                    setBirthDate(newDate);
-                    updateBirthDate(newDate);
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  border: `1px solid ${theme.colors.border}`,
-                  borderRadius: '4px',
-                  backgroundColor: theme.colors.background,
-                  fontSize: '16px',
-                  padding: '10px',
-                  color: theme.colors.text,
-                  outline: 'none'
-                }}
-                max={new Date().toISOString().split('T')[0]}
-                min="1900-01-01"
-              />
-            </View>
-          ) : (
-            // Direkt eingebetteter DatePicker für iOS/Android
-            <View style={{
-              width: '100%',
+              {birthDate.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </Text>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.medium,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.primary
             }}>
-              {/* Auf allen Plattformen den Spinner-Modus verwenden für scrollbares Auswahlen der einzelnen Werte */}
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={birthDate}
-                mode="date"
-                display="spinner" 
-                onChange={(event, selectedDate) => {
-                  if (selectedDate) {
-                    setBirthDate(selectedDate);
-                    updateBirthDate(selectedDate);
-                  }
-                }}
-                maximumDate={new Date()}
-                minimumDate={new Date(1900, 0, 1)}
-                themeVariant={theme.dark ? 'dark' : 'light'}
-                style={{
-                  width: '100%', 
-                  backgroundColor: 'transparent',
-                  height: 100,
-                  alignSelf: 'center'
-                }}
-              />
-            </View>
-          )}
+              Ändern
+            </Text>
+          </TouchableOpacity>
         </View>
       {/* Weight */}
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 
         width: '100%',          
-        padding: theme.spacing.xs,
+        padding: theme.spacing.m,
         marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
         borderRadius: theme.borderRadius.medium,
@@ -487,13 +618,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         borderColor: theme.colors.border
       }]}>
         <View style={{
-          width: '100%',        
+          width: '100%',
+          marginBottom: theme.spacing.s      
         }}>
           <Text style={[styles.inputLabel, { 
             fontFamily: theme.typography.fontFamily.medium, 
             color: theme.colors.text,
-            marginTop: theme.spacing.xs,
-            marginLeft: theme.spacing.xs
+            fontSize: theme.typography.fontSize.m
           }]}>
             Gewicht
           </Text>
@@ -505,8 +636,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           width: '100%',
-          paddingHorizontal: theme.spacing.xs,
-          marginBottom: theme.spacing.xs
+          marginBottom: theme.spacing.s
         }}>
           <Text style={{
             fontFamily: theme.typography.fontFamily.medium,
@@ -569,11 +699,10 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         {/* Weight slider */}
         <View style={{
           width: '100%',        
-          marginBottom: theme.spacing.xs,
-          paddingHorizontal: theme.spacing.xs
+          marginBottom: theme.spacing.s
         }}>
           <Slider
-            style={{ width: '100%', height: 30 }}
+            style={{ width: '100%', height: 40 }}
             minimumValue={30}
             maximumValue={200}
             step={0.1}
@@ -597,8 +726,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           width: '100%',         
           flexDirection: 'row',
           justifyContent: 'space-between',
-          paddingHorizontal: theme.spacing.xs,
-          marginBottom: theme.spacing.xs
+          marginBottom: theme.spacing.s
         }}>
           <Text style={{
             color: theme.colors.textLight,
@@ -619,7 +747,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 
         width: '100%',          
-        padding: theme.spacing.xs,
+        padding: theme.spacing.m,
         marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
         borderRadius: theme.borderRadius.medium,
@@ -628,13 +756,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         borderColor: theme.colors.border
       }]}>
         <View style={{
-          width: '100%',        
+          width: '100%',
+          marginBottom: theme.spacing.s
         }}>
           <Text style={[styles.inputLabel, { 
             fontFamily: theme.typography.fontFamily.medium, 
             color: theme.colors.text,
-            marginTop: theme.spacing.xs,
-            marginLeft: theme.spacing.xs
+            fontSize: theme.typography.fontSize.m
           }]}>
             Größe
           </Text>
@@ -646,8 +774,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           width: '100%',
-          paddingHorizontal: theme.spacing.xs,
-          marginBottom: theme.spacing.xs
+          marginBottom: theme.spacing.s
         }}>
           <Text style={{
             fontFamily: theme.typography.fontFamily.medium,
@@ -710,11 +837,10 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         {/* Height slider */}
         <View style={{
           width: '100%',        
-          marginBottom: theme.spacing.xs,
-          paddingHorizontal: theme.spacing.xs
+          marginBottom: theme.spacing.s
         }}>
           <Slider
-            style={{ width: '100%', height: 30 }}
+            style={{ width: '100%', height: 40 }}
             minimumValue={120}
             maximumValue={240}
             step={1}
@@ -735,8 +861,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           width: '100%',         
           flexDirection: 'row',
           justifyContent: 'space-between',
-          paddingHorizontal: theme.spacing.xs,
-          marginBottom: theme.spacing.xs
+          marginBottom: theme.spacing.s
         }}>
           <Text style={{
             color: theme.colors.textLight,
@@ -816,24 +941,27 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               style={{
                 width: '100%',
                 height: '100%',
-                background: 'linear-gradient(to right, #64B5F6, #81C784, #FFD54F, #E57373)',
+                background: 'linear-gradient(to right, #2196F3 0%, #42A5F5 15%, #4CAF50 20%, #8BC34A 39%, #FFEB3B 40%, #FFC107 50%, #FF9800 70%, #F44336 100%)',
                 borderRadius: theme.borderRadius.small + 'px',
               }}
             />
           ) : (
             // Für react-native: Vereinfachter Verlauf mit mehreren Blöcken
             <View style={{flexDirection: 'row', height: '100%', width: '100%'}}>
-              {/* Mehrere kleine Blöcke erzeugen einen Verlaufseffekt */}
-              <View style={{flex: 1, backgroundColor: '#64B5F6'}} />
-              <View style={{flex: 1, backgroundColor: '#90CAF9'}} />
-              <View style={{flex: 1, backgroundColor: '#A5D6A7'}} />
-              <View style={{flex: 1, backgroundColor: '#81C784'}} />
-              <View style={{flex: 1, backgroundColor: '#AED581'}} />
-              <View style={{flex: 1, backgroundColor: '#DCE775'}} />
-              <View style={{flex: 1, backgroundColor: '#FFF176'}} />
-              <View style={{flex: 1, backgroundColor: '#FFD54F'}} />
-              <View style={{flex: 1, backgroundColor: '#FFB74D'}} />
-              <View style={{flex: 1, backgroundColor: '#E57373'}} />
+              {/* Mehrere kleine Blöcke erzeugen einen Verlaufseffekt - von Untergewicht bis Adipositas */}
+              {/* Blau - Untergewicht (<18,5) */}
+              <View style={{flex: 1.5, backgroundColor: '#2196F3'}} />
+              <View style={{flex: 1.5, backgroundColor: '#42A5F5'}} />
+              {/* Grün - Normalgewicht (18,5-25) */}
+              <View style={{flex: 2, backgroundColor: '#4CAF50'}} />
+              <View style={{flex: 1.9, backgroundColor: '#8BC34A'}} />
+              {/* Gelb/Orange - Übergewicht (25-30) */}
+              <View style={{flex: 1, backgroundColor: '#FFEB3B'}} />
+              <View style={{flex: 1, backgroundColor: '#FFC107'}} />
+              <View style={{flex: 1, backgroundColor: '#FF9800'}} />
+              {/* Rot - Adipositas (>30) */}
+              <View style={{flex: 1, backgroundColor: '#FF5722'}} />
+              <View style={{flex: 1, backgroundColor: '#F44336'}} />
             </View>
           )}
         </View>
@@ -876,6 +1004,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           }} />
         </View>
         
+
+        
         {/* BMI-Marker */}
         {profile.weight && profile.height && (
           <View style={{
@@ -913,7 +1043,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 
         width: '100%',          
-        padding: theme.spacing.xs,
+        padding: theme.spacing.m,
         marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
         borderRadius: theme.borderRadius.medium,
@@ -922,13 +1052,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         borderColor: theme.colors.border
       }]}>
         <View style={{
-          width: '100%',        
+          width: '100%',
+          marginBottom: theme.spacing.s
         }}>
           <Text style={[styles.inputLabel, { 
             fontFamily: theme.typography.fontFamily.medium, 
             color: theme.colors.text,
-            marginTop: theme.spacing.xs,
-            marginLeft: theme.spacing.xs
+            fontSize: theme.typography.fontSize.m
           }]}>
             Geschlecht
           </Text>
@@ -939,8 +1069,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           // Web-Dropdown mit nativer Selektbox
           <View style={{
             width: '100%',
-            marginTop: theme.spacing.xs,
-            marginBottom: theme.spacing.xs
+            marginBottom: theme.spacing.s
           }}>
             <select
               value={profile.gender || 'male'}
@@ -962,14 +1091,16 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             </select>
           </View>
         ) : (
-          // iOS/Android Spinner-Picker - direkt sichtbar und nahtlos in die Card integriert
+          // iOS/Android Spinner-Picker - optimiert für besseres Layout
           <View style={{
             width: '100%',
-            marginVertical: theme.spacing.xs,
-            // Kein Border und gleicher Hintergrund wie Parent-Card
-            backgroundColor: 'transparent',
-            // Keine Border mehr
-            height: 120, // Höher für bessere Sichtbarkeit des Spinners
+            marginBottom: theme.spacing.s,
+            backgroundColor: theme.colors.background,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            borderRadius: theme.borderRadius.small,
+            height: 56, // Reduzierte Höhe nach 8-Punkt-Grid (7*8=56)
+            justifyContent: 'center',
             overflow: 'hidden'
           }}>
             <Picker
@@ -982,14 +1113,15 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               style={{
                 width: '100%',
                 color: theme.colors.text,
+                height: 56, // Passend zur Container-Höhe
               }}
               itemStyle={{
                 fontSize: 16,
-                height: 120,
-                color: theme.colors.text,
-                backgroundColor: 'transparent'
+                height: 56, // Passend zur Container-Höhe
+                fontWeight: 'bold',
+                color: theme.colors.text
               }}
-              // Spinner-Modus für cooleren Look
+              // Dropdown-Modus für konsistentes Erscheinungsbild
               mode="dropdown"
             >
               <Picker.Item label="Männlich" value="male" />
@@ -1002,14 +1134,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         {/* Description */}
         <View style={{
           width: '100%',         
-          marginTop: theme.spacing.xs,
-          marginBottom: theme.spacing.xs
+          marginBottom: theme.spacing.s
         }}>
           <Text style={{
             color: theme.colors.textLight,
             fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.xs,
-            textAlign: 'center'
+            fontSize: theme.typography.fontSize.xs
           }}>
             Für genauere Kalorienberechnungen
           </Text>
@@ -1051,18 +1181,25 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         )}
       </View>
       
-      {/* Personalisierte Empfehlungen basierend auf Profildaten */}
-      <View style={[styles.inputContainer, {
-        flexDirection: 'column', 
-        width: '100%',          
-        padding: theme.spacing.m,
-        marginTop: theme.spacing.l,
-        marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.medium,
-        backgroundColor: profile.activityLevel ? theme.colors.primary + '15' : theme.colors.card,
-        borderWidth: 1,
-        borderColor: profile.activityLevel ? theme.colors.primary : theme.colors.border,
-      }]}>
+      {/* U00dcberschrift fu00fcr Ziele */}
+      <View style={{ marginTop: theme.spacing.m, marginBottom: theme.spacing.s }}>
+        <Text style={{
+          fontFamily: theme.typography.fontFamily.bold,
+          fontSize: theme.typography.fontSize.l,
+          color: theme.colors.text,
+          marginBottom: theme.spacing.xs
+        }}>
+          Dein Ernährungsziel
+        </Text>
+        <Text style={{
+          fontFamily: theme.typography.fontFamily.regular,
+          fontSize: theme.typography.fontSize.s,
+          color: theme.colors.textLight,
+          marginBottom: theme.spacing.s
+        }}>
+          Wähle dein Ernährungsziel oder lege eigene Werte fest. Die Empfehlungen basieren auf deinen Körperdaten.
+        </Text>
+      </View>
         
       {profile.weight && profile.height && profile.gender && profile.activityLevel ? (
           <>
@@ -1492,7 +1629,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             um eine auf dich zugeschnittene Empfehlung zu erhalten.
           </Text>
         )}
-      </View>
 
       {/* Water */}
       <View style={styles.inputContainer}>
