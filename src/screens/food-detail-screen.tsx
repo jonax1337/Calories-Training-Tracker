@@ -302,7 +302,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 paddingHorizontal: theme.spacing.s,
                 marginBottom: theme.spacing.m
               }}>
-                <Text style={{color: theme.colors.textLight}}>1</Text>
+                <Text style={{color: theme.colors.textLight}}>001</Text>
                 <Text style={{color: theme.colors.textLight}}>250</Text>
                 <Text style={{color: theme.colors.textLight}}>500</Text>
               </View>
