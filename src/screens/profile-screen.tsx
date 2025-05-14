@@ -531,167 +531,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         </View>
       </View>
       
-      {/* BMI Indikator */}
-      <View style={[styles.inputContainer, {
-        flexDirection: 'column', 
-        width: '100%',          
-        padding: theme.spacing.m,
-        marginTop: theme.spacing.s,
-        marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.medium,
-        backgroundColor: theme.colors.card,
-        borderWidth: 1,
-        borderColor: theme.colors.border
-      }]}>
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.medium, 
-            color: theme.colors.text,
-            fontSize: theme.typography.fontSize.m,
-          }}>
-            Body-Mass-Index (BMI)
-          </Text>
-          
-          {/* BMI-Wert anzeigen, wenn sowohl Gewicht als auch Gru00f6u00dfe vorhanden sind */}
-          {profile.weight && profile.height ? (
-            <Text style={{
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: theme.typography.fontSize.m,
-              color: theme.colors.primary
-            }}>
-              {/* BMI = Gewicht (kg) / (Gru00f6u00dfe (m))u00b2 */}
-              {(profile.weight / Math.pow(profile.height / 100, 2)).toFixed(1)}
-            </Text>
-          ) : (
-            <Text style={{
-              fontFamily: theme.typography.fontFamily.medium,
-              fontSize: theme.typography.fontSize.s,
-              color: theme.colors.textLight,
-              fontStyle: 'italic'
-            }}>
-              Gewicht & Größe eingeben
-            </Text>
-          )}
-        </View>
-        
-        {/* BMI Farbskala */}
-        <View style={{
-          width: '100%',
-          height: 24,
-          flexDirection: 'row',
-          borderRadius: theme.borderRadius.small,
-          overflow: 'hidden',
-          marginVertical: theme.spacing.s
-        }}>
-          {/* Untergewicht - Blau */}
-          <View style={{
-            flex: 1.85, // <18.5
-            backgroundColor: '#64B5F6', // Helles Blau
-          }} />
-          
-          {/* Normalgewicht - Gru00fcn */}
-          <View style={{
-            flex: 6.5, // 18.5-25
-            backgroundColor: '#81C784', // Helles Gru00fcn
-          }} />
-          
-          {/* u00dcbergewicht - Gelb/Orange */}
-          <View style={{
-            flex: 5, // 25-30
-            backgroundColor: '#FFD54F', // Helles Gelb/Orange
-          }} />
-          
-          {/* Adipositas - Rot */}
-          <View style={{
-            flex: 10, // >30
-            backgroundColor: '#E57373', // Helles Rot
-          }} />
-        </View>
-        
-        {/* BMI-Marker */}
-        {profile.weight && profile.height && (
-          <View style={{
-            position: 'absolute',
-            bottom: theme.spacing.m + 12, // Mitte des Markers auf der Skala
-            left: (() => {
-              // BMI berechnen
-              const bmi = profile.weight / Math.pow(profile.height / 100, 2);
-              
-              // Position in Prozent umrechnen (basierend auf einem BMI-Bereich von 15-40)
-              const minBmi = 15;
-              const maxBmi = 40;
-              const totalWidth = 100; // Prozentuale Breite
-              
-              // Begrenze den BMI auf den darstellbaren Bereich
-              const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmi));
-              
-              // Prozentuale Position im Verhältnis zur Gesamtbreite
-              const percentPosition = ((clampedBmi - minBmi) / (maxBmi - minBmi)) * totalWidth;
-              
-              return `${percentPosition}%`;
-            })(),
-            width: 3,
-            height: 30,
-            backgroundColor: theme.colors.primary,
-            borderRadius: 4,
-            transform: [{ translateX: -1.5 }], // Zentriere den Marker
-          }} />
-        )}
-        
-        {/* BMI Kategorien-Labels */}
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          width: '100%',
-        }}>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.xs,
-            color: theme.colors.textLight,
-            flex: 1.85,
-            textAlign: 'left'
-          }}>
-            Untergewicht
-          </Text>
-          
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.xs,
-            color: theme.colors.textLight,
-            flex: 6.5,
-            textAlign: 'center'
-          }}>
-            Normalgewicht
-          </Text>
-          
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.xs,
-            color: theme.colors.textLight,
-            flex: 5,
-            textAlign: 'center'
-          }}>
-            Übergewicht
-          </Text>
-          
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.xs,
-            color: theme.colors.textLight,
-            flex: 10,
-            textAlign: 'right'
-          }}>
-            Adipositas
-          </Text>
-        </View>
-      </View>
-      
       {/* Height */}
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 
@@ -828,6 +667,162 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             fontSize: theme.typography.fontSize.xs
           }}>240</Text>
         </View>
+      </View>
+
+      {/* BMI Indikator */}
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.m,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: theme.colors.card,
+        borderWidth: 1,
+        borderColor: theme.colors.border
+      }]}>
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          marginBottom: theme.spacing.s
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.medium, 
+            color: theme.colors.text,
+            fontSize: theme.typography.fontSize.m,
+          }}>
+            Body-Mass-Index (BMI)
+          </Text>
+          
+          {/* BMI-Wert anzeigen, wenn sowohl Gewicht als auch Gru00f6u00dfe vorhanden sind */}
+          {profile.weight && profile.height ? (
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.m,
+              color: theme.colors.primary
+            }}>
+              {/* BMI = Gewicht (kg) / (Gru00f6u00dfe (m))u00b2 */}
+              {(profile.weight / Math.pow(profile.height / 100, 2)).toFixed(1)}
+            </Text>
+          ) : (
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.medium,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.textLight,
+              fontStyle: 'italic'
+            }}>
+              Gewicht & Größe eingeben
+            </Text>
+          )}
+        </View>
+        
+        {/* BMI Farbskala mit Verlauf */}
+        <View style={{
+          width: '100%',
+          height: 20,
+          borderRadius: theme.borderRadius.small,
+          overflow: 'hidden',
+          marginVertical: theme.spacing.s
+        }}>
+          {/* Linearer Farbverlauf aus CSS für Web */}
+          {Platform.OS === 'web' ? (
+            <div 
+              style={{
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(to right, #64B5F6, #81C784, #FFD54F, #E57373)',
+                borderRadius: theme.borderRadius.small + 'px',
+              }}
+            />
+          ) : (
+            // Für react-native: Vereinfachter Verlauf mit mehreren Blöcken
+            <View style={{flexDirection: 'row', height: '100%', width: '100%'}}>
+              {/* Mehrere kleine Blöcke erzeugen einen Verlaufseffekt */}
+              <View style={{flex: 1, backgroundColor: '#64B5F6'}} />
+              <View style={{flex: 1, backgroundColor: '#90CAF9'}} />
+              <View style={{flex: 1, backgroundColor: '#A5D6A7'}} />
+              <View style={{flex: 1, backgroundColor: '#81C784'}} />
+              <View style={{flex: 1, backgroundColor: '#AED581'}} />
+              <View style={{flex: 1, backgroundColor: '#DCE775'}} />
+              <View style={{flex: 1, backgroundColor: '#FFF176'}} />
+              <View style={{flex: 1, backgroundColor: '#FFD54F'}} />
+              <View style={{flex: 1, backgroundColor: '#FFB74D'}} />
+              <View style={{flex: 1, backgroundColor: '#E57373'}} />
+            </View>
+          )}
+        </View>
+        
+        {/* BMI-Kategorie-Marker */}
+        <View style={{
+          width: '100%',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          position: 'relative',
+          height: 16,
+          marginTop: -8 // Oben auf der Skala positionieren
+        }}>
+          {/* Markierungen der wichtigen BMI-Grenzen */}
+          <View style={{
+            position: 'absolute',
+            left: '14%', // Ungefähr BMI 18.5 (Untergewicht/Normal)
+            height: 6,
+            width: 2,
+            backgroundColor: 'white',
+            top: 0
+          }} />
+          
+          <View style={{
+            position: 'absolute',
+            left: '40%', // Ungefähr BMI 25 (Normal/Übergewicht)
+            height: 6,
+            width: 2,
+            backgroundColor: 'white',
+            top: 0
+          }} />
+          
+          <View style={{
+            position: 'absolute',
+            left: '60%', // Ungefähr BMI 30 (Übergewicht/Adipositas)
+            height: 6,
+            width: 2,
+            backgroundColor: 'white',
+            top: 0
+          }} />
+        </View>
+        
+        {/* BMI-Marker */}
+        {profile.weight && profile.height && (
+          <View style={{
+            position: 'absolute',
+            bottom: theme.spacing.m + 10, // Mitte des Markers auf der Skala
+            left: (() => {
+              // BMI berechnen
+              const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+              
+              // Position in Prozent umrechnen (basierend auf einem BMI-Bereich von 15-40)
+              const minBmi = 15;
+              const maxBmi = 40;
+              const totalWidth = 100; // Prozentuale Breite
+              
+              // Begrenze den BMI auf den darstellbaren Bereich
+              const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmi));
+              
+              // Prozentuale Position im Verhältnis zur Gesamtbreite
+              const percentPosition = ((clampedBmi - minBmi) / (maxBmi - minBmi)) * totalWidth;
+              
+              return `${percentPosition}%`;
+            })(),
+            width: 4,
+            height: 28,
+            backgroundColor: 'white',
+            borderWidth: 1,
+            borderColor: theme.colors.text,
+            borderRadius: 2,
+            transform: [{ translateX: -2 }], // Zentriere den Marker
+          }} />
+        )}
       </View>
       
       {/* Gender Selection */}
