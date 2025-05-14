@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { NutritionInfo } from '../../types';
+import { useTheme } from '../../theme/theme-context';
 
 interface NutritionalInfoCardProps {
   nutrition: NutritionInfo;
@@ -8,57 +9,131 @@ interface NutritionalInfoCardProps {
 }
 
 function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalInfoCardProps) {
+  // Get theme for styling
+  const { theme } = useTheme();
+  
   // Calculate nutrition values based on serving multiplier
   const calculateValue = (value: number) => {
     return Math.round(value * servingMultiplier * 10) / 10;
   };
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Nutritional Information</Text>
-      <Text style={styles.servingInfo}>
+    <View style={[styles.card, { 
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.medium,
+      shadowColor: theme.colors.shadow,
+      borderColor: theme.colors.border,
+    }]}>
+      <Text style={[styles.title, { 
+        color: theme.colors.text,
+        fontFamily: theme.typography.fontFamily.bold, 
+        fontSize: theme.typography.fontSize.l,
+        marginBottom: theme.spacing.m
+      }]}>Nährwertangaben</Text>
+      <Text style={[styles.servingInfo, { 
+        color: theme.colors.textLight,
+        fontFamily: theme.typography.fontFamily.regular,
+        fontSize: theme.typography.fontSize.s,
+        marginBottom: theme.spacing.m
+      }]}>
         {servingMultiplier > 1 ? `${servingMultiplier} x ` : ''}
         {nutrition.servingSize} ({nutrition.servingSizeGrams * servingMultiplier}g)
       </Text>
       
-      <View style={styles.nutritionRow}>
-        <Text style={styles.nutrientName}>Calories</Text>
-        <Text style={styles.nutrientValue}>{calculateValue(nutrition.calories)} kcal</Text>
+      <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+        <Text style={[styles.nutrientName, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m
+        }]}>Kalorien</Text>
+        <Text style={[styles.nutrientValue, { 
+          color: theme.colors.primary,
+          fontFamily: theme.typography.fontFamily.bold,
+          fontSize: theme.typography.fontSize.m
+        }]}>{calculateValue(nutrition.calories)} kcal</Text>
       </View>
       
-      <View style={styles.nutritionRow}>
-        <Text style={styles.nutrientName}>Protein</Text>
-        <Text style={styles.nutrientValue}>{calculateValue(nutrition.protein)}g</Text>
+      <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+        <Text style={[styles.nutrientName, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m
+        }]}>Protein</Text>
+        <Text style={[styles.nutrientValue, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m
+        }]}>{calculateValue(nutrition.protein)}g</Text>
       </View>
       
-      <View style={styles.nutritionRow}>
-        <Text style={styles.nutrientName}>Carbs</Text>
-        <Text style={styles.nutrientValue}>{calculateValue(nutrition.carbs)}g</Text>
+      <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+        <Text style={[styles.nutrientName, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m
+        }]}>Kohlenhydrate</Text>
+        <Text style={[styles.nutrientValue, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m
+        }]}>{calculateValue(nutrition.carbs)}g</Text>
       </View>
       
-      <View style={styles.nutritionRow}>
-        <Text style={styles.nutrientName}>Fat</Text>
-        <Text style={styles.nutrientValue}>{calculateValue(nutrition.fat)}g</Text>
+      <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+        <Text style={[styles.nutrientName, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m
+        }]}>Fett</Text>
+        <Text style={[styles.nutrientValue, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m
+        }]}>{calculateValue(nutrition.fat)}g</Text>
       </View>
       
       {nutrition.sugar !== undefined && (
-        <View style={styles.nutritionRow}>
-          <Text style={styles.nutrientName}>Sugar</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.sugar)}g</Text>
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Zucker</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.sugar)}g</Text>
         </View>
       )}
       
       {nutrition.fiber !== undefined && (
-        <View style={styles.nutritionRow}>
-          <Text style={styles.nutrientName}>Fiber</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.fiber)}g</Text>
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Ballaststoffe</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.fiber)}g</Text>
         </View>
       )}
       
       {nutrition.sodium !== undefined && (
-        <View style={styles.nutritionRow}>
-          <Text style={styles.nutrientName}>Sodium</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.sodium)}mg</Text>
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Natrium</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.sodium)}mg</Text>
         </View>
       )}
     </View>
@@ -67,39 +142,32 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 16,
-    marginVertical: 8,
-    shadowColor: '#000',
+    padding: 16, // 2 Grid-Punkte (16px)
+    marginVertical: 8, // 1 Grid-Punkt (8px)
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    // Theme-spezifische Stile werden inline hinzugefügt
   },
   servingInfo: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    // Theme-spezifische Stile werden inline hinzugefügt
   },
   nutritionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 8, // 1 Grid-Punkt (8px)
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    marginBottom: 8, // 1 Grid-Punkt (8px)
   },
   nutrientName: {
-    fontSize: 16,
+    // Theme-spezifische Stile werden inline hinzugefügt
   },
   nutrientValue: {
-    fontSize: 16,
-    fontWeight: '500',
+    // Theme-spezifische Stile werden inline hinzugefügt
   },
 });
 

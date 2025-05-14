@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  ActivityIndicator,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  FlatList,
-  Dimensions,
-  Alert,
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TextInput, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  KeyboardAvoidingView, 
+  Platform, 
+  FlatList, 
+  Dimensions, 
+  Alert, 
 } from "react-native";
+import { useFocusEffect } from '@react-navigation/native';
 import { AddTabScreenProps } from "../types/navigation-types";
 import { FoodItem } from "../types";
 import { getFoodDataByBarcode, searchFoodByName } from "../services/barcode-service";
 import { useTheme } from "../theme/theme-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Camera, CameraView } from "expo-camera";
+import { Camera, CameraView, CameraType, FlashMode } from "expo-camera";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -39,6 +40,10 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   const [scanned, setScanned] = useState(false);
   const [lastScannedData, setLastScannedData] = useState<string>('');
   const [lastScannedType, setLastScannedType] = useState<string>('');
+  const [isTorchOn, setIsTorchOn] = useState(false);
+
+  // Scanner-Steuerung
+  const isScanningRef = useRef(false); // Ref statt State für sofortige Wirkung ohne Re-Rendering
 
   useEffect(() => {
     (async () => {
@@ -46,33 +51,92 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
       setHasPermission(status === "granted");
     })();
   }, []);
+  
+  // Automatisches Reset des Scanners, wenn der Screen wieder fokussiert wird
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('Scanner-Screen erhält Fokus - Scanner wird zurückgesetzt');
+      // Scanner zurücksetzen, wenn der Screen wieder fokussiert wird
+      setScanned(false);
+      isScanningRef.current = false;
+      
+      return () => {
+        // Optional: Clean-up beim Verlassen des Screens
+      };
+    }, [])
+  );
 
-  const handleBarcodeScanned = ({ type, data }: { type: string; data: string }) => {
-    console.log(`✅ Barcode erkannt: ${type} – ${data}`);
+  const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
+    // KRITISCH: Sofortiger und definitiver Ausstieg, wenn bereits gescannt
+    if (isScanningRef.current) {
+      console.log('\u274c Scan bereits in Bearbeitung - ignoriere');
+      return;
+    }
+
+    // SOFORT Scanner blockieren - vor allem anderen!
+    isScanningRef.current = true;
+    setScanned(true); // Deaktiviert den Scanner in der UI
+
+    console.log(`\u2705 Barcode erkannt: ${type} \u2013 ${data}`);
     setLastScannedData(data);
     setLastScannedType(type);
-    if (scanned) return;
-    setScanned(true);
 
-    Alert.alert(
-      "Barcode erkannt",
-      `Typ: ${type}\nDaten: ${data}\n\nWeiter zum Detail-Screen?`,
-      [
-        { text: "Abbrechen", style: "cancel", onPress: () => setScanned(false) },
-        {
-          text: "Weiter",
-          onPress: () => {
-            navigation.goBack();
-            setTimeout(() => {
-              navigation.getParent()?.navigate("FoodDetail", {
-                barcode: data,
-                mealType,
-              });
-            }, 100);
-          },
-        },
-      ]
-    );
+    // Vorprüfung, ob Produkt existiert
+    setIsLoading(true);
+    try {
+      const productData = await getFoodDataByBarcode(data);
+      setIsLoading(false);
+
+      // Direkt zum FoodDetail-Screen navigieren, unabhängig davon, ob Produkt gefunden wurde
+      try {
+        // Vereinfachte Navigation: Versuche zuerst Parent-Navigator
+        const parent = navigation.getParent();
+
+        if (parent) {
+          // Wenn Produkt nicht gefunden, mit manualEntry-Flag navigieren
+          const params = productData 
+            ? { barcode: data, mealType } 
+            : { barcode: data, mealType, manualEntry: true };
+            
+          parent.navigate("FoodDetail", params);
+          console.log("Navigation erfolgt über Parent-Navigator");
+          return;
+        }
+
+        // Fallback: Direkte Navigation
+        const params = productData 
+          ? { barcode: data, mealType } 
+          : { barcode: data, mealType, manualEntry: true };
+          
+        // @ts-ignore - Ignoriere TypeScript-Fehler, da wir wissen, dass dieser Screen existiert
+        navigation.navigate("FoodDetail", params);
+        console.log("Navigation erfolgt direkt");
+      } catch (e) {
+        // Im Fehlerfall
+        console.error("Navigation error:", e);
+        setScanned(false);
+        isScanningRef.current = false;
+      }
+    } catch (error) {
+      // API-Fehler
+      console.error("Error checking product:", error);
+      setIsLoading(false);
+      
+      // Trotz Fehler zum Detail-Screen navigieren (manuelle Eingabe)
+      try {
+        const parent = navigation.getParent();
+        if (parent) {
+          parent.navigate("FoodDetail", { barcode: data, mealType, manualEntry: true });
+        } else {
+          // @ts-ignore
+          navigation.navigate("FoodDetail", { barcode: data, mealType, manualEntry: true });
+        }
+      } catch (e) {
+        console.error("Navigation error:", e);
+        setScanned(false);
+        isScanningRef.current = false;
+      }
+    }
   };
 
   const handleSubmitBarcode = async () => {
@@ -86,13 +150,15 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
     try {
       const foodData = await getFoodDataByBarcode(barcodeInput.trim());
       if (foodData) {
-        navigation.goBack();
-        setTimeout(() => {
+        try {
           navigation.getParent()?.navigate("FoodDetail", {
             barcode: barcodeInput.trim(),
             mealType,
           });
-        }, 100);
+        } catch (e) {
+          console.error("Navigation error:", e);
+          Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");
+        }
       }
     } catch (e) {
       console.error(e);
@@ -123,13 +189,21 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   };
 
   const handleSelectProduct = (item: FoodItem) => {
-    navigation.goBack();
-    setTimeout(() => {
+    try {
       navigation.getParent()?.navigate("FoodDetail", {
         foodId: item.id,
         mealType,
       });
-    }, 100);
+    } catch (e) {
+      console.error("Navigation error:", e);
+      Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");
+    }
+  };
+
+  const handleScanAgain = () => {
+    // Vollständiges Zurücksetzen aller Scan-Flags
+    setScanned(false);
+    isScanningRef.current = false;
   };
 
   return (
@@ -175,50 +249,41 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
                 <CameraView
                   style={styles.preview}
                   facing="back"
-                  enableTorch={false}
+                  enableTorch={isTorchOn}
                   autofocus="on"
                   onCameraReady={() => console.log("📸 Camera ready")}
                   onMountError={(err) => console.error("❌ Camera error:", err)}
-                  onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+                  onBarcodeScanned={scanned || isScanningRef.current ? undefined : handleBarcodeScanned}
                   barcodeScannerSettings={{
                     barcodeTypes: [
                       "aztec",
-                      "ean13",
-                      "ean8",
-                      "qr",     // notwendig für iOS :contentReference[oaicite:0]{index=0}
-                      "pdf417",
-                      "upc_e",
-                      "datamatrix",
-                      "code39",
-                      "code93",
-                      "itf14",
                       "codabar",
                       "code128",
-                      "upc_a",
+                      "code39",
+                      "code93",
+                      "datamatrix",
+                      "ean13",
+                      "ean8",
+                      "itf14",
+                      "pdf417",
+                      "qr",
+                      "upc_e"
                     ],
                   }}
                   videoStabilizationMode="off"
                 />
                 <View style={[styles.overlay, { borderColor: theme.colors.primary }]} />
 
-                {/* Debug-Anzeige */}
-                <View style={styles.debugInfo}>
-                  <Text style={styles.debugText}>
-                    {lastScannedData ? `Erkannt: ${lastScannedData}` : "Scanne…"}
+                {/* Taschenlampen-Button */}
+                <TouchableOpacity
+                  style={[styles.torchButton, { backgroundColor: isTorchOn ? theme.colors.primary : 'rgba(0,0,0,0.5)' }]}
+                  onPress={() => setIsTorchOn(prev => !prev)}
+                >
+                  <Text style={{ color: 'white', fontSize: 12 }}>
+                    {isTorchOn ? '🔦' : '🔦'}
                   </Text>
-                  <Text style={styles.debugText}>
-                    {lastScannedType ? `Typ: ${lastScannedType}` : ""}
-                  </Text>
-                </View>
+                </TouchableOpacity>
               </View>
-            )}
-            {scanned && (
-              <TouchableOpacity
-                onPress={() => setScanned(false)}
-                style={[styles.rescanButton, { backgroundColor: theme.colors.primary }]}
-              >
-                <Text style={{ color: "white", fontWeight: "bold" }}>Nochmal scannen</Text>
-              </TouchableOpacity>
             )}
           </View>
         )}
@@ -283,10 +348,12 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
         <TouchableOpacity
           style={[styles.manualEntryButton, { borderColor: theme.colors.border }]}
           onPress={() => {
-            navigation.goBack();
-            setTimeout(() => {
+            try {
               navigation.getParent()?.navigate("FoodDetail", { mealType });
-            }, 100);
+            } catch (e) {
+              console.error("Navigation error:", e);
+              Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");
+            }
           }}
         >
           <Text style={{ color: theme.colors.text }}>Manuell eingeben</Text>
@@ -336,6 +403,17 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   debugText: { color: "white", fontSize: 12, textAlign: "center" },
+  torchButton: {
+    position: "absolute",
+    bottom: 12,
+    left: "50%",
+    transform: [{ translateX: -30 }],
+    padding: 8,
+    borderRadius: 20,
+    width: 60,
+    alignItems: "center",
+    zIndex: 999,
+  },
   rescanButton: {
     marginTop: 16,
     padding: 10,

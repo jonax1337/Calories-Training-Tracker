@@ -59,8 +59,8 @@ const typography = {
 
 // Light theme colors
 const lightColors: Colors = {
-  primary: '#4CAF50',
-  primaryLight: '#E8F5E9',
+  primary: '#3498DB',
+  primaryLight: '#ebf5fb',
   secondary: '#03A9F4',
   secondaryLight: '#E1F5FE',
   accent: '#FF9800',
@@ -74,8 +74,8 @@ const lightColors: Colors = {
   shadow: 'rgba(0, 0, 0, 0.1)',
   error: '#F44336',
   errorLight: '#FFEBEE',
-  success: '#4CAF50',
-  successLight: '#E8F5E9',
+  success: '#4FD1C5',
+  successLight: '#E6FFFA',
   warning: '#FFC107',
   warningLight: '#FFF8E1',
   info: '#2196F3',
@@ -95,8 +95,8 @@ const lightColors: Colors = {
 
 // Dark theme colors
 const darkColors: Colors = {
-  primary: '#66BB6A',
-  primaryLight: '#1B5E20',
+  primary: '#3498DB',
+  primaryLight: '#1B4F72',
   secondary: '#29B6F6',
   secondaryLight: '#0D47A1',
   accent: '#FFA726',
@@ -110,8 +110,8 @@ const darkColors: Colors = {
   shadow: 'rgba(0, 0, 0, 0.3)',
   error: '#EF5350',
   errorLight: '#5D1F1F',
-  success: '#66BB6A',
-  successLight: '#1B5E20',
+  success: '#4FD1C5',
+  successLight: '#1D4B45',
   warning: '#FFCA28',
   warningLight: '#4E3C00',
   info: '#42A5F5',

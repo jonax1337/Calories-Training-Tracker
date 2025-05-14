@@ -6,7 +6,10 @@ import { FoodItem, MealType } from '../types';
 import NutritionalInfoCard from '../components/ui/nutritional-info-card';
 import { getFoodDataByBarcode } from '../services/barcode-service';
 import { saveFoodItem } from '../services/storage-service';
-import { v4 as uuidv4 } from 'uuid';
+// Eigene UUID-Generierung statt uuidv4, da es Probleme mit crypto.getRandomValues() gibt
+function generateSimpleId() {
+  return 'food_' + Date.now().toString() + '_' + Math.random().toString(36).substring(2, 11);
+}
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -70,7 +73,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
     // Funktion zum Erstellen eines leeren Food Items
     const createEmptyFoodItem = () => {
       const emptyFood: FoodItem = {
-        id: `food_${Date.now()}`,
+        id: generateSimpleId(),
         name: '',
         brand: '',
         barcode: '',
@@ -105,12 +108,14 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
       // Create a food entry (in a real app, this would be saved to the daily log)
       const entry = {
-        id: uuidv4(),
+        id: generateSimpleId(),
         foodItem: updatedFoodItem,
         servingAmount: parseFloat(servings) || 1,
         mealType: selectedMeal,
         timeConsumed: new Date().toISOString(),
       };
+      
+      console.log('Food entry created:', entry.id);
 
       // Show success message
       Alert.alert(
@@ -152,212 +157,142 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Sticky Header */}
-      <View
-        style={[
-          styles.stickyHeader,
-          {
-            paddingTop: insets.top,
-            backgroundColor: theme.colors.background,
-            borderBottomColor: theme.colors.border,
-            borderBottomWidth: 1,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 2,
-            elevation: 1,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.headerText,
-            { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text },
-          ]}
-        >
-          {foodItem ? foodItem.name : barcode ? 'Produkt laden...' : 'Neues Produkt'}
-        </Text>
-      </View>
-
+    <View style={[styles.container, { 
+      backgroundColor: theme.colors.background
+    }]}>
       <ScrollView
         style={styles.scrollContent}
         contentContainerStyle={{
-          padding: 16, // 2 Grid-Punkte (16px)
-          paddingBottom: Math.max(16, insets.bottom), // Safe Area oder 16px, je nachdem was größer ist
+          paddingRight: 16,
+          paddingLeft: 16,
         }}
       >
         {isLoading ? (
-          <View
-            style={[
-              styles.loadingContainer,
-              { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium },
-            ]}
-          >
+          <View style={[styles.loadingContainer, { marginTop: theme.spacing.xl }]}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text
-              style={[
-                styles.loadingText,
-                { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight },
-              ]}
-            >
-              Produktinformationen werden geladen...
-            </Text>
+            <Text style={[styles.loadingText, { 
+              color: theme.colors.text,
+              fontFamily: theme.typography.fontFamily.medium,
+              marginTop: theme.spacing.m 
+            }]}>Lade Produktdaten...</Text>
           </View>
         ) : error ? (
-          <View
-            style={[
-              styles.errorContainer,
-              { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium },
-            ]}
-          >
-            <Text
-              style={[
-                styles.errorText,
-                { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.error },
-              ]}
-            >
-              {error}
-            </Text>
+          <View style={[styles.errorContainer, { marginTop: theme.spacing.xl }]}>
+            <Text style={[styles.errorText, { 
+              color: theme.colors.error,
+              fontFamily: theme.typography.fontFamily.medium 
+            }]}>{error}</Text>
           </View>
         ) : (
           <>
-            {/* Kein Bild mehr anzeigen */}
-            <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
-              <Text style={[styles.placeholderText, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                Nährwertangaben
-              </Text>
-            </View>
-
             {/* Food name input */}
-            <View style={styles.inputContainer}>
-              <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>Produktname:</Text>
+            <View style={[styles.inputContainer, { marginBottom: theme.spacing.m }]}>
+              <Text style={[styles.inputLabel, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s
+              }]}>Name</Text>
               <TextInput
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.border,
-                    color: theme.colors.text,
-                    fontFamily: theme.typography.fontFamily.regular,
-                  },
-                ]}
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
                 value={customName}
                 onChangeText={setCustomName}
                 placeholder="Produktname eingeben"
-                placeholderTextColor={theme.colors.textLight}
+                placeholderTextColor={theme.colors.placeholder}
               />
             </View>
 
-            {/* Brand display if available */}
-            {foodItem?.brand && (
-              <View style={styles.brandContainer}>
-                <Text style={styles.brandLabel}>Brand:</Text>
-                <Text style={styles.brandText}>{foodItem.brand}</Text>
-              </View>
-            )}
-
-            {/* Barcode display if available */}
-            {barcode && (
-              <View style={styles.barcodeContainer}>
-                <Text style={styles.barcodeLabel}>Barcode:</Text>
-                <Text style={styles.barcodeText}>{barcode}</Text>
-              </View>
-            )}
-
             {/* Nutrition information */}
             {foodItem?.nutrition && (
-              <>
-                <View style={styles.servingsContainer}>
-                  <Text style={[styles.servingsLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>Menge in Gramm:</Text>
-                  <TextInput
-                    style={[
-                      styles.textInput,
-                      { 
-                        backgroundColor: theme.colors.card,
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text,
-                        fontFamily: theme.typography.fontFamily.regular,
-                      },
-                    ]}
-                    value={servings}
-                    onChangeText={(text) => {
-                      // Validiere und formatiere die Eingabe für Nachkommastellen
-                      const filteredText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
-                      if (filteredText === '') {
-                        setServings('');
-                        return;
-                      }
-                      
-                      // Verarbeite die Zahl mit bis zu 2 Nachkommastellen
-                      const number = parseFloat(filteredText);
-                      if (!isNaN(number)) {
-                        // Limitiere auf 2 Nachkommastellen
-                        if (filteredText.includes('.')) {
-                          const parts = filteredText.split('.');
-                          if (parts[1].length > 2) {
-                            // Wenn mehr als 2 Nachkommastellen, kürze sie
-                            setServings(`${parts[0]}.${parts[1].substring(0, 2)}`);
-                            return;
-                          }
-                        }
-                        setServings(filteredText);
-                      }
-                    }}
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-
-                <NutritionalInfoCard
-                  nutrition={foodItem.nutrition}
-                  servingMultiplier={parseFloat(servings) || 1}
-                />
-                <Text style={[{
-                  textAlign: 'center',
-                  marginTop: 4,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  color: theme.colors.textLight,
-                  fontSize: 12
-                }]}>
-                  Sie können Nachkommastellen eingeben (z.B. 125.75g)
-                </Text>
-              </>
+              <NutritionalInfoCard
+              nutrition={foodItem.nutrition}
+              servingMultiplier={parseFloat(servings) / foodItem.nutrition.servingSizeGrams}
+            />
             )}
 
+            <Text style={[{
+              textAlign: 'center',
+              marginTop: 4,
+              fontFamily: theme.typography.fontFamily.regular,
+              color: theme.colors.textLight,
+              fontSize: 12
+            }]}>
+              Sie können Nachkommastellen eingeben (z.B. 125.75g)
+            </Text>
+
+            {/* Servings input */}
+            <View style={[styles.servingsContainer, { marginBottom: theme.spacing.m }]}>
+              <Text style={[styles.servingsLabel, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s
+              }]}>Menge (g)</Text>
+              <TextInput
+                style={[styles.servingsInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={servings}
+                onChangeText={setServings}
+                keyboardType="numeric"
+                placeholderTextColor={theme.colors.placeholder}
+              />
+            </View>
+
             {/* Meal type selection */}
-            <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>Mahlzeitkategorie</Text>
-              <View style={styles.mealTypeContainer}>
-                {Object.entries(MealType).map(([key, type]) => (
+            <View style={[styles.sectionContainer, { marginBottom: theme.spacing.l }]}>
+              <Text style={[styles.sectionTitle, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                fontSize: theme.typography.fontSize.m,
+                marginBottom: theme.spacing.m
+              }]}>Mahlzeitentyp:</Text>
+              <View style={[styles.mealTypeContainer, { gap: theme.spacing.s }]}>
+                {Object.keys(MealType).map((meal) => (
                   <TouchableOpacity
-                    key={type}
+                    key={meal}
+                    onPress={() => setSelectedMeal(MealType[meal as keyof typeof MealType])}
                     style={[
                       styles.mealButton,
-                      {
+                      { 
+                        borderRadius: theme.borderRadius.medium, 
+                        padding: theme.spacing.m,
+                        borderWidth: 1,
                         borderColor: theme.colors.border,
-                        borderRadius: theme.borderRadius.small,
+                        backgroundColor: theme.colors.surfaceVariant,
                       },
-                      selectedMeal === type && {
-                        backgroundColor: theme.colors.primary,
-                        borderColor: theme.colors.primary,
-                      },
+                      selectedMeal === MealType[meal as keyof typeof MealType]
+                        ? { 
+                            backgroundColor: theme.colors.primary,
+                            borderColor: theme.colors.primary
+                          }
+                        : null,
                     ]}
-                    onPress={() => setSelectedMeal(type)}
                   >
                     <Text
                       style={[
                         styles.mealButtonText,
-                        {
+                        { 
                           fontFamily: theme.typography.fontFamily.medium,
-                          color: theme.colors.text,
+                          fontSize: theme.typography.fontSize.m,
+                          color: theme.colors.text
                         },
-                        selectedMeal === type && {
-                          color: 'white',
-                          fontFamily: theme.typography.fontFamily.bold,
-                        },
+                        selectedMeal === MealType[meal as keyof typeof MealType]
+                          ? { color: 'white' }
+                          : null,
                       ]}
                     >
-                      {getMealTypeEmoji(key.toLowerCase())} {getMealTypeLabel(key.toLowerCase())}
+                      {getMealTypeEmoji(meal)} {getMealTypeLabel(meal.toLowerCase())}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -366,12 +301,21 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
             {/* Add to log button */}
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.medium }]}
+              style={[styles.addButton, { 
+                backgroundColor: theme.colors.primary,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
+                marginTop: theme.spacing.l,
+                marginBottom: theme.spacing.xl
+              }]}
               onPress={handleAddToLog}
             >
-              <Text style={[styles.addButtonText, { fontFamily: theme.typography.fontFamily.bold, color: 'white' }]}>
-                Zur Tagesübersicht hinzufügen
-              </Text>
+              <Text style={[styles.addButtonText, { 
+                color: 'white',
+                fontFamily: theme.typography.fontFamily.bold,
+                fontSize: theme.typography.fontSize.l,
+                textAlign: 'center'
+              }]}>Zum Tagebuch hinzufügen</Text>
             </TouchableOpacity>
           </>
         )}
@@ -407,7 +351,8 @@ interface Styles {
   stickyHeader: ViewStyle;
   headerText: TextStyle;
   scrollContent: ViewStyle;
-  productImage: ImageStyle;
+  card: ViewStyle;
+  cardTitle: TextStyle; // Hinzugefügt, fehlte in der Interface-Definition
   imagePlaceholder: ViewStyle;
   placeholderText: TextStyle;
   inputContainer: ViewStyle;
@@ -443,21 +388,15 @@ const styles = StyleSheet.create<Styles>({
   },
   stickyHeader: {
     width: '100%',
-    paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-    paddingBottom: 8, // 1 Grid-Punkt (8px)
     zIndex: 10,
   },
   headerText: {
-    fontSize: 20,
     textAlign: 'center',
-    marginVertical: 8, // 1 Grid-Punkt (8px)
   },
   scrollContent: {
     flex: 1,
   },
   card: {
-    padding: 16, // 2 Grid-Punkte (16px)
-    marginBottom: 16, // 2 Grid-Punkte (16px)
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -490,13 +429,6 @@ const styles = StyleSheet.create<Styles>({
   label: {
     fontSize: 16,
     marginBottom: 8, // 1 Grid-Punkt (8px)
-  },
-  productImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 16,
-    resizeMode: 'contain',
   },
   imagePlaceholder: {
     width: '100%',
@@ -588,35 +520,16 @@ const styles = StyleSheet.create<Styles>({
     justifyContent: 'space-between',
   },
   mealButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    marginHorizontal: 4,
-    marginBottom: 8,
+    minWidth: '47%',
     alignItems: 'center',
   },
-  selectedMealButton: {
-    backgroundColor: '#4CAF50',
-  },
+  selectedMealButton: {},
   mealButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
+    textAlign: 'center',
   },
-  selectedMealButtonText: {
-    color: 'white',
-  },
+  selectedMealButtonText: {},
   addButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 16,
     alignItems: 'center',
-    marginVertical: 16,
   },
-  addButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  addButtonText: {},
 });

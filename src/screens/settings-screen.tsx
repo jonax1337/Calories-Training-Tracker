@@ -17,12 +17,12 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     {
       type: 'light',
       label: 'Hell',
-      description: 'Klassisches helles Theme mit grünen Akzenten',
+      description: 'Klassisches helles Theme mit blauen Akzenten',
     },
     {
       type: 'dark',
       label: 'Dunkel',
-      description: 'Augenschonendes dunkles Theme für schwache Beleuchtung',
+      description: 'Augenschonendes dunkles Theme mit blauen Akzenten',
     },
     {
       type: 'pink',
@@ -65,9 +65,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             styles.themeColorAccent, 
             { 
               backgroundColor: option.type === 'light' 
-                ? '#4CAF50' 
+                ? '#3498DB' 
                 : option.type === 'dark' 
-                ? '#66BB6A' 
+                ? '#3498DB' 
                 : '#FF4081',
               borderRadius: option.type === 'pink' ? 10 : 4,
             }
