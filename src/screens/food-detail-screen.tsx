@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ViewStyle, TextStyle, ImageStyle } from 'react-native';
+import { StyleSheet, Text, View, Image, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ViewStyle, TextStyle, ImageStyle, Platform } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { FoodItem, MealType } from '../types';
@@ -26,6 +27,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
   const [servings, setServings] = useState('100.00'); // Default to 100g mit 2 Nachkommastellen
+  const [sliderValue, setSliderValue] = useState(100); // Slider-Wert (identisch mit servings, aber als number)
   
   // Set selected meal based on navigation parameter or default to Lunch
   const [selectedMeal, setSelectedMeal] = useState<MealType>(
@@ -190,6 +192,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               <Text style={[styles.inputLabel, { 
                 color: theme.colors.text,
                 fontFamily: theme.typography.fontFamily.medium,
+                marginTop: theme.spacing.m,
                 marginBottom: theme.spacing.s
               }]}>Name</Text>
               <TextInput
@@ -216,37 +219,109 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             />
             )}
 
-            <Text style={[{
-              textAlign: 'center',
-              marginTop: 4,
-              fontFamily: theme.typography.fontFamily.regular,
-              color: theme.colors.textLight,
-              fontSize: 12
-            }]}>
-              Sie können Nachkommastellen eingeben (z.B. 125.75g)
-            </Text>
-
             {/* Servings input */}
-            <View style={[styles.servingsContainer, { marginBottom: theme.spacing.m }]}>
-              <Text style={[styles.servingsLabel, { 
-                color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.medium,
-                marginBottom: theme.spacing.s
-              }]}>Menge (g)</Text>
-              <TextInput
-                style={[styles.servingsInput, { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                  borderRadius: theme.borderRadius.small,
+            {/* Mengeneingabe mit Slider */}
+            <View style={{
+              flexDirection: 'column', 
+              width: '100%',          
+              padding: theme.spacing.m,
+              marginBottom: theme.spacing.xl,
+              borderRadius: theme.borderRadius.medium,
+              backgroundColor: theme.colors.surfaceVariant
+            }}>
+              {/* Überschrift */}
+              <View style={{
+                width: '100%',        
+                marginBottom: theme.spacing.m
+              }}>
+                <Text style={{
                   color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.bold,
+                  fontSize: theme.typography.fontSize.l
+                }}>Menge (g)</Text>
+              </View>
+              
+              {/* Wertanzeige - Klickbare/Editierbare Grammzahl */}
+              <View style={{
+                width: '100%',        
+                alignItems: 'center',
+                marginBottom: theme.spacing.m
+              }}>
+                <TextInput
+                  style={{
+                    color: theme.colors.primary,
+                    fontFamily: theme.typography.fontFamily.bold,
+                    fontSize: theme.typography.fontSize.xxl,
+                    textAlign: 'center',
+                    minWidth: 120,
+                    padding: theme.spacing.s
+                  }}
+                  value={`${servings}`}
+                  onChangeText={(text) => {
+                    // Entferne das 'g' und andere nicht-numerische Zeichen (außer Punkt und Komma)
+                    const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
+                    setServings(validText);
+                    
+                    // Aktualisiere auch den Slider, falls der Wert im gültigen Bereich liegt
+                    const numValue = parseFloat(validText);
+                    if (!isNaN(numValue) && numValue >= 1 && numValue <= 500) {
+                      setSliderValue(Math.round(numValue));
+                    }
+                  }}
+                  keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
+                />
+              </View>
+              
+              {/* Slider */}
+              <View style={{
+                width: '100%',        
+                marginBottom: theme.spacing.m
+              }}>
+                <Slider
+                  style={{ width: '100%', height: 40 }}
+                  minimumValue={1}
+                  maximumValue={500}
+                  step={1}
+                  value={sliderValue}
+                  minimumTrackTintColor={theme.colors.primary}
+                  maximumTrackTintColor={theme.colors.border}
+                  thumbTintColor={theme.colors.primary}
+                  onValueChange={(value: number) => {
+                    const intValue = Math.round(value);
+                    setSliderValue(intValue);
+                    setServings(intValue.toString());
+                  }}
+                />
+              </View>
+                
+              {/* Slider-Beschriftungen */}
+              <View style={{
+                width: '100%',         
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                paddingHorizontal: theme.spacing.s,
+                marginBottom: theme.spacing.m
+              }}>
+                <Text style={{color: theme.colors.textLight}}>1</Text>
+                <Text style={{color: theme.colors.textLight}}>250</Text>
+                <Text style={{color: theme.colors.textLight}}>500</Text>
+              </View>
+              
+              {/* Zusätzlicher Hinweis unter der Skala */}
+              <View style={{
+                width: '100%',         
+                marginTop: theme.spacing.s,
+                marginBottom: theme.spacing.s
+              }}>
+                <Text style={{
+                  color: theme.colors.textLight,
                   fontFamily: theme.typography.fontFamily.regular,
-                  padding: theme.spacing.m
-                }]}
-                value={servings}
-                onChangeText={setServings}
-                keyboardType="numeric"
-                placeholderTextColor={theme.colors.placeholder}
-              />
+                  fontSize: theme.typography.fontSize.s,
+                  textAlign: 'center'
+                }}>
+                  Tippen Sie auf den Wert oben, um eine exakte Menge einzugeben
+                </Text>
+              </View>
             </View>
 
             {/* Meal type selection */}
@@ -315,7 +390,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 fontFamily: theme.typography.fontFamily.bold,
                 fontSize: theme.typography.fontSize.l,
                 textAlign: 'center'
-              }]}>Zum Tagebuch hinzufügen</Text>
+              }]}>Hinzufügen</Text>
             </TouchableOpacity>
           </>
         )}
@@ -367,6 +442,10 @@ interface Styles {
   servingsContainer: ViewStyle;
   servingsLabel: TextStyle;
   servingsInput: TextStyle;
+  servingHeader: ViewStyle;
+  servingsAmount: TextStyle;
+  slider: ViewStyle;
+  sliderLabels: ViewStyle;
   sectionContainer: ViewStyle;
   sectionTitle: TextStyle;
   mealTypeContainer: ViewStyle;
@@ -402,6 +481,23 @@ const styles = StyleSheet.create<Styles>({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+  },
+  servingHeader: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  servingsAmount: {
+    textAlign: 'center',
+  },
+  slider: {
+    height: 40,
+    alignSelf: 'stretch',
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    marginBottom: 8,
   },
   loadingContainer: {
     padding: 16, // 2 Grid-Punkte (16px)
