@@ -38,6 +38,10 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   const [birthDate, setBirthDate] = useState<Date>(new Date(new Date().getFullYear() - 25, 0, 1)); // Default 25 Jahre alt
   const [showDatePicker, setShowDatePicker] = useState(false);
   
+  // State für ausgeklapptes Ziel-Menü und ausgewähltes Ziel
+  const [goalsExpanded, setGoalsExpanded] = useState(false);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null); // null = empfohlenes Ziel
+  
   // Funktion zum Berechnen des Alters aus dem Geburtsdatum
   const calculateAge = (birthdate: Date): number => {
     const today = new Date();
@@ -96,6 +100,86 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
 
     loadProfile();
   }, []);
+  
+  // Berechne und setze Ernährungsempfehlungen wenn alle benötigten Daten vorhanden sind
+  useEffect(() => {
+    // Nur berechnen wenn alle nötigen Daten vorhanden sind
+    if (profile.weight && profile.height && profile.gender && profile.activityLevel) {
+      // BMI berechnen
+      const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+      
+      // Basis-Kalorienverbrauch mit Harris-Benedict-Formel berechnen
+      let bmr = 0;
+      if (profile.gender === 'male') {
+        // Männer: BMR = 66.5 + (13.75 * kg) + (5.003 * cm) - (6.75 * Alter)
+        bmr = 66.5 + (13.75 * profile.weight) + (5.003 * profile.height) - (6.75 * (profile.age || 30));
+      } else {
+        // Frauen: BMR = 655.1 + (9.563 * kg) + (1.850 * cm) - (4.676 * Alter)
+        bmr = 655.1 + (9.563 * profile.weight) + (1.850 * profile.height) - (4.676 * (profile.age || 30));
+      }
+      
+      // Multiplikator basierend auf Aktivitätsstufe
+      let activityMultiplier = 1.2; // Sedentär
+      switch(profile.activityLevel) {
+        case ActivityLevel.Sedentary: activityMultiplier = 1.2; break;
+        case ActivityLevel.LightlyActive: activityMultiplier = 1.375; break;
+        case ActivityLevel.ModeratelyActive: activityMultiplier = 1.55; break;
+        case ActivityLevel.VeryActive: activityMultiplier = 1.725; break;
+        case ActivityLevel.ExtremelyActive: activityMultiplier = 1.9; break;
+      }
+      
+      // Täglicher Kalorienbedarf zum Gewicht halten
+      const maintenanceCalories = Math.round(bmr * activityMultiplier);
+      
+      // Empfehlung basierend auf BMI und Aktivitätsstufe
+      let dailyCalories = 0;
+      let protein = 0;
+      let carbs = 0;
+      let fat = 0;
+      
+      if (bmi < 18.5) {
+        // Untergewicht - Zunehmen
+        dailyCalories = maintenanceCalories + 300;
+        protein = Math.round(profile.weight * 1.6); // Mehr Protein für Muskelaufbau
+        carbs = Math.round((dailyCalories * 0.50) / 4); // 50% Kohlenhydrate
+        fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
+      } else if (bmi < 25) {
+        // Normalgewicht - Halten
+        dailyCalories = maintenanceCalories;
+        protein = Math.round(profile.weight * 1.4);
+        carbs = Math.round((dailyCalories * 0.45) / 4); // 45% Kohlenhydrate
+        fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
+      } else if (bmi < 30) {
+        // Übergewicht - Leicht reduzieren
+        dailyCalories = maintenanceCalories - 300;
+        protein = Math.round(profile.weight * 1.8); // Mehr Protein zur Sättigung
+        carbs = Math.round((dailyCalories * 0.35) / 4); // 35% Kohlenhydrate
+        fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
+      } else {
+        // Adipositas - Stärker reduzieren
+        dailyCalories = maintenanceCalories - 500;
+        protein = Math.round(profile.weight * 2.0); // Deutlich mehr Protein
+        carbs = Math.round((dailyCalories * 0.30) / 4); // 30% Kohlenhydrate
+        fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
+      }
+      
+      // Aktualisiere das Profil (mache eine Kopie um sicherzustellen, dass wir kein direktes setState im Rendering haben)
+      const updatedGoals = {
+        ...profile.goals,
+        dailyCalories: dailyCalories,
+        dailyProtein: protein,
+        dailyCarbs: carbs,
+        dailyFat: fat,
+        dailyWater: 2500 // Standardempfehlung
+      };
+      
+      // Wir setzen das gesamte Profil auf einmal, um Rendering-Schleifen zu vermeiden
+      setProfile(prevProfile => ({
+        ...prevProfile,
+        goals: updatedGoals
+      }));
+    }
+  }, [profile.weight, profile.height, profile.gender, profile.activityLevel, profile.age]);
 
   // Handle text input changes
   const handleTextChange = (field: string, value: string) => {
@@ -967,123 +1051,449 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         )}
       </View>
       
-      {/* Nutritional Goals */}
-      <Text 
-        style={[
-          styles.sectionTitle, 
-          { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.bold,
-            fontSize: theme.typography.fontSize.xl,
-            marginTop: theme.spacing.l,
-            marginBottom: theme.spacing.m,
-          }
-        ]}
-      >
-        Tägliche Ziele
-      </Text>
-      
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: theme.colors.textLight,
+      {/* Personalisierte Empfehlungen basierend auf Profildaten */}
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.m,
+        marginTop: theme.spacing.l,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: profile.activityLevel ? theme.colors.primary + '15' : theme.colors.card,
+        borderWidth: 1,
+        borderColor: profile.activityLevel ? theme.colors.primary : theme.colors.border,
+      }]}>
+        
+      {profile.weight && profile.height && profile.gender && profile.activityLevel ? (
+          <>
+            {/* Aktuelles Ziel und aufklappbare Optionen */}
+            <View style={{
+              backgroundColor: theme.colors.card,
+              borderRadius: theme.borderRadius.small,
+              padding: theme.spacing.m,
+              marginBottom: theme.spacing.s,
+            }}>
+              {/* Ziel-Auswahl */}
+              {(() => {
+                // BMI berechnen
+                const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+                
+                // Das basierend auf BMI empfohlene Ziel
+                let recommendedGoal = '';
+                if (bmi < 18.5) {
+                  recommendedGoal = 'gain';
+                } else if (bmi < 25) {
+                  recommendedGoal = 'maintain';
+                } else if (bmi < 30) {
+                  recommendedGoal = 'lose_moderate';
+                } else {
+                  recommendedGoal = 'lose_fast';
+                }
+                
+                // Ziele definieren
+                const goals = [
+                  { id: 'gain', title: 'Gesunde Gewichtszunahme', description: 'Für Personen mit Untergewicht oder Muskelaufbau-Ziel.' },
+                  { id: 'maintain', title: 'Gewicht halten & Fitness verbessern', description: 'Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.' },
+                  { id: 'lose_moderate', title: 'Moderate Gewichtsreduktion', description: 'Für leichtes Übergewicht, langsamer aber nachhaltiger Gewichtsverlust.' },
+                  { id: 'lose_fast', title: 'Gesunde Gewichtsreduktion', description: 'Für stärkeres Übergewicht, schnellerer Gewichtsverlust.' },
+                  { id: 'custom', title: 'Benutzerdefiniert', description: 'Eigene Ziele manuell festlegen.' },
+                ];
+                
+                // Das empfohlene Ziel finden
+                const recommended = goals.find(goal => goal.id === recommendedGoal) || goals[0];
+                
+                // Das aktuell ausgewählte Ziel bestimmen (empfohlen oder benutzerdefiniert)
+                const activeGoal = selectedGoalId ? goals.find(goal => goal.id === selectedGoalId) || recommended : recommended;
+                
+                return (
+                  <>
+                    {/* Hervorgehobene aktive Zielauswahl */}
+                    <View style={{
+                      backgroundColor: theme.colors.primary + '15',
+                      borderRadius: theme.borderRadius.small,
+                      padding: theme.spacing.m,
+                      borderLeftWidth: 4,
+                      borderLeftColor: theme.colors.primary,
+                      marginBottom: theme.spacing.m
+                    }}>
+                      <Text style={{
+                        fontFamily: theme.typography.fontFamily.bold,
+                        fontSize: theme.typography.fontSize.m,
+                        color: theme.colors.text,
+                        marginBottom: theme.spacing.xs
+                      }}>
+                        {selectedGoalId === null ? 'Personalisierte Empfehlung: ' : ''}{activeGoal.title}
+                      </Text>
+                      <Text style={{
+                        fontFamily: theme.typography.fontFamily.regular,
+                        fontSize: theme.typography.fontSize.s,
+                        color: theme.colors.textLight,
+                        marginBottom: theme.spacing.s
+                      }}>
+                        {activeGoal.description}
+                      </Text>
+                      
+                      {/* Nährwerte für das ausgewählte Ziel */}
+                      <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: theme.spacing.xs,
+                        paddingTop: theme.spacing.s,
+                        borderTopWidth: 1,
+                        borderTopColor: theme.colors.border + '40'
+                      }}>
+                        <View style={{ alignItems: 'center' }}>
+                          <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Kalorien</Text>
+                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                            {profile.goals.dailyCalories}
+                          </Text>
+                        </View>
+                        
+                        <View style={{ alignItems: 'center' }}>
+                          <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Protein</Text>
+                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                            {profile.goals.dailyProtein}g
+                          </Text>
+                        </View>
+                        
+                        <View style={{ alignItems: 'center' }}>
+                          <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Kohlenhydrate</Text>
+                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                            {profile.goals.dailyCarbs}g
+                          </Text>
+                        </View>
+                        
+                        <View style={{ alignItems: 'center' }}>
+                          <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Fett</Text>
+                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                            {profile.goals.dailyFat}g
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      {/* Benutzerdefinierte Ziele bearbeiten, nur anzeigen wenn "Benutzerdefiniert" ausgewählt ist */}
+                      {selectedGoalId === 'custom' && (
+                        <View style={{ marginTop: theme.spacing.m }}>
+                          <Text style={{
+                            fontFamily: theme.typography.fontFamily.medium,
+                            fontSize: theme.typography.fontSize.s,
+                            color: theme.colors.text,
+                            marginBottom: theme.spacing.s
+                          }}>
+                            Tägliche Ziele anpassen:
+                          </Text>
+                          
+                          <View style={{ marginBottom: theme.spacing.m }}>
+                            <Text style={{
+                              fontFamily: theme.typography.fontFamily.regular,
+                              fontSize: theme.typography.fontSize.s,
+                              color: theme.colors.text,
+                              marginBottom: theme.spacing.xs
+                            }}>
+                              Kalorien: {profile.goals.dailyCalories}
+                            </Text>
+                            <Slider
+                              style={{ width: '100%', height: 40 }}
+                              minimumValue={1200}
+                              maximumValue={4000}
+                              step={50}
+                              value={profile.goals.dailyCalories}
+                              minimumTrackTintColor={theme.colors.primary}
+                              maximumTrackTintColor="#DCDCDC"
+                              thumbTintColor={theme.colors.primary}
+                              onValueChange={(value) => {
+                                setProfile(prevProfile => ({
+                                  ...prevProfile,
+                                  goals: {
+                                    ...prevProfile.goals,
+                                    dailyCalories: Math.round(value)
+                                  }
+                                }));
+                              }}
+                            />
+                          </View>
+                          
+                          <View style={{ marginBottom: theme.spacing.m }}>
+                            <Text style={{
+                              fontFamily: theme.typography.fontFamily.regular,
+                              fontSize: theme.typography.fontSize.s,
+                              color: theme.colors.text,
+                              marginBottom: theme.spacing.xs
+                            }}>
+                              Protein: {profile.goals.dailyProtein}g
+                            </Text>
+                            <Slider
+                              style={{ width: '100%', height: 40 }}
+                              minimumValue={30}
+                              maximumValue={250}
+                              step={5}
+                              value={profile.goals.dailyProtein}
+                              minimumTrackTintColor={theme.colors.primary}
+                              maximumTrackTintColor="#DCDCDC"
+                              thumbTintColor={theme.colors.primary}
+                              onValueChange={(value) => {
+                                setProfile(prevProfile => ({
+                                  ...prevProfile,
+                                  goals: {
+                                    ...prevProfile.goals,
+                                    dailyProtein: Math.round(value)
+                                  }
+                                }));
+                              }}
+                            />
+                          </View>
+                          
+                          <View style={{ marginBottom: theme.spacing.m }}>
+                            <Text style={{
+                              fontFamily: theme.typography.fontFamily.regular,
+                              fontSize: theme.typography.fontSize.s,
+                              color: theme.colors.text,
+                              marginBottom: theme.spacing.xs
+                            }}>
+                              Kohlenhydrate: {profile.goals.dailyCarbs}g
+                            </Text>
+                            <Slider
+                              style={{ width: '100%', height: 40 }}
+                              minimumValue={50}
+                              maximumValue={500}
+                              step={10}
+                              value={profile.goals.dailyCarbs}
+                              minimumTrackTintColor={theme.colors.primary}
+                              maximumTrackTintColor="#DCDCDC"
+                              thumbTintColor={theme.colors.primary}
+                              onValueChange={(value) => {
+                                setProfile(prevProfile => ({
+                                  ...prevProfile,
+                                  goals: {
+                                    ...prevProfile.goals,
+                                    dailyCarbs: Math.round(value)
+                                  }
+                                }));
+                              }}
+                            />
+                          </View>
+                          
+                          <View style={{ marginBottom: theme.spacing.s }}>
+                            <Text style={{
+                              fontFamily: theme.typography.fontFamily.regular,
+                              fontSize: theme.typography.fontSize.s,
+                              color: theme.colors.text,
+                              marginBottom: theme.spacing.xs
+                            }}>
+                              Fett: {profile.goals.dailyFat}g
+                            </Text>
+                            <Slider
+                              style={{ width: '100%', height: 40 }}
+                              minimumValue={20}
+                              maximumValue={200}
+                              step={5}
+                              value={profile.goals.dailyFat}
+                              minimumTrackTintColor={theme.colors.primary}
+                              maximumTrackTintColor="#DCDCDC"
+                              thumbTintColor={theme.colors.primary}
+                              onValueChange={(value) => {
+                                setProfile(prevProfile => ({
+                                  ...prevProfile,
+                                  goals: {
+                                    ...prevProfile.goals,
+                                    dailyFat: Math.round(value)
+                                  }
+                                }));
+                              }}
+                            />
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                    
+                    {/* Andere Ziele anzeigen/ausblenden */}
+                    <TouchableOpacity 
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingVertical: theme.spacing.s,
+                        backgroundColor: theme.colors.background,
+                        borderRadius: theme.borderRadius.small,
+                        borderWidth: 1,
+                        borderColor: theme.colors.border,
+                        paddingHorizontal: theme.spacing.s,
+                        marginBottom: goalsExpanded ? theme.spacing.s : theme.spacing.m
+                      }}
+                      onPress={() => setGoalsExpanded(!goalsExpanded)}
+                    >
+                      <Text style={{
+                        fontFamily: theme.typography.fontFamily.medium,
+                        fontSize: theme.typography.fontSize.s,
+                        color: theme.colors.text,
+                      }}>
+                        {goalsExpanded ? 'Andere Ziele ausblenden' : 'Alternative Ziele anzeigen'}
+                      </Text>
+                      <Text style={{
+                        color: theme.colors.primary,
+                        fontSize: theme.typography.fontSize.m,
+                      }}>
+                        {goalsExpanded ? '▲' : '▼'}
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    {/* Aufklappbare alternative Ziele */}
+                    {goalsExpanded && (
+                      <View style={{
+                        backgroundColor: theme.colors.card,
+                        borderRadius: theme.borderRadius.small,
+                        padding: theme.spacing.m,
+                        marginBottom: theme.spacing.m
+                      }}>
+                        <Text style={{
+                          fontFamily: theme.typography.fontFamily.medium,
+                          fontSize: theme.typography.fontSize.s,
+                          color: theme.colors.textLight,
+                          marginBottom: theme.spacing.s
+                        }}>
+                          Wähle ein alternatives Ziel:
+                        </Text>
+                        {goals.filter(goal => goal.id !== selectedGoalId).map(goal => (
+                          <TouchableOpacity 
+                            key={goal.id}
+                            style={{
+                              paddingVertical: theme.spacing.s,
+                              borderBottomWidth: 1,
+                              borderBottomColor: theme.colors.border + '40',
+                              marginBottom: theme.spacing.s,
+                            }}
+                            onPress={() => {
+                              // Je nach gewähltem Ziel andere Nährwerte setzen
+                              const weight = profile.weight || 70; // Standardgewicht wenn undefined
+                              const height = profile.height || 170; // Standardgröße wenn undefined
+                              const bmr = profile.gender === 'male' 
+                                ? 66.5 + (13.75 * weight) + (5.003 * height) - (6.75 * (profile.age || 30))
+                                : 655.1 + (9.563 * weight) + (1.850 * height) - (4.676 * (profile.age || 30));
+                              
+                              // Aktivitätsmultiplikator
+                              let activityMultiplier = 1.2;
+                              switch(profile.activityLevel) {
+                                case ActivityLevel.LightlyActive: activityMultiplier = 1.375; break;
+                                case ActivityLevel.ModeratelyActive: activityMultiplier = 1.55; break;
+                                case ActivityLevel.VeryActive: activityMultiplier = 1.725; break;
+                                case ActivityLevel.ExtremelyActive: activityMultiplier = 1.9; break;
+                              }
+                              
+                              const maintenanceCalories = Math.round(bmr * activityMultiplier);
+                              
+                              // Zieldaten basierend auf dem Ziel berechnen
+                              let dailyCalories = 0;
+                              let protein = 0;
+                              let carbs = 0;
+                              let fat = 0;
+                              
+                              switch(goal.id) {
+                                case 'gain': // Zunehmen
+                                  dailyCalories = maintenanceCalories + 300;
+                                  protein = Math.round(weight * 1.6);
+                                  carbs = Math.round((dailyCalories * 0.50) / 4);
+                                  fat = Math.round((dailyCalories * 0.25) / 9);
+                                  break;
+                                case 'maintain': // Halten
+                                  dailyCalories = maintenanceCalories;
+                                  protein = Math.round(weight * 1.4);
+                                  carbs = Math.round((dailyCalories * 0.45) / 4);
+                                  fat = Math.round((dailyCalories * 0.30) / 9);
+                                  break;
+                                case 'lose_moderate': // Moderat reduzieren
+                                  dailyCalories = maintenanceCalories - 300;
+                                  protein = Math.round(weight * 1.8);
+                                  carbs = Math.round((dailyCalories * 0.35) / 4);
+                                  fat = Math.round((dailyCalories * 0.30) / 9);
+                                  break;
+                                case 'lose_fast': // Stärker reduzieren
+                                  dailyCalories = maintenanceCalories - 500;
+                                  protein = Math.round(weight * 2.0);
+                                  carbs = Math.round((dailyCalories * 0.30) / 4);
+                                  fat = Math.round((dailyCalories * 0.25) / 9);
+                                  break;
+                              }
+                              
+                              // Profil aktualisieren
+                              const updatedGoals = {
+                                ...profile.goals,
+                                dailyCalories: dailyCalories,
+                                dailyProtein: protein,
+                                dailyCarbs: carbs,
+                                dailyFat: fat,
+                                dailyWater: 2500
+                              };
+                              
+                              setProfile(prevProfile => ({
+                                ...prevProfile,
+                                goals: updatedGoals
+                              }));
+                              
+                              // Das ausgewählte Ziel setzen
+                              setSelectedGoalId(goal.id);
+                              
+                              // Ziele einklappen nach Auswahl
+                              setGoalsExpanded(false);
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <Text style={{
+                                fontFamily: theme.typography.fontFamily.medium,
+                                fontSize: theme.typography.fontSize.m,
+                                color: theme.colors.text,
+                                flex: 1,
+                              }}>
+                                {goal.title}
+                              </Text>
+                              {goal.id === recommendedGoal && (
+                                <View style={{
+                                  backgroundColor: theme.colors.primary + '20',
+                                  paddingHorizontal: theme.spacing.xs,
+                                  paddingVertical: 2,
+                                  borderRadius: theme.borderRadius.small,
+                                  marginLeft: theme.spacing.xs
+                                }}>
+                                  <Text style={{
+                                    fontSize: theme.typography.fontSize.xs,
+                                    color: theme.colors.primary,
+                                    fontFamily: theme.typography.fontFamily.medium
+                                  }}>
+                                    Empfohlen
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+                            <Text style={{
+                              fontFamily: theme.typography.fontFamily.regular,
+                              fontSize: theme.typography.fontSize.s,
+                              color: theme.colors.textLight,
+                            }}>
+                              {goal.description}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                );
+              })()}
+            
+            </View>
+          </>
+        ) : (
+          <Text style={{
             fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.m,
-            marginBottom: theme.spacing.l,
-          }
-        ]}
-      >
-        Zielwerte für deine tägliche Ernährung
-      </Text>
-      
-      
-      {/* Calories */}
-      <View style={styles.inputContainer}>
-        <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-          Kalorien
-        </Text>
-        <TextInput
-          style={[styles.textInput, { 
-            fontFamily: theme.typography.fontFamily.regular, 
-            color: theme.colors.text,
-            backgroundColor: theme.colors.card,
-            borderColor: theme.colors.border,
-            borderRadius: theme.borderRadius.medium
-          }]}
-          value={profile.goals.dailyCalories?.toString() || ''}
-          onChangeText={(value) => handleTextChange('goals.dailyCalories', value)}
-          placeholder="Calories"
-          placeholderTextColor={theme.colors.placeholder}
-          keyboardType="numeric"
-        />
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textLight,
+            fontStyle: 'italic'
+          }}>
+            Fülle alle notwendigen Daten (Gewicht, Größe, Geschlecht, Aktivitätsniveau) aus, 
+            um eine auf dich zugeschnittene Empfehlung zu erhalten.
+          </Text>
+        )}
       </View>
-      
-      <View style={styles.rowInputs}>
-        {/* Protein */}
-        <View style={[styles.inputContainer, styles.thirdInput]}>
-          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Protein (g)
-          </Text>
-          <TextInput
-            style={[styles.textInput, { 
-              fontFamily: theme.typography.fontFamily.regular, 
-              color: theme.colors.text,
-              backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.medium
-            }]}
-            value={profile.goals.dailyProtein?.toString() || ''}
-            onChangeText={(value) => handleTextChange('goals.dailyProtein', value)}
-            placeholder="Protein"
-            placeholderTextColor={theme.colors.placeholder}
-            keyboardType="numeric"
-          />
-        </View>
-        
-        {/* Carbs */}
-        <View style={[styles.inputContainer, styles.thirdInput]}>
-          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Kohlenhydrate (g)
-          </Text>
-          <TextInput
-            style={[styles.textInput, { 
-              fontFamily: theme.typography.fontFamily.regular, 
-              color: theme.colors.text,
-              backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.medium
-            }]}
-            value={profile.goals.dailyCarbs?.toString() || ''}
-            onChangeText={(value) => handleTextChange('goals.dailyCarbs', value)}
-            placeholder="Carbs"
-            placeholderTextColor={theme.colors.placeholder}
-            keyboardType="numeric"
-          />
-        </View>
-        
-        {/* Fat */}
-        <View style={[styles.inputContainer, styles.thirdInput]}>
-          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Fett (g)
-          </Text>
-          <TextInput
-            style={[styles.textInput, { 
-              fontFamily: theme.typography.fontFamily.regular, 
-              color: theme.colors.text,
-              backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.medium
-            }]}
-            value={profile.goals.dailyFat?.toString() || ''}
-            onChangeText={(value) => handleTextChange('goals.dailyFat', value)}
-            placeholder="Fat"
-            placeholderTextColor={theme.colors.placeholder}
-            keyboardType="numeric"
-          />
-        </View>
-      </View>
-      
+
       {/* Water */}
       <View style={styles.inputContainer}>
         <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
