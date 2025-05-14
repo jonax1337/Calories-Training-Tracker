@@ -47,7 +47,8 @@ export enum MealType {
 export interface UserProfile {
   id: string;
   name: string;
-  age?: number;
+  birthDate?: string; // ISO-Format Datum (YYYY-MM-DD)
+  age?: number; // wird automatisch aus dem Geburtsdatum berechnet
   weight?: number; // in kg
   height?: number; // in cm
   gender?: 'male' | 'female' | 'divers';

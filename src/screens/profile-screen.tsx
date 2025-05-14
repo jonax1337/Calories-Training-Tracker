@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { ProfileTabScreenProps } from '../types/navigation-types';
 import { ActivityLevel, UserProfile } from '../types';
 import { getUserProfile, saveUserProfile } from '../services/storage-service';
@@ -28,6 +29,36 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   
   const [isLoading, setIsLoading] = useState(true);
   const [healthPermission, setHealthPermission] = useState(false);
+  
+  // State für Slider-Werte
+  const [weightSliderValue, setWeightSliderValue] = useState(70);
+  const [heightSliderValue, setHeightSliderValue] = useState(170);
+  
+  // State für Geburtsdatum
+  const [birthDate, setBirthDate] = useState<Date>(new Date(new Date().getFullYear() - 25, 0, 1)); // Default 25 Jahre alt
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  // Funktion zum Berechnen des Alters aus dem Geburtsdatum
+  const calculateAge = (birthdate: Date): number => {
+    const today = new Date();
+    let age = today.getFullYear() - birthdate.getFullYear();
+    const m = today.getMonth() - birthdate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+  
+  // Aktualisiert das Geburtsdatum im Profil
+  const updateBirthDate = (date: Date) => {
+    // ISO-Format: YYYY-MM-DD
+    const formattedDate = date.toISOString().split('T')[0];
+    const age = calculateAge(date);
+    
+    // Aktualisiere sowohl Geburtsdatum als auch Alter im Profil
+    handleTextChange('birthDate', formattedDate);
+    handleTextChange('age', age.toString());
+  };
 
   // Load user profile and check health permissions
   useEffect(() => {
@@ -37,6 +68,20 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         const savedProfile = await getUserProfile();
         if (savedProfile) {
           setProfile(savedProfile);
+          
+          // Initialisiere auch die Slider-Werte und das Geburtsdatum, wenn das Profil geladen wird
+          if (savedProfile.weight) setWeightSliderValue(savedProfile.weight);
+          if (savedProfile.height) setHeightSliderValue(savedProfile.height);
+          
+          // Wenn ein Geburtsdatum existiert, setze es; andernfalls berechne es aus dem Alter (wenn vorhanden)
+          if (savedProfile.birthDate) {
+            // Format YYYY-MM-DD
+            setBirthDate(new Date(savedProfile.birthDate));
+          } else if (savedProfile.age) {
+            // Setze ein ungefähres Geburtsdatum basierend auf dem vorhandenen Alter
+            const approximateBirthYear = new Date().getFullYear() - savedProfile.age;
+            setBirthDate(new Date(approximateBirthYear, 0, 1)); // 1. Januar des Geburtsjahres
+          }
         }
         
         // Check health permissions
@@ -65,11 +110,20 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         },
       }));
     } else {
-      // Handle top-level fields
-      setProfile(prev => ({
-        ...prev,
-        [field]: field === 'name' ? value : (value === '' ? '' : Number(value)),
-      }));
+      // Handle top-level fields - bestimmte Felder als String behandeln
+      if (field === 'name' || field === 'gender' || field === 'birthDate') {
+        // Diese Felder sollten als Strings behandelt werden
+        setProfile(prev => ({
+          ...prev,
+          [field]: value
+        }));
+      } else {
+        // Alle anderen Felder als Zahlen behandeln
+        setProfile(prev => ({
+          ...prev,
+          [field]: value === '' ? '' : Number(value),
+        }));
+      }
     }
   };
 
@@ -89,8 +143,20 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         Alert.alert('Error', 'Please enter your name');
         return;
       }
-
-      await saveUserProfile(profile);
+      
+      // Geburtsdatum aufbereiten und Alter berechnen
+      const formattedDate = birthDate.toISOString().split('T')[0]; // YYYY-MM-DD Format
+      const calculatedAge = calculateAge(birthDate);
+      
+      // Profil mit den aktuellen Werten aktualisieren
+      const updatedProfile = {
+        ...profile,
+        birthDate: formattedDate,
+        age: calculatedAge
+      };
+      
+      await saveUserProfile(updatedProfile);
+      
       Alert.alert('Success', 'Profile saved successfully', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -229,116 +295,101 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         />
       </View>
       
-      {/* Age */}
+      {/* Birth Date (statt Alter) */}
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 
         width: '100%',          
-        padding: theme.spacing.xs,
+        padding: theme.spacing.m,
         marginBottom: theme.spacing.s,
         borderRadius: theme.borderRadius.medium,
         backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: theme.colors.border
+        borderColor: theme.colors.border,
+        overflow: 'hidden'
       }]}>
-        <View style={{
-          width: '100%',        
-        }}>
-          <Text style={[styles.inputLabel, { 
-            fontFamily: theme.typography.fontFamily.medium, 
-            color: theme.colors.text,
-            marginTop: theme.spacing.xs,
-            marginLeft: theme.spacing.xs,
-            }]}>
-            Alter
-          </Text>
-        </View>
-        
-        {/* Age value display */}
         <View style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
           width: '100%',
-          paddingHorizontal: theme.spacing.xs,
-          marginBottom: theme.spacing.xs
+          marginBottom: theme.spacing.m
         }}>
+          <Text style={[styles.inputLabel, { 
+            fontFamily: theme.typography.fontFamily.medium, 
+            color: theme.colors.text,
+            fontSize: theme.typography.fontSize.m,
+          }]}>
+            Geburtsdatum
+          </Text>
           <Text style={{
             fontFamily: theme.typography.fontFamily.medium,
             fontSize: theme.typography.fontSize.s,
             color: theme.colors.textLight
           }}>
-            Jahre
+            {calculateAge(birthDate)} Jahre
           </Text>
-          <TextInput
-            style={{
-              color: theme.colors.primary,
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: theme.typography.fontSize.l,
-              textAlign: 'center',
-              minWidth: 50,
-              padding: theme.spacing.xs,
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.borderRadius.small,
-              borderWidth: 1,
-              borderColor: theme.colors.border
-            }}
-            value={profile.age?.toString() || '18'}
-            onChangeText={(text) => {
-              const validText = text.replace(/[^0-9]/g, '');
-              const numValue = parseInt(validText);
-              if (!isNaN(numValue) && numValue >= 12 && numValue <= 120) {
-                handleTextChange('age', validText);
-              }
-            }}
-            keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
-          />
         </View>
-        
-        {/* Age slider */}
-        <View style={{
-          width: '100%',        
-          marginBottom: theme.spacing.xs,
-          paddingHorizontal: theme.spacing.xs
-        }}>
-          <Slider
-            style={{ width: '100%', height: 30 }}
-            minimumValue={12}
-            maximumValue={120}
-            step={1}
-            value={profile.age || 18}
-            minimumTrackTintColor={theme.colors.primary}
-            maximumTrackTintColor={theme.colors.border}
-            thumbTintColor={theme.colors.primary}
-            onValueChange={(value: number) => {
-              const intValue = Math.round(value);
-              handleTextChange('age', intValue.toString());
-            }}
-          />
+          
+          {/* Plattformabhängige Datumseingabe */}
+          {Platform.OS === 'web' ? (
+            // Für Web: Nativer Datums-Input wie in Ihrem Beispiel
+            <View style={{
+              width: '100%',
+            }}>
+              <input
+                type="date"
+                value={birthDate.toISOString().split('T')[0]}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const newDate = new Date(e.target.value);
+                    setBirthDate(newDate);
+                    updateBirthDate(newDate);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '4px',
+                  backgroundColor: theme.colors.background,
+                  fontSize: '16px',
+                  padding: '10px',
+                  color: theme.colors.text,
+                  outline: 'none'
+                }}
+                max={new Date().toISOString().split('T')[0]}
+                min="1900-01-01"
+              />
+            </View>
+          ) : (
+            // Direkt eingebetteter DatePicker für iOS/Android
+            <View style={{
+              width: '100%',
+            }}>
+              {/* Auf allen Plattformen den Spinner-Modus verwenden für scrollbares Auswahlen der einzelnen Werte */}
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={birthDate}
+                mode="date"
+                display="spinner" 
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) {
+                    setBirthDate(selectedDate);
+                    updateBirthDate(selectedDate);
+                  }
+                }}
+                maximumDate={new Date()}
+                minimumDate={new Date(1900, 0, 1)}
+                themeVariant={theme.dark ? 'dark' : 'light'}
+                style={{
+                  width: '100%', 
+                  backgroundColor: 'transparent',
+                  height: 100,
+                  alignSelf: 'center'
+                }}
+              />
+            </View>
+          )}
         </View>
-        
-        {/* Slider labels */}
-        <View style={{
-          width: '100%',         
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          paddingHorizontal: theme.spacing.xs,
-          marginBottom: theme.spacing.xs
-        }}>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>12</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>65</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>120</Text>
-        </View>
-      </View>
-      
       {/* Weight */}
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 
@@ -386,23 +437,48 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               fontFamily: theme.typography.fontFamily.bold,
               fontSize: theme.typography.fontSize.l,
               textAlign: 'center',
-              minWidth: 50,
+              minWidth: 80,
               padding: theme.spacing.xs,
               backgroundColor: theme.colors.card,
               borderRadius: theme.borderRadius.small,
               borderWidth: 1,
-              borderColor: theme.colors.border
+              borderColor: theme.colors.primary,
+              elevation: 2,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1
             }}
-            value={profile.weight?.toString() || '70'}
+            value={profile.weight?.toString() || ''}
+            placeholder="70.00"
             onChangeText={(text) => {
-              // Remove non-numeric characters except for decimal point, replace comma with dot
-              const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
-              const numValue = parseFloat(validText);
-              if (!isNaN(numValue) && numValue >= 30 && numValue <= 200) {
-                handleTextChange('weight', validText);
+              // Erlaube grundsätzlich alle Eingaben und bereinige später
+              // Ersetze Komma durch Punkt für konsistente Dezimalzahlen
+              let processedText = text.replace(',', '.');
+              
+              // Wir aktualisieren erst das Textfeld direkt, um keine Blockierung zu haben
+              handleTextChange('weight', processedText);
+              
+              // Dann versuchen wir, den Wert als Zahl zu interpretieren
+              const numValue = parseFloat(processedText);
+              
+              // Wenn es eine gültige Zahl ist, aktualisiere den Slider
+              // Auch wenn es außerhalb des Bereichs ist
+              if (!isNaN(numValue)) {
+                if (numValue > 200) {
+                  // Bei höheren Werten, setze Slider auf Maximum
+                  setWeightSliderValue(200);
+                } else if (numValue < 30) {
+                  // Bei niedrigeren Werten, setze Slider auf Minimum
+                  setWeightSliderValue(30);
+                } else {
+                  // Bei Werten im gültigen Bereich, setze exakten Wert
+                  setWeightSliderValue(numValue);
+                }
               }
             }}
             keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
+            selectTextOnFocus={true}
           />
         </View>
         
@@ -416,13 +492,18 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             style={{ width: '100%', height: 30 }}
             minimumValue={30}
             maximumValue={200}
-            step={0.5}
-            value={profile.weight || 70}
+            step={0.1}
+            value={Math.min(Math.max(weightSliderValue, 30), 200)}
             minimumTrackTintColor={theme.colors.primary}
             maximumTrackTintColor={theme.colors.border}
             thumbTintColor={theme.colors.primary}
             onValueChange={(value: number) => {
-              handleTextChange('weight', value.toString());
+              // Runde auf 2 Nachkommastellen für bessere Anzeige
+              const roundedValue = Math.round(value * 100) / 100;
+              setWeightSliderValue(roundedValue);
+              
+              // Wir formatieren mit 2 Nachkommastellen für bessere Lesbarkeit
+              handleTextChange('weight', roundedValue.toFixed(2));
             }}
           />
         </View>
@@ -447,6 +528,167 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             color: theme.colors.textLight,
             fontSize: theme.typography.fontSize.xs
           }}>200</Text>
+        </View>
+      </View>
+      
+      {/* BMI Indikator */}
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.m,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: theme.colors.card,
+        borderWidth: 1,
+        borderColor: theme.colors.border
+      }]}>
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          marginBottom: theme.spacing.s
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.medium, 
+            color: theme.colors.text,
+            fontSize: theme.typography.fontSize.m,
+          }}>
+            Body-Mass-Index (BMI)
+          </Text>
+          
+          {/* BMI-Wert anzeigen, wenn sowohl Gewicht als auch Gru00f6u00dfe vorhanden sind */}
+          {profile.weight && profile.height ? (
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.m,
+              color: theme.colors.primary
+            }}>
+              {/* BMI = Gewicht (kg) / (Gru00f6u00dfe (m))u00b2 */}
+              {(profile.weight / Math.pow(profile.height / 100, 2)).toFixed(1)}
+            </Text>
+          ) : (
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.medium,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.textLight,
+              fontStyle: 'italic'
+            }}>
+              Gewicht & Größe eingeben
+            </Text>
+          )}
+        </View>
+        
+        {/* BMI Farbskala */}
+        <View style={{
+          width: '100%',
+          height: 24,
+          flexDirection: 'row',
+          borderRadius: theme.borderRadius.small,
+          overflow: 'hidden',
+          marginVertical: theme.spacing.s
+        }}>
+          {/* Untergewicht - Blau */}
+          <View style={{
+            flex: 1.85, // <18.5
+            backgroundColor: '#64B5F6', // Helles Blau
+          }} />
+          
+          {/* Normalgewicht - Gru00fcn */}
+          <View style={{
+            flex: 6.5, // 18.5-25
+            backgroundColor: '#81C784', // Helles Gru00fcn
+          }} />
+          
+          {/* u00dcbergewicht - Gelb/Orange */}
+          <View style={{
+            flex: 5, // 25-30
+            backgroundColor: '#FFD54F', // Helles Gelb/Orange
+          }} />
+          
+          {/* Adipositas - Rot */}
+          <View style={{
+            flex: 10, // >30
+            backgroundColor: '#E57373', // Helles Rot
+          }} />
+        </View>
+        
+        {/* BMI-Marker */}
+        {profile.weight && profile.height && (
+          <View style={{
+            position: 'absolute',
+            bottom: theme.spacing.m + 12, // Mitte des Markers auf der Skala
+            left: (() => {
+              // BMI berechnen
+              const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+              
+              // Position in Prozent umrechnen (basierend auf einem BMI-Bereich von 15-40)
+              const minBmi = 15;
+              const maxBmi = 40;
+              const totalWidth = 100; // Prozentuale Breite
+              
+              // Begrenze den BMI auf den darstellbaren Bereich
+              const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmi));
+              
+              // Prozentuale Position im Verhältnis zur Gesamtbreite
+              const percentPosition = ((clampedBmi - minBmi) / (maxBmi - minBmi)) * totalWidth;
+              
+              return `${percentPosition}%`;
+            })(),
+            width: 3,
+            height: 30,
+            backgroundColor: theme.colors.primary,
+            borderRadius: 4,
+            transform: [{ translateX: -1.5 }], // Zentriere den Marker
+          }} />
+        )}
+        
+        {/* BMI Kategorien-Labels */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          width: '100%',
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.regular,
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.textLight,
+            flex: 1.85,
+            textAlign: 'left'
+          }}>
+            Untergewicht
+          </Text>
+          
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.regular,
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.textLight,
+            flex: 6.5,
+            textAlign: 'center'
+          }}>
+            Normalgewicht
+          </Text>
+          
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.regular,
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.textLight,
+            flex: 5,
+            textAlign: 'center'
+          }}>
+            Übergewicht
+          </Text>
+          
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.regular,
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.textLight,
+            flex: 10,
+            textAlign: 'right'
+          }}>
+            Adipositas
+          </Text>
         </View>
       </View>
       
@@ -497,22 +739,48 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               fontFamily: theme.typography.fontFamily.bold,
               fontSize: theme.typography.fontSize.l,
               textAlign: 'center',
-              minWidth: 50,
+              minWidth: 80,
               padding: theme.spacing.xs,
               backgroundColor: theme.colors.card,
               borderRadius: theme.borderRadius.small,
               borderWidth: 1,
-              borderColor: theme.colors.border
+              borderColor: theme.colors.primary,
+              elevation: 2,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1
             }}
-            value={profile.height?.toString() || '170'}
+            value={profile.height?.toString() || ''}
+            placeholder="170"
             onChangeText={(text) => {
-              const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
-              const numValue = parseFloat(validText);
-              if (!isNaN(numValue) && numValue >= 120 && numValue <= 240) {
-                handleTextChange('height', validText);
+              // Erlaube grundsätzlich alle Eingaben und bereinige später
+              // Ersetze Komma durch Punkt für konsistente Dezimalzahlen
+              let processedText = text.replace(',', '.');
+              
+              // Wir aktualisieren erst das Textfeld direkt, um keine Blockierung zu haben
+              handleTextChange('height', processedText);
+              
+              // Dann versuchen wir, den Wert als Zahl zu interpretieren
+              const numValue = parseFloat(processedText);
+              
+              // Wenn es eine gültige Zahl ist, aktualisiere den Slider
+              // Auch wenn es außerhalb des Bereichs ist
+              if (!isNaN(numValue)) {
+                if (numValue > 240) {
+                  // Bei höheren Werten, setze Slider auf Maximum
+                  setHeightSliderValue(240);
+                } else if (numValue < 120) {
+                  // Bei niedrigeren Werten, setze Slider auf Minimum
+                  setHeightSliderValue(120);
+                } else {
+                  // Bei Werten im gültigen Bereich, setze exakten Wert
+                  setHeightSliderValue(numValue);
+                }
               }
             }}
             keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
+            selectTextOnFocus={true}
           />
         </View>
         
@@ -527,12 +795,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             minimumValue={120}
             maximumValue={240}
             step={1}
-            value={profile.height || 170}
+            value={Math.min(Math.max(heightSliderValue, 120), 240)}
             minimumTrackTintColor={theme.colors.primary}
             maximumTrackTintColor={theme.colors.border}
             thumbTintColor={theme.colors.primary}
             onValueChange={(value: number) => {
               const intValue = Math.round(value);
+              setHeightSliderValue(intValue);
               handleTextChange('height', intValue.toString());
             }}
           />
@@ -586,34 +855,70 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           </Text>
         </View>
         
-        {/* Gender dropdown */}
-        <View style={{
-          width: '100%',
-          borderColor: theme.colors.border,
-          borderWidth: 1,
-          borderRadius: theme.borderRadius.small,
-          marginTop: theme.spacing.xs,
-          marginBottom: theme.spacing.xs,
-          backgroundColor: theme.colors.card,
-          overflow: 'hidden',
-          height: 40 // Feste Höhe für bessere Konsistenz
-        }}>
-          <Picker
-            selectedValue={profile.gender || 'male'}
-            onValueChange={(itemValue) => handleTextChange('gender', itemValue)}
-            style={{
-              width: '100%',
-              color: theme.colors.text,
-              backgroundColor: 'transparent',
-              height: 38
-            }}
-            dropdownIconColor={theme.colors.primary}
-          >
-            <Picker.Item label="Männlich" value="male" />
-            <Picker.Item label="Weiblich" value="female" />
-            <Picker.Item label="Divers" value="divers" />
-          </Picker>
-        </View>
+        {/* Plattformabhängiger Gender-Picker */}
+        {Platform.OS === 'web' ? (
+          // Web-Dropdown mit nativer Selektbox
+          <View style={{
+            width: '100%',
+            marginTop: theme.spacing.xs,
+            marginBottom: theme.spacing.xs
+          }}>
+            <select
+              value={profile.gender || 'male'}
+              onChange={(e) => handleTextChange('gender', e.target.value)}
+              style={{
+                width: '100%',
+                fontSize: '16px',
+                padding: '10px',
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '4px',
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text,
+                outline: 'none'
+              }}
+            >
+              <option value="male">Männlich</option>
+              <option value="female">Weiblich</option>
+              <option value="divers">Divers</option>
+            </select>
+          </View>
+        ) : (
+          // iOS/Android Spinner-Picker - direkt sichtbar und nahtlos in die Card integriert
+          <View style={{
+            width: '100%',
+            marginVertical: theme.spacing.xs,
+            // Kein Border und gleicher Hintergrund wie Parent-Card
+            backgroundColor: 'transparent',
+            // Keine Border mehr
+            height: 120, // Höher für bessere Sichtbarkeit des Spinners
+            overflow: 'hidden'
+          }}>
+            <Picker
+              selectedValue={profile.gender || 'male'}
+              onValueChange={(itemValue) => {
+                // itemValue kann manchmal kein String sein, also explizit konvertieren
+                const genderValue = typeof itemValue === 'string' ? itemValue : String(itemValue);
+                handleTextChange('gender', genderValue);
+              }}
+              style={{
+                width: '100%',
+                color: theme.colors.text,
+              }}
+              itemStyle={{
+                fontSize: 16,
+                height: 120,
+                color: theme.colors.text,
+                backgroundColor: 'transparent'
+              }}
+              // Spinner-Modus für cooleren Look
+              mode="dropdown"
+            >
+              <Picker.Item label="Männlich" value="male" />
+              <Picker.Item label="Weiblich" value="female" />
+              <Picker.Item label="Divers" value="divers" />
+            </Picker>
+          </View>
+        )}
         
         {/* Description */}
         <View style={{
