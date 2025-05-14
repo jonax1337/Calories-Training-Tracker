@@ -224,7 +224,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           }]}
           value={profile.name}
           onChangeText={(value) => handleTextChange('name', value)}
-          placeholder="Enter your name"
+          placeholder="Name"
           placeholderTextColor={theme.colors.placeholder}
         />
       </View>
@@ -234,7 +234,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         flexDirection: 'column', 
         width: '100%',          
         padding: theme.spacing.xs,
-        marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
         borderRadius: theme.borderRadius.medium,
         backgroundColor: theme.colors.card,
@@ -243,7 +242,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       }]}>
         <View style={{
           width: '100%',        
-          marginBottom: theme.spacing.s
         }}>
           <Text style={[styles.inputLabel, { 
             fontFamily: theme.typography.fontFamily.medium, 
@@ -348,17 +346,21 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         padding: theme.spacing.xs,
         marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.small,
-        backgroundColor: theme.colors.surfaceVariant,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
         borderColor: theme.colors.border
       }]}>
         <View style={{
           width: '100%',        
-          marginBottom: theme.spacing.xs
         }}>
-          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Gewicht (kg)
+          <Text style={[styles.inputLabel, { 
+            fontFamily: theme.typography.fontFamily.medium, 
+            color: theme.colors.text,
+            marginTop: theme.spacing.xs,
+            marginLeft: theme.spacing.xs
+          }]}>
+            Gewicht
           </Text>
         </View>
         
@@ -455,17 +457,21 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         padding: theme.spacing.xs,
         marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.small,
-        backgroundColor: theme.colors.surfaceVariant,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
         borderColor: theme.colors.border
       }]}>
         <View style={{
           width: '100%',        
-          marginBottom: theme.spacing.xs
         }}>
-          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-            Größe (cm)
+          <Text style={[styles.inputLabel, { 
+            fontFamily: theme.typography.fontFamily.medium, 
+            color: theme.colors.text,
+            marginTop: theme.spacing.xs,
+            marginLeft: theme.spacing.xs
+          }]}>
+            Größe
           </Text>
         </View>
         
@@ -562,16 +568,20 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         padding: theme.spacing.xs,
         marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.small,
-        backgroundColor: theme.colors.surfaceVariant,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: theme.colors.card,
         borderWidth: 1,
         borderColor: theme.colors.border
       }]}>
         <View style={{
           width: '100%',        
-          marginBottom: theme.spacing.xs
         }}>
-          <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
+          <Text style={[styles.inputLabel, { 
+            fontFamily: theme.typography.fontFamily.medium, 
+            color: theme.colors.text,
+            marginTop: theme.spacing.xs,
+            marginLeft: theme.spacing.xs
+          }]}>
             Geschlecht
           </Text>
         </View>
