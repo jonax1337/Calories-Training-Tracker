@@ -927,116 +927,132 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           )}
         </View>
         
-        {/* BMI Farbskala mit Verlauf */}
+        {/* BMI-Container mit relativem Positionierungssystem */}
         <View style={{
           width: '100%',
-          height: 20,
-          borderRadius: theme.borderRadius.small,
-          overflow: 'hidden',
-          marginVertical: theme.spacing.s
+          height: 40, // Mehr Platz für den Indikator und die Skala
+          marginVertical: theme.spacing.m,
+          position: 'relative' // Wichtig für absolute Positionierung des Markers
         }}>
-          {/* Linearer Farbverlauf aus CSS für Web */}
-          {Platform.OS === 'web' ? (
-            <div 
-              style={{
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(to right, #2196F3 0%, #42A5F5 15%, #4CAF50 20%, #8BC34A 39%, #FFEB3B 40%, #FFC107 50%, #FF9800 70%, #F44336 100%)',
-                borderRadius: theme.borderRadius.small + 'px',
-              }}
-            />
-          ) : (
-            // Für react-native: Vereinfachter Verlauf mit mehreren Blöcken
-            <View style={{flexDirection: 'row', height: '100%', width: '100%'}}>
-              {/* Mehrere kleine Blöcke erzeugen einen Verlaufseffekt - von Untergewicht bis Adipositas */}
-              {/* Blau - Untergewicht (<18,5) */}
-              <View style={{flex: 1.5, backgroundColor: '#2196F3'}} />
-              <View style={{flex: 1.5, backgroundColor: '#42A5F5'}} />
-              {/* Grün - Normalgewicht (18,5-25) */}
-              <View style={{flex: 2, backgroundColor: '#4CAF50'}} />
-              <View style={{flex: 1.9, backgroundColor: '#8BC34A'}} />
-              {/* Gelb/Orange - Übergewicht (25-30) */}
-              <View style={{flex: 1, backgroundColor: '#FFEB3B'}} />
-              <View style={{flex: 1, backgroundColor: '#FFC107'}} />
-              <View style={{flex: 1, backgroundColor: '#FF9800'}} />
-              {/* Rot - Adipositas (>30) */}
-              <View style={{flex: 1, backgroundColor: '#FF5722'}} />
-              <View style={{flex: 1, backgroundColor: '#F44336'}} />
-            </View>
-          )}
-        </View>
-        
-        {/* BMI-Kategorie-Marker */}
-        <View style={{
-          width: '100%',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          position: 'relative',
-          height: 16,
-          marginTop: -8 // Oben auf der Skala positionieren
-        }}>
-          {/* Markierungen der wichtigen BMI-Grenzen */}
+          {/* BMI Farbskala mit Verlauf */}
           <View style={{
             position: 'absolute',
-            left: '14%', // Ungefähr BMI 18.5 (Untergewicht/Normal)
-            height: 6,
-            width: 2,
-            backgroundColor: 'white',
-            top: 0
-          }} />
-          
-          <View style={{
-            position: 'absolute',
-            left: '40%', // Ungefähr BMI 25 (Normal/Übergewicht)
-            height: 6,
-            width: 2,
-            backgroundColor: 'white',
-            top: 0
-          }} />
-          
-          <View style={{
-            position: 'absolute',
-            left: '60%', // Ungefähr BMI 30 (Übergewicht/Adipositas)
-            height: 6,
-            width: 2,
-            backgroundColor: 'white',
-            top: 0
-          }} />
-        </View>
-        
+            top: 10, // Marker hat 28px Höhe, positioniere die Skala entsprechend
+            left: 0,
+            right: 0,
+            height: 20,
+            borderRadius: theme.borderRadius.small,
+            overflow: 'hidden'
+          }}>
+            {/* Linearer Farbverlauf aus CSS für Web */}
+            {Platform.OS === 'web' ? (
+              <div 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(to right, #2196F3 0%, #42A5F5 14%, #4CAF50 15%, #8BC34A 39%, #FFEB3B 40%, #FFC107 50%, #FF9800 70%, #F44336 100%)',
+                  borderRadius: theme.borderRadius.small + 'px',
+                }}
+              />
+            ) : (
+              // Für react-native: Vereinfachter Verlauf mit mehreren Blöcken
+              <View style={{flexDirection: 'row', height: '100%', width: '100%'}}>
+                {/* Mehrere kleine Blöcke erzeugen einen Verlaufseffekt - von Untergewicht bis Adipositas */}
+                {/* Blau - Untergewicht (<18,5) */}
+                <View style={{flex: 1.5, backgroundColor: '#2196F3'}} />
+                <View style={{flex: 1, backgroundColor: '#42A5F5'}} />
+                {/* Grün - Normalgewicht (18,5-24,9) */}
+                <View style={{flex: 1.4, backgroundColor: '#4CAF50'}} />
+                <View style={{flex: 1.5, backgroundColor: '#8BC34A'}} />
+                {/* Gelb - Grenzbereich (exakt bei 25) */}
+                <View style={{flex: 0.2, backgroundColor: '#E4E436'}} />
+                {/* Orange/Gelb - Übergewicht (25,1-30) */}
+                <View style={{flex: 1.3, backgroundColor: '#FFEB3B'}} />
+                <View style={{flex: 1.3, backgroundColor: '#FFC107'}} />
+                <View style={{flex: 1.4, backgroundColor: '#FF9800'}} />
+                {/* Rot - Adipositas (>30) */}
+                <View style={{flex: 1, backgroundColor: '#FF5722'}} />
+                <View style={{flex: 1, backgroundColor: '#F44336'}} />
+              </View>
+            )}
+          </View>
 
-        
-        {/* BMI-Marker */}
-        {profile.weight && profile.height && (
+          {/* BMI-Kategorie-Marker */}
           <View style={{
             position: 'absolute',
-            bottom: theme.spacing.m + 10, // Mitte des Markers auf der Skala
-            left: (() => {
-              // BMI berechnen
-              const bmi = profile.weight / Math.pow(profile.height / 100, 2);
-              
-              // Position in Prozent umrechnen (basierend auf einem BMI-Bereich von 15-40)
-              const minBmi = 15;
-              const maxBmi = 40;
-              const totalWidth = 100; // Prozentuale Breite
-              
-              // Begrenze den BMI auf den darstellbaren Bereich
-              const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmi));
-              
-              // Prozentuale Position im Verhältnis zur Gesamtbreite
-              const percentPosition = ((clampedBmi - minBmi) / (maxBmi - minBmi)) * totalWidth;
-              
-              return `${percentPosition}%`;
-            })(),
-            width: 4,
-            height: 28,
-            backgroundColor: 'white',
-            borderWidth: 1,
-            borderColor: theme.colors.text,
-            borderRadius: 2,
-            transform: [{ translateX: -2 }], // Zentriere den Marker
-          }} />
-        )}
+            top: 10, // Align mit der Skala
+            left: 0,
+            right: 0,
+            height: 6
+          }}>
+            {/* Markierungen der wichtigen BMI-Grenzen */}
+            <View style={{
+              position: 'absolute',
+              left: '14%', // Ungefähr BMI 18.5 (Untergewicht/Normal)
+              height: 6,
+              width: 2,
+              backgroundColor: 'white',
+              top: 0
+            }} />
+            
+            <View style={{
+              position: 'absolute',
+              left: '40%', // Ungefähr BMI 25 (Normal/Übergewicht)
+              height: 6,
+              width: 2,
+              backgroundColor: 'white',
+              top: 0
+            }} />
+            
+            <View style={{
+              position: 'absolute',
+              left: '60%', // Ungefähr BMI 30 (Übergewicht/Adipositas)
+              height: 6,
+              width: 2,
+              backgroundColor: 'white',
+              top: 0
+            }} />
+          </View>
+        
+          {/* BMI-Marker - garantiert sichtbar innerhalb der Skala */}
+          {profile.weight && profile.height && (() => {
+            // BMI berechnen
+            const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+            
+            // BMI-Bereich definieren
+            const minBmi = 15;
+            const maxBmi = 40;
+            
+            // Begrenze den BMI auf den darstellbaren Bereich
+            const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmi));
+            
+            // Sicherheitsrand hinzufügen, sodass der Marker immer innerhalb der Skala erscheint
+            // 0% = links, 100% = rechts
+            const safeMinPos = 0.5; // 0.5% vom linken Rand
+            const safeMaxPos = 99.5; // 0.5% vom rechten Rand
+            const usableRange = safeMaxPos - safeMinPos;
+            
+            // Prozentuale Position berechnen mit Sicherheitsrand
+            const percentPosition = safeMinPos + ((clampedBmi - minBmi) / (maxBmi - minBmi)) * usableRange;
+            
+            return (
+              <View 
+                style={{
+                  position: 'absolute',
+                  top: 0, // Oben im Container
+                  left: `${percentPosition}%`,
+                  width: 4,
+                  height: 28, // Höher als die Skala für bessere Sichtbarkeit
+                  backgroundColor: 'white',
+                  borderWidth: 1,
+                  borderColor: theme.colors.text,
+                  borderRadius: 2,
+                  transform: [{ translateX: -2 }], // Zentrieren
+                }}
+              />
+            );
+          })()}
+        </View>
       </View>
       
       {/* Gender Selection */}
