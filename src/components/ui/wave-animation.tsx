@@ -87,31 +87,34 @@ const WaveAnimation = ({
         {/* Hintergrundfarbe für das Wasser */}
         <View style={[styles.waterBackground, { backgroundColor: `${color}40` }]} />
 
-        {/* Erste animierte Welle */}
-        <Animated.View style={[styles.waveContainer, wave1Style]}>
-          <Svg height="50" width={windowWidth * 2} style={styles.wave}>
-            <Path
-              d={`M0,10 
-                 C${windowWidth/4},30 ${windowWidth/2},0 ${windowWidth},10 
-                 C${windowWidth + windowWidth/4},25 ${windowWidth + windowWidth/2},5 ${windowWidth*2},10 
-                 L${windowWidth*2},50 L0,50 Z`}
-              fill={`${color}90`}
-            />
-          </Svg>
-        </Animated.View>
-        
-        {/* Zweite animierte Welle (mit versetzter Animation) */}
-        <Animated.View style={[styles.waveContainer, wave2Style]}>
-          <Svg height="50" width={windowWidth * 2} style={styles.wave}>
-            <Path
-              d={`M0,15 
-                 C${windowWidth/4},0 ${windowWidth/2},20 ${windowWidth},15 
-                 C${windowWidth + windowWidth/4},5 ${windowWidth + windowWidth/2},15 ${windowWidth*2},10 
-                 L${windowWidth*2},50 L0,50 Z`}
-              fill={`${color}60`}
-            />
-          </Svg>
-        </Animated.View>
+        {/* Wellen-Container der sich über dem festen Wasserhintergrund bewegt */}
+        <View style={styles.wavesWrapper}>
+          {/* Erste animierte Welle */}
+          <Animated.View style={[styles.waveContainer, wave1Style]}>
+            <Svg height="50" width={windowWidth * 2} style={styles.wave}>
+              <Path
+                d={`M0,10 
+                   C${windowWidth/4},30 ${windowWidth/2},0 ${windowWidth},10 
+                   C${windowWidth + windowWidth/4},25 ${windowWidth + windowWidth/2},5 ${windowWidth*2},10 
+                   L${windowWidth*2},50 L0,50 Z`}
+                fill={`${color}90`}
+              />
+            </Svg>
+          </Animated.View>
+          
+          {/* Zweite animierte Welle (mit versetzter Animation) */}
+          <Animated.View style={[styles.waveContainer, wave2Style]}>
+            <Svg height="50" width={windowWidth * 2} style={styles.wave}>
+              <Path
+                d={`M0,15 
+                   C${windowWidth/4},0 ${windowWidth/2},20 ${windowWidth},15 
+                   C${windowWidth + windowWidth/4},5 ${windowWidth + windowWidth/2},15 ${windowWidth*2},10 
+                   L${windowWidth*2},50 L0,50 Z`}
+                fill={`${color}60`}
+              />
+            </Svg>
+          </Animated.View>
+        </View>
       </Animated.View>
       
       {/* Text overlay */}
@@ -155,9 +158,17 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  wavesWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    top: 0,  // Wichtig: Die Wellen erstrecken sich über den gesamten Container
+    overflow: 'hidden',
+  },
   waveContainer: {
     position: 'absolute',
-    bottom: -20, // Leicht nach unten versetzt, um Lücken zu vermeiden
+    bottom: -5,  // Leicht nach unten versetzt, um Lücken zu vermeiden
     left: 0,
     width: '100%',
     height: 50,
