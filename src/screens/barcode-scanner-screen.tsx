@@ -190,10 +190,26 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
 
   const handleSelectProduct = (item: FoodItem) => {
     try {
-      navigation.getParent()?.navigate("FoodDetail", {
-        foodId: item.id,
+      // Erste Variante: Über Parent-Navigator - mit vollständigem FoodItem-Objekt
+      const parent = navigation.getParent();
+      if (parent) {
+        parent.navigate("FoodDetail", { 
+          foodId: item.id, 
+          mealType,
+          foodItem: item // Übergebe das vollständige FoodItem-Objekt
+        });
+        console.log("Navigation zum FoodDetail mit vollständigem FoodItem:", item.name);
+        return;
+      }
+      
+      // Zweite Variante: Direkte Navigation
+      // @ts-ignore - Ignoriere TypeScript-Fehler, da wir wissen, dass dieser Screen existiert
+      navigation.navigate("FoodDetail", { 
+        foodId: item.id, 
         mealType,
+        foodItem: item // Übergebe das vollständige FoodItem-Objekt
       });
+      console.log("Direkte Navigation zum FoodDetail mit vollständigem FoodItem:", item.name);
     } catch (e) {
       console.error("Navigation error:", e);
       Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");

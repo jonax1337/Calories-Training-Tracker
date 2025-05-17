@@ -34,6 +34,34 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
       console.log(`Product found: ${product.product_name}`);
       
       // Extract nutrition information from the API response
+      
+      // Parse quantity to get serving size in grams
+      let servingSizeGrams = 100; // Default to 100g
+      const quantity = product.quantity || "";
+      
+      if (quantity) {
+        console.log(`Product quantity: ${quantity}`);
+        // Try to extract number from string like "400g"
+        const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|l)/i);
+        if (match) {
+          const amount = parseFloat(match[1].replace(',', '.'));
+          const unit = match[2].toLowerCase();
+          
+          // Convert to grams based on unit
+          if (unit === 'kg') {
+            servingSizeGrams = amount * 1000;
+          } else if (unit === 'g') {
+            servingSizeGrams = amount;
+          } else if (unit === 'l') {
+            servingSizeGrams = amount * 1000; // Assuming 1L = 1000g for simplicity
+          } else if (unit === 'ml') {
+            servingSizeGrams = amount; // Assuming 1ml = 1g for simplicity
+          }
+          
+          console.log(`Parsed serving size: ${servingSizeGrams}g`);
+        }
+      }
+      
       const nutrition: NutritionInfo = {
         calories: product.nutriments?.['energy-kcal_100g'] || 0,
         protein: product.nutriments?.proteins_100g || 0,
@@ -43,7 +71,7 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
         fiber: product.nutriments?.fiber_100g,
         sodium: product.nutriments?.sodium_100g,
         servingSize: product.quantity || '100g',
-        servingSizeGrams: 100 // Default to 100g if no specific serving size
+        servingSizeGrams: servingSizeGrams
       };
       
       // Create and return a FoodItem object from the API data
@@ -114,6 +142,34 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
     if (data.products && data.products.length > 0) {
       return data.products.map(product => {
         // Extract nutrition information
+        
+        // Parse quantity to get serving size in grams (gleicher Code wie in getFoodDataByBarcode)
+        let servingSizeGrams = 100; // Default to 100g
+        const quantity = product.quantity || "";
+        
+        if (quantity) {
+          console.log(`Search product quantity: ${quantity}`);
+          // Try to extract number from string like "400g"
+          const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|l)/i);
+          if (match) {
+            const amount = parseFloat(match[1].replace(',', '.'));
+            const unit = match[2].toLowerCase();
+            
+            // Convert to grams based on unit
+            if (unit === 'kg') {
+              servingSizeGrams = amount * 1000;
+            } else if (unit === 'g') {
+              servingSizeGrams = amount;
+            } else if (unit === 'l') {
+              servingSizeGrams = amount * 1000; // Assuming 1L = 1000g for simplicity
+            } else if (unit === 'ml') {
+              servingSizeGrams = amount; // Assuming 1ml = 1g for simplicity
+            }
+            
+            console.log(`Search parsed serving size: ${servingSizeGrams}g`);
+          }
+        }
+        
         const nutrition: NutritionInfo = {
           calories: product.nutriments?.['energy-kcal_100g'] || 0,
           protein: product.nutriments?.proteins_100g || 0,
@@ -123,7 +179,7 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
           fiber: product.nutriments?.fiber_100g,
           sodium: product.nutriments?.sodium_100g,
           servingSize: product.quantity || '100g',
-          servingSizeGrams: 100 // Default to 100g
+          servingSizeGrams: servingSizeGrams
         };
         
         // Create a FoodItem object

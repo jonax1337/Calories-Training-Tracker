@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, ScrollView, ViewStyle, TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
@@ -17,6 +18,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   const date = new Date().toISOString().split('T')[0];
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // State for tracking expanded meal sections
+  const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
 
   // Format the date for display
   const formattedDate = new Date(date).toLocaleDateString('de-DE', {
@@ -25,6 +29,14 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     month: 'long',
     day: 'numeric'
   });
+
+  // Toggle expand/collapse state for meal sections
+  const toggleMealAccordion = (mealType: string) => {
+    setExpandedMeals(prev => ({
+      ...prev,
+      [mealType]: !prev[mealType]
+    }));
+  };
   // Load daily log data
   useEffect(() => {
     const loadDailyLog = async () => {
@@ -96,6 +108,17 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     await saveDailyLog(updatedLog);
   };
 
+  // Funktion zum Öffnen der Food-Details eines Eintrags
+  const handleOpenFoodDetails = (entry: FoodEntry) => {
+    navigation.getParent()?.navigate('FoodDetail', {
+      foodItem: entry.foodItem,
+      mealType: entry.mealType,
+      // Bearbeitung eines existierenden Eintrags
+      existingEntryId: entry.id,
+      servingAmount: entry.servingAmount
+    });
+  };
+
   // Calculate nutrition totals
   const calculateTotals = () => {
     if (!dailyLog || dailyLog.foodEntries.length === 0) {
@@ -134,10 +157,10 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         const mealType = entry.mealType as keyof typeof totals.mealTotals;
 
         // Calculate nutrition values for this entry
-        const entryCalories = nutrition.calories * multiplier;
-        const entryProtein = nutrition.protein * multiplier;
-        const entryCarbs = nutrition.carbs * multiplier;
-        const entryFat = nutrition.fat * multiplier;
+        const entryCalories = nutrition.calories * (multiplier / 100);
+        const entryProtein = nutrition.protein * (multiplier / 100);
+        const entryCarbs = nutrition.carbs * (multiplier / 100);
+        const entryFat = nutrition.fat * (multiplier / 100);
 
         // Update meal-specific totals
         totals.mealTotals[mealType].calories += entryCalories;
@@ -202,7 +225,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
             style={[styles.removeButton, { backgroundColor: theme.colors.errorLight, borderRadius: theme.borderRadius.small }]}
           >
             <Text style={[styles.removeButtonText, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.error }]}>
-              Remove
+              Entfernen
             </Text>
           </TouchableOpacity>
         </View>
@@ -215,7 +238,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
 
         <View style={styles.servingContainer}>
           <Text style={[styles.servingText, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-            {servingAmount} {servingAmount > 1 ? 'servings' : 'serving'} ({nutrition.servingSize})
+            {servingAmount} {servingAmount > 1 ? 'Portionen' : 'Portion'} ({nutrition.servingSize})
           </Text>
         </View>
 
@@ -234,7 +257,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               {Math.round(nutrition.protein * servingAmount)}g
             </Text>
             <Text style={[styles.nutritionLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-              Protein
+              Eiweiß
             </Text>
           </View>
 
@@ -243,7 +266,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               {Math.round(nutrition.carbs * servingAmount)}g
             </Text>
             <Text style={[styles.nutritionLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-              Carbs
+              Kohlenhydrate
             </Text>
           </View>
 
@@ -252,7 +275,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               {Math.round(nutrition.fat * servingAmount)}g
             </Text>
             <Text style={[styles.nutritionLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-              Fat
+              Fett
             </Text>
           </View>
         </View>
@@ -262,34 +285,125 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
           onPress={() => navigation.getParent()?.navigate('FoodDetail', { foodId: item.id })}
         >
           <Text style={[styles.viewButtonText, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }]}>
-            View Details
+            Details anzeigen
           </Text>
         </TouchableOpacity>
       </View>
     );
   };
 
+  // Function to toggle meal expansion
+  const toggleMeal = (mealType: string) => {
+    setExpandedMeals(prev => ({
+      ...prev,
+      [mealType]: !prev[mealType]
+    }));
+  };
+  
+  // Function to add food to a specific meal type
+  const handleAddFood = (mealType: string) => {
+    // Navigate to the Add Food screen with the specific meal type
+    navigation.getParent()?.navigate('Add', { screen: 'Scanner', params: { mealType } });
+  };
+
   // Render a meal type group
   const renderMealGroup = ({ item }: { item: { mealType: string; entries: FoodEntry[] } }) => {
     const { mealType, entries } = item;
+    const isExpanded = expandedMeals[mealType] || false;
+    const mealCalories = totals.mealTotals[mealType as keyof typeof totals.mealTotals].calories;
+    const entryCount = entries.length;
 
     return (
       <View style={styles.mealSection}>
-        <Text style={[styles.mealTypeHeader, { 
-          fontFamily: theme.typography.fontFamily.bold, 
-          color: theme.colors.text,
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: theme.colors.surfaceVariant,
+          borderRadius: theme.borderRadius.medium,
+          padding: 16,
+          marginBottom: isExpanded ? 8 : 16,
           borderLeftWidth: 4,
           borderLeftColor: theme.colors.primary,
-          paddingLeft: 8,
-        }]}>
-          {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-        </Text>
-        <FlatList
-          data={entries}
-          renderItem={renderFoodEntry}
-          keyExtractor={(entry) => entry.id}
-          scrollEnabled={false}
-        />
+        }}>
+          {/* Hauptbereich der Mahlzeit - klickbar um zum Scanner zu gehen */}
+          <TouchableOpacity 
+            onPress={() => navigation.getParent()?.navigate('Add', { screen: 'Scanner', params: { mealType } })}
+            style={{ flex: 1 }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{
+                fontFamily: theme.typography.fontFamily.bold,
+                fontSize: 18,
+                color: theme.colors.text,
+              }}>
+                {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+              </Text>
+              <Text style={{
+                fontFamily: theme.typography.fontFamily.regular,
+                fontSize: 14,
+                color: theme.colors.textLight,
+                marginLeft: 8,
+              }}>
+                ({entryCount} {entryCount === 1 ? 'Eintrag' : 'Einträge'})
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Rechte Seite: Kalorien + Accordion Icon */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: 16,
+              color: theme.colors.primary,
+              marginRight: 8,
+            }}>
+              {Math.round(mealCalories)} kcal
+            </Text>
+
+            {/* EINFACHES ICON zum Auf-/Zuklappen */}
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                toggleMeal(mealType);
+              }}
+              style={{ padding: 8 }}
+              accessibilityLabel={"Mahlzeit " + mealType + (isExpanded ? " einklappen" : " ausklappen")}
+            >
+              <Ionicons 
+                name={isExpanded ? 'chevron-up' : 'chevron-down'} 
+                size={24} 
+                color={theme.colors.primary} 
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Expandierbarer Bereich */}
+        {isExpanded && (
+          <View style={{
+            marginBottom: 16,
+            marginLeft: 4,
+            marginRight: 4,
+          }}>
+            {entries.length > 0 ? (
+              <FlatList
+                data={entries}
+                renderItem={renderFoodEntry}
+                keyExtractor={(entry) => entry.id}
+                scrollEnabled={false}
+              />
+            ) : (
+              <Text style={{
+                textAlign: 'center',
+                color: theme.colors.textLight,
+                padding: 16,
+              }}>
+                Keine Einträge vorhanden
+              </Text>
+            )}
+          </View>
+        )}
       </View>
     );
   };
@@ -412,109 +526,513 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
           Mahlzeiten
         </Text>
         
-        {/* Fru00fchstu00fcck */}
-        <TouchableOpacity 
-          style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'breakfast' })}
-        >
-          <View style={styles.mealCategoryContent}>
-            <View>
-              <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                🥞 Frühstück
-              </Text>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length > 0 ? (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  {dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length} Einträge
+        {/* Frühstück */}
+        <View style={{ marginBottom: expandedMeals['breakfast'] ? 0 : 12 }}>
+          {/* Header-Bereich - klickbar für Scanner */}
+          <TouchableOpacity 
+            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
+              borderBottomLeftRadius: expandedMeals['breakfast'] ? 0 : theme.borderRadius.medium,
+              borderBottomRightRadius: expandedMeals['breakfast'] ? 0 : theme.borderRadius.medium,
+              marginBottom: expandedMeals['breakfast'] ? 0 : undefined,
+            }]}
+          >
+            <View style={styles.mealCategoryContent}>
+              {/* Linke Seite - Mahlzeiteninfo */}
+              <TouchableOpacity 
+                style={{ flex: 1 }}
+                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'breakfast' })}
+              >
+                <View>
+                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+                    🥞 Frühstück
+                  </Text>
+                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length > 0 ? (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length} Einträge
+                    </Text>
+                  ) : (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      Noch keine Einträge
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+              
+              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
+                  {Math.round(totals.mealTotals.breakfast?.calories || 0)} kcal
                 </Text>
+                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    toggleMealAccordion('breakfast');
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons 
+                    name={expandedMeals['breakfast'] ? "chevron-up" : "chevron-down"} 
+                    size={24} 
+                    color={theme.colors.primary} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          {/* Ausklappbarer Bereich für die Einträge */}
+          {expandedMeals['breakfast'] && (
+            <View style={{
+              backgroundColor: theme.colors.card,
+              borderBottomLeftRadius: theme.borderRadius.medium,
+              borderBottomRightRadius: theme.borderRadius.medium,
+              borderTopWidth: 1,     // Subtile Trennlinie
+              borderTopColor: theme.colors.border + '40', // Transparentes Grau
+              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
+              paddingTop: 8,        // 1 Grid Punkt (8px)
+              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
+              marginBottom: 12,      // Abstand zum nächsten Element
+            }}>
+              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length > 0 ? (
+                dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').map((entry, index, array) => (
+                  <View key={entry.id} style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 8, // 1 Grid Punkt (8px)
+                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
+                    ...index < array.length - 1 ? {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.colors.border + '40',
+                    } : {
+                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
+                    }
+                  }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
+                        {entry.foodItem.name}
+                      </Text>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
+                        {entry.servingAmount}g
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
+                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
+                      </Text>
+                      {/* Details-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleOpenFoodDetails(entry)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={{ marginRight: 8 }}
+                      >
+                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                      </TouchableOpacity>
+                      {/* Löschen-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveEntry(entry.id)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
               ) : (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  Noch keine Einträge
+                <Text style={{ 
+                  fontFamily: theme.typography.fontFamily.regular, 
+                  color: theme.colors.textLight, 
+                  textAlign: 'center', 
+                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
+                }}>
+                  Keine Einträge vorhanden
                 </Text>
               )}
             </View>
-            <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
-              {Math.round(totals.mealTotals.breakfast?.calories || 0)} kcal
-            </Text>
-          </View>
-        </TouchableOpacity>
+          )}
+        </View>
         
         {/* Mittagessen */}
-        <TouchableOpacity 
-          style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'lunch' })}
-        >
-          <View style={styles.mealCategoryContent}>
-            <View>
-              <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                🍲 Mittagessen
-              </Text>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length > 0 ? (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  {dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length} Einträge
+        <View style={{ marginBottom: expandedMeals['lunch'] ? 0 : 12 }}>
+          {/* Header-Bereich - klickbar für Scanner */}
+          <TouchableOpacity 
+            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
+              borderBottomLeftRadius: expandedMeals['lunch'] ? 0 : theme.borderRadius.medium,
+              borderBottomRightRadius: expandedMeals['lunch'] ? 0 : theme.borderRadius.medium,
+              marginBottom: expandedMeals['lunch'] ? 0 : undefined,
+            }]}
+          >
+            <View style={styles.mealCategoryContent}>
+              {/* Linke Seite - Mahlzeiteninfo */}
+              <TouchableOpacity 
+                style={{ flex: 1 }}
+                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'lunch' })}
+              >
+                <View>
+                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+                    🍲 Mittagessen
+                  </Text>
+                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length > 0 ? (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length} Einträge
+                    </Text>
+                  ) : (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      Noch keine Einträge
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+              
+              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
+                  {Math.round(totals.mealTotals.lunch?.calories || 0)} kcal
                 </Text>
+                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    toggleMealAccordion('lunch');
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons 
+                    name={expandedMeals['lunch'] ? "chevron-up" : "chevron-down"} 
+                    size={24} 
+                    color={theme.colors.primary} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          {/* Ausklappbarer Bereich für die Einträge */}
+          {expandedMeals['lunch'] && (
+            <View style={{
+              backgroundColor: theme.colors.card,
+              borderBottomLeftRadius: theme.borderRadius.medium,
+              borderBottomRightRadius: theme.borderRadius.medium,
+              borderTopWidth: 1,     // Subtile Trennlinie
+              borderTopColor: theme.colors.border + '40', // Transparentes Grau
+              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
+              paddingTop: 8,        // 1 Grid Punkt (8px)
+              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
+              marginBottom: 12,      // Abstand zum nächsten Element
+            }}>
+              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length > 0 ? (
+                dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').map((entry, index, array) => (
+                  <View key={entry.id} style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 8, // 1 Grid Punkt (8px)
+                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
+                    ...index < array.length - 1 ? {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.colors.border + '40',
+                    } : {
+                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
+                    }
+                  }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
+                        {entry.foodItem.name}
+                      </Text>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
+                        {entry.servingAmount}g
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
+                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
+                      </Text>
+                      {/* Details-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleOpenFoodDetails(entry)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={{ marginRight: 8 }}
+                      >
+                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                      </TouchableOpacity>
+                      {/* Löschen-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveEntry(entry.id)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
               ) : (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  Noch keine Einträge
+                <Text style={{ 
+                  fontFamily: theme.typography.fontFamily.regular, 
+                  color: theme.colors.textLight, 
+                  textAlign: 'center', 
+                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
+                }}>
+                  Keine Einträge vorhanden
                 </Text>
               )}
             </View>
-            <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
-              {Math.round(totals.mealTotals.lunch?.calories || 0)} kcal
-            </Text>
-          </View>
-        </TouchableOpacity>
+          )}
+        </View>
         
         {/* Abendessen */}
-        <TouchableOpacity 
-          style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'dinner' })}
-        >
-          <View style={styles.mealCategoryContent}>
-            <View>
-              <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                🍽️ Abendessen
-              </Text>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length > 0 ? (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  {dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length} Einträge
+        <View style={{ marginBottom: expandedMeals['dinner'] ? 0 : 12 }}>
+          {/* Header-Bereich - klickbar für Scanner */}
+          <TouchableOpacity 
+            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
+              borderBottomLeftRadius: expandedMeals['dinner'] ? 0 : theme.borderRadius.medium,
+              borderBottomRightRadius: expandedMeals['dinner'] ? 0 : theme.borderRadius.medium,
+              marginBottom: expandedMeals['dinner'] ? 0 : undefined,
+            }]}
+          >
+            <View style={styles.mealCategoryContent}>
+              {/* Linke Seite - Mahlzeiteninfo */}
+              <TouchableOpacity 
+                style={{ flex: 1 }}
+                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'dinner' })}
+              >
+                <View>
+                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+                    🍽️ Abendessen
+                  </Text>
+                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length > 0 ? (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length} Einträge
+                    </Text>
+                  ) : (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      Noch keine Einträge
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+              
+              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
+                  {Math.round(totals.mealTotals.dinner?.calories || 0)} kcal
                 </Text>
+                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    toggleMealAccordion('dinner');
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons 
+                    name={expandedMeals['dinner'] ? "chevron-up" : "chevron-down"} 
+                    size={24} 
+                    color={theme.colors.primary} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          {/* Ausklappbarer Bereich für die Einträge */}
+          {expandedMeals['dinner'] && (
+            <View style={{
+              backgroundColor: theme.colors.card,
+              borderBottomLeftRadius: theme.borderRadius.medium,
+              borderBottomRightRadius: theme.borderRadius.medium,
+              borderTopWidth: 1,     // Subtile Trennlinie
+              borderTopColor: theme.colors.border + '40', // Transparentes Grau
+              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
+              paddingTop: 8,        // 1 Grid Punkt (8px)
+              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
+              marginBottom: 12,      // Abstand zum nächsten Element
+            }}>
+              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length > 0 ? (
+                dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').map((entry, index, array) => (
+                  <View key={entry.id} style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 8, // 1 Grid Punkt (8px)
+                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
+                    ...index < array.length - 1 ? {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.colors.border + '40',
+                    } : {
+                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
+                    }
+                  }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
+                        {entry.foodItem.name}
+                      </Text>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
+                        {entry.servingAmount}g
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
+                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
+                      </Text>
+                      {/* Details-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleOpenFoodDetails(entry)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={{ marginRight: 8 }}
+                      >
+                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                      </TouchableOpacity>
+                      {/* Löschen-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveEntry(entry.id)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
               ) : (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  Noch keine Einträge
+                <Text style={{ 
+                  fontFamily: theme.typography.fontFamily.regular, 
+                  color: theme.colors.textLight, 
+                  textAlign: 'center', 
+                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
+                }}>
+                  Keine Einträge vorhanden
                 </Text>
               )}
             </View>
-            <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
-              {Math.round(totals.mealTotals.dinner?.calories || 0)} kcal
-            </Text>
-          </View>
-        </TouchableOpacity>
+          )}
+        </View>
         
         {/* Snacks */}
-        <TouchableOpacity 
-          style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}
-          onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'snack' })}
-        >
-          <View style={styles.mealCategoryContent}>
-            <View>
-              <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                🍪 Snacks
-              </Text>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length > 0 ? (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  {dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length} Einträge
+        <View style={{ marginBottom: expandedMeals['snack'] ? 0 : 12 }}>
+          {/* Header-Bereich - klickbar für Scanner */}
+          <TouchableOpacity 
+            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
+              borderBottomLeftRadius: expandedMeals['snack'] ? 0 : theme.borderRadius.medium,
+              borderBottomRightRadius: expandedMeals['snack'] ? 0 : theme.borderRadius.medium,
+              marginBottom: expandedMeals['snack'] ? 0 : undefined,
+            }]}
+          >
+            <View style={styles.mealCategoryContent}>
+              {/* Linke Seite - Mahlzeiteninfo */}
+              <TouchableOpacity 
+                style={{ flex: 1 }}
+                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'snack' })}
+              >
+                <View>
+                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+                    🍪 Snacks
+                  </Text>
+                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length > 0 ? (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length} Einträge
+                    </Text>
+                  ) : (
+                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                      Noch keine Einträge
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+              
+              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
+                  {Math.round(totals.mealTotals.snack?.calories || 0)} kcal
                 </Text>
+                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    toggleMealAccordion('snack');
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons 
+                    name={expandedMeals['snack'] ? "chevron-up" : "chevron-down"} 
+                    size={24} 
+                    color={theme.colors.primary} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          {/* Ausklappbarer Bereich für die Einträge */}
+          {expandedMeals['snack'] && (
+            <View style={{
+              backgroundColor: theme.colors.card,
+              borderBottomLeftRadius: theme.borderRadius.medium,
+              borderBottomRightRadius: theme.borderRadius.medium,
+              borderTopWidth: 1,     // Subtile Trennlinie
+              borderTopColor: theme.colors.border + '40', // Transparentes Grau
+              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
+              paddingTop: 8,        // 1 Grid Punkt (8px)
+              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
+              marginBottom: 0,       // Kein Abstand zum Seitenende
+            }}>
+              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length > 0 ? (
+                dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').map((entry, index, array) => (
+                  <View key={entry.id} style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 8, // 1 Grid Punkt (8px)
+                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
+                    ...index < array.length - 1 ? {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.colors.border + '40',
+                    } : {
+                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
+                    }
+                  }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
+                        {entry.foodItem.name}
+                      </Text>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
+                        {entry.servingAmount}g
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
+                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
+                      </Text>
+                      {/* Details-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleOpenFoodDetails(entry)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={{ marginRight: 8 }}
+                      >
+                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                      </TouchableOpacity>
+                      {/* Löschen-Button */}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveEntry(entry.id)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
               ) : (
-                <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                  Noch keine Einträge
+                <Text style={{ 
+                  fontFamily: theme.typography.fontFamily.regular, 
+                  color: theme.colors.textLight, 
+                  textAlign: 'center', 
+                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
+                }}>
+                  Keine Einträge vorhanden
                 </Text>
               )}
             </View>
-            <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
-              {Math.round(totals.mealTotals.snack?.calories || 0)} kcal
-            </Text>
-          </View>
-        </TouchableOpacity>
+          )}
+        </View>
       </ScrollView>
     </View>
   );

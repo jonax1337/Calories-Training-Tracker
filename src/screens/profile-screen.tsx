@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform, Modal } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -327,135 +327,103 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     if (!showDatePickerModal) return null;
     
     return (
-      <View style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-      }}>
-        <View style={{
-          width: '90%',
-          backgroundColor: theme.colors.card,
-          borderRadius: theme.borderRadius.medium,
-          padding: theme.spacing.m,
-          alignItems: 'center',
-          elevation: 5,
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-        }}>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.bold,
-            fontSize: theme.typography.fontSize.l,
-            color: theme.colors.text,
-            marginBottom: theme.spacing.m,
-            textAlign: 'center'
-          }}>
-            Geburtsdatum auswählen
-          </Text>
-          
-          {/* DatePicker */}
-          {Platform.OS === 'web' ? (
-            <input
-              type="date"
-              value={(tempBirthDate || birthDate).toISOString().split('T')[0]}
-              onChange={(e) => {
-                if (e.target.value) {
-                  const newDate = new Date(e.target.value);
-                  setTempBirthDate(newDate);
-                }
-              }}
-              style={{
-                width: '100%',
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: '4px',
-                backgroundColor: theme.colors.background,
-                fontSize: '16px',
-                padding: '10px',
-                color: theme.colors.text,
-                outline: 'none',
-                marginBottom: theme.spacing.m
-              }}
-              max={new Date().toISOString().split('T')[0]}
-              min="1900-01-01"
-            />
-          ) : (
-            <DateTimePicker
-              testID="dateTimePickerModal"
-              value={tempBirthDate || birthDate}
-              mode="date"
-              display="spinner"
-              onChange={(event, selectedDate) => {
-                if (selectedDate) {
-                  setTempBirthDate(selectedDate);
-                }
-              }}
-              maximumDate={new Date()}
-              minimumDate={new Date(1900, 0, 1)}
-              themeVariant={theme.dark ? 'dark' : 'light'}
-              style={{
-                width: '100%',
-                height: 200,
-                marginBottom: theme.spacing.m
-              }}
-            />
-          )}
-          
-          {/* Buttons */}
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            width: '100%'
-          }}>
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                padding: theme.spacing.m,
-                backgroundColor: theme.colors.card,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                borderRadius: theme.borderRadius.small,
-                marginRight: theme.spacing.s,
-                alignItems: 'center'
-              }}
-              onPress={cancelDatePickerModal}
-            >
-              <Text style={{
-                fontFamily: theme.typography.fontFamily.medium,
-                fontSize: theme.typography.fontSize.m,
-                color: theme.colors.text
-              }}>
-                Abbrechen
-              </Text>
-            </TouchableOpacity>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showDatePickerModal}
+        onRequestClose={cancelDatePickerModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
+            <Text style={[styles.modalTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+              Geburtsdatum auswählen
+            </Text>
             
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                padding: theme.spacing.m,
-                backgroundColor: theme.colors.primary,
-                borderRadius: theme.borderRadius.small,
-                alignItems: 'center'
-              }}
-              onPress={confirmDatePickerModal}
-            >
-              <Text style={{
-                fontFamily: theme.typography.fontFamily.medium,
-                fontSize: theme.typography.fontSize.m,
-                color: 'white'
-              }}>
-                Bestätigen
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.datePickerContainer}>
+              {Platform.OS === 'web' ? (
+                <input
+                  type="date"
+                  value={(tempBirthDate || birthDate).toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const newDate = new Date(e.target.value);
+                      setTempBirthDate(newDate);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.small,
+                    backgroundColor: theme.colors.background,
+                    fontSize: '16px',
+                    padding: '12px',
+                    color: theme.colors.text,
+                    outline: 'none'
+                  }}
+                  max={new Date().toISOString().split('T')[0]}
+                  min="1900-01-01"
+                />
+              ) : (
+                <View style={[{
+                  backgroundColor: theme.colors.background,
+                  borderRadius: theme.borderRadius.small,
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.1)',
+                  overflow: 'hidden',
+                  // Flex-Container für DateTimePicker
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0
+                }]} >
+                  {/* Wrapper für den DateTimePicker mit negativem Margin zum Verschieben nach links */}
+                  <View style={{
+                    marginLeft: -30, // Verschiebt den Picker 15px nach links für bessere Zentrierung
+                    width: '100%', // Leicht vergrößert, um Abschneidungen zu vermeiden
+                  }}>
+                    <DateTimePicker
+                      testID="dateTimePickerModal"
+                      value={tempBirthDate || birthDate}
+                      mode="date"
+                      display="spinner"
+                      onChange={(event, selectedDate) => {
+                        if (selectedDate) {
+                          setTempBirthDate(selectedDate);
+                        }
+                      }}
+                      maximumDate={new Date()}
+                      minimumDate={new Date(1900, 0, 1)}
+                      themeVariant={theme.dark ? 'dark' : 'light'}
+                      style={{
+                        height: 200
+                      }}
+                    />
+                  </View>
+                </View>
+              )}
+            </View>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.colors.error + '20', borderRadius: theme.borderRadius.small }]}
+                onPress={cancelDatePickerModal}
+              >
+                <Text style={{ color: theme.colors.error, fontFamily: theme.typography.fontFamily.medium }}>
+                  Abbrechen
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.colors.primary + '20', borderRadius: theme.borderRadius.small }]}
+                onPress={confirmDatePickerModal}
+              >
+                <Text style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.medium }}>
+                  Speichern
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </Modal>
     );
   };
 
@@ -1778,6 +1746,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '85%',
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  datePickerContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stickyHeader: {
     width: '100%',

@@ -32,7 +32,7 @@ export type RootStackParamList = {
   // Stack screens
   TabNavigator: undefined;
   BarcodeScanner: { mealType?: string };
-  FoodDetail: { barcode?: string; foodId?: string; mealType?: string };
+  FoodDetail: { barcode?: string; foodId?: string; mealType?: string; foodItem?: any };
   DailyLog: { date?: string };
   Settings: undefined;
   // Tab screens (for backwards compatibility)

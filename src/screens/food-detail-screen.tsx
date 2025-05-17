@@ -3,10 +3,10 @@ import { StyleSheet, Text, View, Image, TextInput, ScrollView, TouchableOpacity,
 import Slider from '@react-native-community/slider';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
-import { FoodItem, MealType } from '../types';
+import { FoodItem, MealType, FoodEntry } from '../types';
 import NutritionalInfoCard from '../components/ui/nutritional-info-card';
 import { getFoodDataByBarcode } from '../services/barcode-service';
-import { saveFoodItem } from '../services/storage-service';
+import { saveFoodItem, getDailyLogByDate, saveDailyLog } from '../services/storage-service';
 // Eigene UUID-Generierung statt uuidv4, da es Probleme mit crypto.getRandomValues() gibt
 function generateSimpleId() {
   return 'food_' + Date.now().toString() + '_' + Math.random().toString(36).substring(2, 11);
@@ -22,7 +22,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const insets = useSafeAreaInsets();
 
   // Get parameters from navigation
-  const { barcode, foodId, mealType } = route.params || {};
+  const { barcode, foodId, mealType, foodItem: passedFoodItem } = route.params || {};
   
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
@@ -40,6 +40,25 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Load food data when component mounts or create empty food item for manual entry
   useEffect(() => {
     const loadFoodData = async () => {
+      // Wenn ein FoodItem direkt übergeben wurde, verwende dieses
+      if (passedFoodItem) {
+        console.log('Verwende direkt übergebenes FoodItem:', passedFoodItem.id);
+        setFoodItem(passedFoodItem);
+        setCustomName(passedFoodItem.name);
+        
+        // Setze die Portionsgröße auf die tatsächliche Füllmenge des Produkts
+        if (passedFoodItem.nutrition && passedFoodItem.nutrition.servingSizeGrams) {
+          const productSize = passedFoodItem.nutrition.servingSizeGrams;
+          console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}g`);
+          setServings(productSize.toFixed(2));
+          setSliderValue(productSize);
+        }
+        
+        setIsLoading(false);
+        return;
+      }
+
+      // Ansonsten versuche, Daten über Barcode oder ID zu laden
       if (barcode) {
         setIsLoading(true);
         try {
@@ -52,6 +71,14 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             };
             setFoodItem(foodWithoutImage);
             setCustomName(data.name);
+            
+            // Setze die Portionsgröße auf die tatsächliche Füllmenge des Produkts
+            if (data.nutrition && data.nutrition.servingSizeGrams) {
+              const productSize = data.nutrition.servingSizeGrams;
+              console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}g`);
+              setServings(productSize.toFixed(2));
+              setSliderValue(productSize);
+            }
           } else {
             setError('Produkt nicht gefunden. Bitte Details manuell eingeben.');
             // Leeres Food Item erstellen
@@ -66,7 +93,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           setIsLoading(false);
         }
       } else {
-        // Wenn kein Barcode übergeben wurde (manuelles Eingeben), erstelle ein leeres Food Item
+        // Wenn kein Barcode oder FoodItem übergeben wurde (manuelles Eingeben), erstelle ein leeres Food Item
         createEmptyFoodItem();
         setIsLoading(false);
       }
@@ -93,7 +120,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
     };
 
     loadFoodData();
-  }, [barcode, foodId]);
+  }, [barcode, foodId, passedFoodItem]);
 
   const handleAddToLog = async () => {
     if (!foodItem) return;
@@ -108,8 +135,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       // Save the food item to storage
       await saveFoodItem(updatedFoodItem);
 
-      // Create a food entry (in a real app, this would be saved to the daily log)
-      const entry = {
+      // Create a food entry
+      const entry: FoodEntry = {
         id: generateSimpleId(),
         foodItem: updatedFoodItem,
         servingAmount: parseFloat(servings) || 1,
@@ -117,7 +144,23 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         timeConsumed: new Date().toISOString(),
       };
       
-      console.log('Food entry created:', entry.id);
+      // Aktuelles Datum im Format YYYY-MM-DD
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Holen des aktuellen Daily Logs
+      const dailyLog = await getDailyLogByDate(today) || {
+        date: today,
+        foodEntries: [],
+        waterIntake: 0
+      };
+      
+      // Hinzufügen des neuen Eintrags
+      dailyLog.foodEntries.push(entry);
+      
+      // Speichern des aktualisierten Logs
+      await saveDailyLog(dailyLog);
+      
+      console.log('Food entry added to daily log:', entry.id);
 
       // Show success message
       Alert.alert(
@@ -133,7 +176,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       );
     } catch (err) {
       console.error('Error adding food to log:', err);
-      Alert.alert('Error', 'Failed to add food to your log');
+      Alert.alert('Fehler', 'Lebensmittel konnte nicht zum Tagebuch hinzugefügt werden');
     }
   };
 

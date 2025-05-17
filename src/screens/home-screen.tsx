@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
 import { HomeTabScreenProps } from '../types/navigation-types';
-import { getDailyLogByDate, getUserProfile } from '../services/storage-service';
+import { getDailyLogByDate, getUserProfile, saveUserProfile, saveDailyLog } from '../services/storage-service';
 import { fetchHealthData, calculateTotalCaloriesBurned } from '../services/health-service';
 import ProgressBar from '../components/ui/progress-bar';
+import WaveAnimation from '../components/ui/wave-animation';
 import { DailyLog, HealthData, UserProfile } from '../types';
 import { useTheme } from '../theme/theme-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,11 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentWeight, setCurrentWeight] = useState<number | undefined>(undefined);
+  const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
+  const [isUpdatingWater, setIsUpdatingWater] = useState(false);
+  const [showWaterModal, setShowWaterModal] = useState(false);
+  const [manualWaterAmount, setManualWaterAmount] = useState('');
 
   // Format current date as ISO string date portion for today's log
   const today = new Date().toISOString().split('T')[0];
@@ -28,6 +34,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         // Load user profile
         const profile = await getUserProfile();
         setUserProfile(profile);
+        setCurrentWeight(profile?.weight);
 
         // Load today's log
         const log = await getDailyLogByDate(today);
@@ -64,11 +71,11 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         const multiplier = entry.servingAmount;
 
         return {
-          calories: totals.calories + nutrition.calories * multiplier,
-          protein: totals.protein + nutrition.protein * multiplier,
-          carbs: totals.carbs + nutrition.carbs * multiplier,
-          fat: totals.fat + nutrition.fat * multiplier,
-          water: totals.water + todayLog.waterIntake,
+          calories: totals.calories + nutrition.calories * (multiplier / 100),
+          protein: totals.protein + nutrition.protein * (multiplier / 100),
+          carbs: totals.carbs + nutrition.carbs * (multiplier / 100),
+          fat: totals.fat + nutrition.fat * (multiplier / 100),
+          water: totals.water,
         };
       },
       { calories: 0, protein: 0, carbs: 0, fat: 0, water: todayLog.waterIntake }
@@ -94,6 +101,111 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const totals = calculateNutritionTotals();
   const goals = getGoals();
   
+  // Funktion zum Aktualisieren des Gewichts
+  const updateWeight = async (newWeight: number) => {
+    if (!userProfile) return;
+    
+    setIsUpdatingWeight(true);
+    try {
+      // Aktualisiere lokalen State
+      setCurrentWeight(newWeight);
+      
+      // Aktualisiere und speichere Benutzerprofil
+      const updatedProfile = {
+        ...userProfile,
+        weight: newWeight
+      };
+      
+      setUserProfile(updatedProfile);
+      await saveUserProfile(updatedProfile);
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren des Gewichts:', error);
+    } finally {
+      setIsUpdatingWeight(false);
+    }
+  };
+
+  // Funktion zum Erhöhen des Gewichts
+  const incrementWeight = () => {
+    if (currentWeight !== undefined) {
+      updateWeight(parseFloat((currentWeight + 0.1).toFixed(1)));
+    }
+  };
+  
+  // Funktion zum Verringern des Gewichts
+  const decrementWeight = () => {
+    if (currentWeight !== undefined && currentWeight > 0.1) {
+      updateWeight(parseFloat((currentWeight - 0.1).toFixed(1)));
+    }
+  };
+
+  // Funktion zum Hinzufügen von Wasser
+  const addWater = async (amount: number) => {
+    if (!todayLog) return;
+    
+    setIsUpdatingWater(true);
+    try {
+      // Aktualisiere lokalen State
+      const updatedLog = {
+        ...todayLog,
+        waterIntake: todayLog.waterIntake + amount
+      };
+      
+      setTodayLog(updatedLog);
+      await saveDailyLog(updatedLog);
+      
+      // Animation wird automatisch durch Änderung des Prozentwerts ausgelöst
+      // Optionale Toast/Feedback-Nachricht könnte hier hinzugefügt werden
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren des Wasserverbrauchs:', error);
+    } finally {
+      setIsUpdatingWater(false);
+    }
+  };
+
+  // Funktion zum direkten Setzen des Wasserstands
+  const setWaterAmount = async (amount: number) => {
+    if (!todayLog) return;
+    
+    // Sicherstellen, dass der Wert nicht negativ ist
+    const newAmount = Math.max(0, amount);
+    
+    setIsUpdatingWater(true);
+    try {
+      // Aktualisiere lokalen State
+      const updatedLog = {
+        ...todayLog,
+        waterIntake: newAmount
+      };
+      
+      setTodayLog(updatedLog);
+      await saveDailyLog(updatedLog);
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren des Wasserverbrauchs:', error);
+    } finally {
+      setIsUpdatingWater(false);
+      setShowWaterModal(false);
+    }
+  };
+
+  // Funktion zum Öffnen des Modals mit aktuellem Wasserstand
+  const openWaterModal = () => {
+    if (todayLog) {
+      setManualWaterAmount(todayLog.waterIntake.toString());
+      setShowWaterModal(true);
+    }
+  };
+  
+  // Funktion zum Anwenden des manuell eingegebenen Wasserwertes
+  const applyManualWaterAmount = () => {
+    const amount = parseInt(manualWaterAmount);
+    if (!isNaN(amount)) {
+      setWaterAmount(amount);
+    } else {
+      Alert.alert('Ungültige Eingabe', 'Bitte geben Sie eine gültige Zahl ein.');
+    }
+  };
+
   // Calculate calories burned
   const caloriesBurned = healthData 
     ? calculateTotalCaloriesBurned(
@@ -185,14 +297,248 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           target={goals.dailyFat || 70}
           color="#FFC107"
         />
-        
-        <ProgressBar 
-          label="💧 Wasser"
-          current={totals.water}
-          target={goals.dailyWater || 2000}
-          color="#03A9F4"
-        />
       </View>
+
+      {/* Water tracking section with wave animation */}
+      <View style={[
+        styles.summaryCard, 
+        { 
+          backgroundColor: theme.theme.colors.card,
+          borderRadius: theme.theme.borderRadius.large,
+          marginBottom: 16,
+          shadowColor: theme.theme.colors.shadow,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.2,
+          shadowRadius: 1.5,
+          elevation: 2,
+          paddingBottom: 8,
+        }
+      ]}>
+        <Text style={[
+          styles.cardTitle, 
+          { 
+            fontFamily: theme.theme.typography.fontFamily.bold,
+            color: theme.theme.colors.text
+          }
+        ]}>Wasser</Text>
+      
+        <View style={{ height: 160, marginVertical: 8 }}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={openWaterModal}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <WaveAnimation 
+              fillPercentage={Math.min((totals.water / (goals.dailyWater || 2000)) * 100, 100)} 
+              color="#03A9F4"
+              text={`${totals.water} / ${goals.dailyWater || 2000} ml`}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "rgba(3, 169, 244, 0.2)",
+              borderRadius: theme.theme.borderRadius.medium,
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              minWidth: 90,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => addWater(100)}
+            disabled={isUpdatingWater}
+          >
+            <Text style={{
+              fontFamily: theme.theme.typography.fontFamily.medium,
+              color: "#03A9F4",
+              fontSize: 16,
+            }}>
+              +100 ml
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={{
+              backgroundColor: "rgba(3, 169, 244, 0.2)",
+              borderRadius: theme.theme.borderRadius.medium,
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              minWidth: 90,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => addWater(250)}
+            disabled={isUpdatingWater}
+          >
+            <Text style={{
+              fontFamily: theme.theme.typography.fontFamily.medium,
+              color: "#03A9F4",
+              fontSize: 16,
+            }}>
+              +250 ml
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={{
+              backgroundColor: "rgba(3, 169, 244, 0.2)",
+              borderRadius: theme.theme.borderRadius.medium,
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              minWidth: 90,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => addWater(500)}
+            disabled={isUpdatingWater}
+          >
+            <Text style={{
+              fontFamily: theme.theme.typography.fontFamily.medium,
+              color: "#03A9F4",
+              fontSize: 16,
+            }}>
+              +500 ml
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      
+      {/* Weight tracking section */}
+      <View style={[
+        styles.summaryCard, 
+        { 
+          backgroundColor: theme.theme.colors.card,
+          borderRadius: theme.theme.borderRadius.large,
+          marginBottom: 16,
+          shadowColor: theme.theme.colors.shadow,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.2,
+          shadowRadius: 1.5,
+          elevation: 2,
+        }
+      ]}>
+        <Text style={[
+          styles.cardTitle, 
+          { 
+            fontFamily: theme.theme.typography.fontFamily.bold,
+            color: theme.theme.colors.text
+          }
+        ]}>Gewicht</Text>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.theme.colors.primary,
+              borderRadius: 99,
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: theme.theme.colors.shadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1,
+              elevation: 2,
+            }}
+            onPress={decrementWeight}
+            disabled={isUpdatingWeight || currentWeight === undefined || currentWeight <= 0.1}
+          >
+            <Ionicons name="remove" size={24} color="white" />
+          </TouchableOpacity>
+          
+          <View style={{
+            backgroundColor: theme.theme.colors.background,
+            borderRadius: theme.theme.borderRadius.medium,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            minWidth: 120,
+            alignItems: 'center',
+          }}>
+            <Text style={{
+              fontFamily: theme.theme.typography.fontFamily.bold,
+              fontSize: 24,
+              color: theme.theme.colors.text
+            }}>
+              {currentWeight !== undefined ? `${currentWeight.toFixed(1)} kg` : '-'}
+            </Text>
+          </View>
+          
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.theme.colors.primary,
+              borderRadius: 99,
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: theme.theme.colors.shadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1,
+              elevation: 2,
+            }}
+            onPress={incrementWeight}
+            disabled={isUpdatingWeight || currentWeight === undefined}
+          >
+            <Ionicons name="add" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Modal zur manuellen Eingabe des Wasserstands */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showWaterModal}
+        onRequestClose={() => setShowWaterModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.theme.colors.card, borderRadius: theme.theme.borderRadius.medium }]}>
+            <Text style={[styles.modalTitle, { fontFamily: theme.theme.typography.fontFamily.bold, color: theme.theme.colors.text }]}>
+              Wasserstand anpassen
+            </Text>
+            
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.input, { 
+                  backgroundColor: theme.theme.colors.background,
+                  color: theme.theme.colors.text,
+                  borderRadius: theme.theme.borderRadius.small,
+                  fontFamily: theme.theme.typography.fontFamily.medium
+                }]}
+                value={manualWaterAmount}
+                onChangeText={setManualWaterAmount}
+                keyboardType="number-pad"
+                placeholder="Wassermenge in ml"
+                placeholderTextColor={theme.theme.colors.textLight}
+              />
+              <Text style={{ fontFamily: theme.theme.typography.fontFamily.medium, color: theme.theme.colors.textLight, marginLeft: 8 }}>ml</Text>
+            </View>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.theme.colors.error + '20', borderRadius: theme.theme.borderRadius.small }]}
+                onPress={() => setShowWaterModal(false)}
+              >
+                <Text style={{ color: theme.theme.colors.error, fontFamily: theme.theme.typography.fontFamily.medium }}>
+                  Abbrechen
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.theme.colors.primary + '20', borderRadius: theme.theme.borderRadius.small }]}
+                onPress={applyManualWaterAmount}
+              >
+                <Text style={{ color: theme.theme.colors.primary, fontFamily: theme.theme.typography.fontFamily.medium }}>
+                  Speichern
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Health data section */}
       {healthData && (
@@ -241,6 +587,49 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '85%',
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    padding: 10,
+    fontSize: 18,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stickyHeader: {
     width: '100%',
