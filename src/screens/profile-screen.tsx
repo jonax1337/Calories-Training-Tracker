@@ -988,7 +988,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             {/* Markierungen der wichtigen BMI-Grenzen */}
             <View style={{
               position: 'absolute',
-              left: '14%', // Ungefähr BMI 18.5 (Untergewicht/Normal)
+              left: '20%', // BMI 18.5 (Untergewicht/Normal)
               height: 6,
               width: 2,
               backgroundColor: 'white',
@@ -997,7 +997,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             
             <View style={{
               position: 'absolute',
-              left: '40%', // Ungefähr BMI 25 (Normal/Übergewicht)
+              left: '50%', // BMI 25 (Normal/Übergewicht)
               height: 6,
               width: 2,
               backgroundColor: 'white',
@@ -1006,34 +1006,62 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             
             <View style={{
               position: 'absolute',
-              left: '60%', // Ungefähr BMI 30 (Übergewicht/Adipositas)
+              left: '75%', // BMI 30 (Übergewicht/Adipositas)
               height: 6,
               width: 2,
               backgroundColor: 'white',
               top: 0
             }} />
           </View>
-        
-          {/* BMI-Marker - garantiert sichtbar innerhalb der Skala */}
+          
+          {/* BMI-Marker - mit verbesserter Skalierung */}
           {profile.weight && profile.height && (() => {
             // BMI berechnen
             const bmi = profile.weight / Math.pow(profile.height / 100, 2);
             
-            // BMI-Bereich definieren
-            const minBmi = 15;
-            const maxBmi = 40;
+            // BMI-Bereich definieren mit Randbereichsanpassung
+            const absoluteMinBmi = 15; // Absoluter Mindestwert
+            const absoluteMaxBmi = 40; // Absoluter Höchstwert
+            
+            // Wichtige BMI-Grenzen für die Darstellung
+            const underweightBmi = 18.5; // Grenze Untergewicht/Normal
+            const normalBmi = 25;      // Grenze Normal/Übergewicht
+            const overweightBmi = 30;    // Grenze Übergewicht/Adipositas
             
             // Begrenze den BMI auf den darstellbaren Bereich
-            const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmi));
+            const clampedBmi = Math.max(absoluteMinBmi, Math.min(absoluteMaxBmi, bmi));
             
-            // Sicherheitsrand hinzufügen, sodass der Marker immer innerhalb der Skala erscheint
-            // 0% = links, 100% = rechts
-            const safeMinPos = 0.5; // 0.5% vom linken Rand
-            const safeMaxPos = 99.5; // 0.5% vom rechten Rand
-            const usableRange = safeMaxPos - safeMinPos;
+            // Verbesserte Berechnung mit Fokus auf die relevanten Bereiche
+            let percentPosition;
             
-            // Prozentuale Position berechnen mit Sicherheitsrand
-            const percentPosition = safeMinPos + ((clampedBmi - minBmi) / (maxBmi - minBmi)) * usableRange;
+            // Zuordnung der BMI-Bereiche zu prozentualen Positionen auf der Anzeige
+            if (clampedBmi < underweightBmi) {
+              // Bereich: 15-18.5 BMI (Untergewicht)
+              const bmiRange = underweightBmi - absoluteMinBmi;
+              const positionRange = 20; // 0-20% der Anzeige für Untergewicht
+              percentPosition = ((clampedBmi - absoluteMinBmi) / bmiRange) * positionRange;
+            } 
+            else if (clampedBmi < normalBmi) {
+              // Bereich: 18.5-25 BMI (Normalgewicht)
+              const bmiRange = normalBmi - underweightBmi;
+              const positionRange = 30; // 20-50% der Anzeige für Normalgewicht
+              percentPosition = 20 + ((clampedBmi - underweightBmi) / bmiRange) * positionRange;
+            } 
+            else if (clampedBmi < overweightBmi) {
+              // Bereich: 25-30 BMI (Übergewicht)
+              const bmiRange = overweightBmi - normalBmi;
+              const positionRange = 25; // 50-75% der Anzeige für Übergewicht
+              percentPosition = 50 + ((clampedBmi - normalBmi) / bmiRange) * positionRange;
+            } 
+            else {
+              // Bereich: 30-40 BMI (Adipositas)
+              const bmiRange = absoluteMaxBmi - overweightBmi;
+              const positionRange = 25; // 75-100% der Anzeige für Adipositas
+              percentPosition = 75 + ((clampedBmi - overweightBmi) / bmiRange) * positionRange;
+            }
+            
+            // Sicherheitsrand für die Anzeige (verhindert, dass der Marker am Rand verschwindet)
+            percentPosition = Math.max(2, Math.min(98, percentPosition));
             
             return (
               <View 
