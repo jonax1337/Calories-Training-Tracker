@@ -30,50 +30,68 @@ const WaveAnimation = ({
   
   // Wellen-Animation starten (endlos laufend)
   useEffect(() => {
-    // Animation der ersten Welle
-    waveOffset1.value = 0;
-    waveOffset1.value = withRepeat(
-      withTiming(windowWidth, { 
-        duration: 4000, 
-        easing: Easing.inOut(Easing.ease)
-      }),
-      -1, // unendlich wiederholen
-      false // nicht umkehren
-    );
+    // Animation der ersten Welle - nur einmal initialisieren
+    if (waveOffset1.value === 0) {
+      waveOffset1.value = withRepeat(
+        withTiming(windowWidth, { 
+          duration: 8000, // Längere Dauer für eine organischere Bewegung
+          easing: Easing.inOut(Easing.ease)
+        }),
+        -1, // unendlich wiederholen
+        false // nicht umkehren
+      );
+    }
     
-    // Animation der zweiten Welle (leicht versetzt)
-    waveOffset2.value = windowWidth / 2;
-    waveOffset2.value = withRepeat(
-      withTiming(windowWidth * 1.5, { 
-        duration: 5000, 
-        easing: Easing.inOut(Easing.ease)
-      }),
-      -1, // unendlich wiederholen
-      false // nicht umkehren
-    );
+    // Animation der zweiten Welle - nur einmal initialisieren
+    if (waveOffset2.value === 0) {
+      waveOffset2.value = windowWidth / 2; // Versetzt starten
+      waveOffset2.value = withRepeat(
+        withTiming(windowWidth * 1.5, { 
+          duration: 12000, // Noch längere Dauer für mehr Variation
+          easing: Easing.inOut(Easing.ease)
+        }),
+        -1, // unendlich wiederholen
+        false // nicht umkehren
+      );
+    }
     
-    // Animation des Füllstands beim Update
+    // Animation des Füllstands beim Update - dieser Teil wird bei jeder Änderung aktualisiert
     fillLevel.value = withTiming(
       100 - actualFillPercentage, 
       { duration: 800, easing: Easing.out(Easing.cubic) }
     );
-  }, [actualFillPercentage, windowWidth]);
+  }, [actualFillPercentage]);
+  
+  // Initialisiere die Wellenanimation einmalig beim Mounten
+  useEffect(() => {
+    // Die Initialisierung erfolgt im anderen useEffect
+    return () => {
+      // Cleanup-Funktion 
+      // Keine explizite Bereinigung erforderlich, da Reanimated dies automatisch handhabt
+    };
+  }, []);
   
   // Animierter Style für die erste Welle
   const wave1Style = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: -waveOffset1.value % windowWidth }]
+      transform: [{ translateX: -waveOffset1.value % windowWidth }],
+      // Y-Position wird durch Top gesetzt: Je niedriger der fillLevel, desto weiter oben ist die Welle
+      // Kleinere Anpassung, um den Abstand zwischen Wasserstand und Animation zu verringern
+      top: `${fillLevel.value -  20}%`
     };
   });
   
   // Animierter Style für die zweite Welle
   const wave2Style = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: -waveOffset2.value % windowWidth }]
+      transform: [{ translateX: -waveOffset2.value % windowWidth }],
+      // Y-Position wird durch Top gesetzt: Je niedriger der fillLevel, desto weiter oben ist die Welle
+      // Kleinere Anpassung, um den Abstand zwischen Wasserstand und Animation zu verringern
+      top: `${fillLevel.value - 20}%`
     };
   });
   
-  // Animierter Style für die Höhe des Wassers
+  // Animierter Style für die Höhe des Wassers (bleibt unverändert)
   const waterLevelStyle = useAnimatedStyle(() => {
     return {
       height: `${100 - fillLevel.value}%`
@@ -82,52 +100,62 @@ const WaveAnimation = ({
   
   return (
     <View style={[styles.container, { borderRadius: theme.theme.borderRadius.medium }]}>
-      {/* Der Wasser-Container mit animierter Höhe */}
-      <Animated.View style={[styles.waterContainer, waterLevelStyle]}>
-        {/* Hintergrundfarbe für das Wasser */}
-        <View style={[styles.waterBackground, { backgroundColor: `${color}40` }]} />
+      {/* Container für den gesamten Inhalt mit fester Höhe */}
+      <View style={styles.contentContainer}>
+        {/* Der Wasser-Container mit animierter Höhe */}
+        <Animated.View style={[styles.waterContainer, waterLevelStyle]}>
+          {/* Hintergrundfarbe für das Wasser */}
+          <View style={[styles.waterBackground, { backgroundColor: `${color}0 ` }]} />
+        </Animated.View>
 
-        {/* Wellen-Container der sich über dem festen Wasserhintergrund bewegt */}
-        <View style={styles.wavesWrapper}>
-          {/* Erste animierte Welle */}
-          <Animated.View style={[styles.waveContainer, wave1Style]}>
-            <Svg height="50" width={windowWidth * 2} style={styles.wave}>
-              <Path
-                d={`M0,10 
-                   C${windowWidth/4},30 ${windowWidth/2},0 ${windowWidth},10 
-                   C${windowWidth + windowWidth/4},25 ${windowWidth + windowWidth/2},5 ${windowWidth*2},10 
-                   L${windowWidth*2},50 L0,50 Z`}
-                fill={`${color}90`}
-              />
-            </Svg>
-          </Animated.View>
-          
-          {/* Zweite animierte Welle (mit versetzter Animation) */}
-          <Animated.View style={[styles.waveContainer, wave2Style]}>
-            <Svg height="50" width={windowWidth * 2} style={styles.wave}>
-              <Path
-                d={`M0,15 
-                   C${windowWidth/4},0 ${windowWidth/2},20 ${windowWidth},15 
-                   C${windowWidth + windowWidth/4},5 ${windowWidth + windowWidth/2},15 ${windowWidth*2},10 
-                   L${windowWidth*2},50 L0,50 Z`}
-                fill={`${color}60`}
-              />
-            </Svg>
-          </Animated.View>
-        </View>
-      </Animated.View>
-      
-      {/* Text overlay */}
-      {(text || icon) && (
-        <View style={styles.content}>
-          {text && (
-            <Text style={[styles.text, { fontFamily: theme.theme.typography.fontFamily.bold }]}>
-              {text}
-            </Text>
-          )}
-          {icon}
-        </View>
-      )}
+        {/* Wellen sind nicht im waterContainer, sondern im Haupt-Container, damit ihre Position absolut gesteuert werden kann */}
+        <Animated.View style={[styles.waveContainer, wave1Style]}>
+          <Svg height="220" width={windowWidth * 2} style={styles.wave}>
+            <Path
+              d={`M0,15 
+                 C${windowWidth*0.2},35 ${windowWidth*0.4},5 ${windowWidth*0.6},20 
+                 C${windowWidth*0.8},35 ${windowWidth},10 ${windowWidth*1.2},25 
+                 C${windowWidth*1.4},40 ${windowWidth*1.6},15 ${windowWidth*1.8},20 
+                 C${windowWidth*1.9},15 ${windowWidth*2},20 ${windowWidth*2},25 
+                 L${windowWidth*2},220 L0,220 Z`}
+              fill={`${color}90`}
+            />
+          </Svg>
+        </Animated.View>
+        
+        <Animated.View style={[styles.waveContainer, wave2Style]}>
+          <Svg height="220" width={windowWidth * 2} style={styles.wave}>
+            <Path
+              d={`M0,25 
+                 C${windowWidth*0.25},5 ${windowWidth*0.35},30 ${windowWidth*0.5},15 
+                 C${windowWidth*0.6},5 ${windowWidth*0.8},30 ${windowWidth},15 
+                 C${windowWidth*1.2},5 ${windowWidth*1.4},20 ${windowWidth*1.6},15 
+                 C${windowWidth*1.8},10 ${windowWidth*1.9},20 ${windowWidth*2},15 
+                 L${windowWidth*2},220 L0,220 Z`}
+              fill={`${color}60`}
+            />
+          </Svg>
+        </Animated.View>
+        
+        {/* Text overlay */}
+        {(text || icon) && (
+          <View style={styles.content}>
+            {text && (
+              <Text style={[
+                styles.text, 
+                { 
+                  fontFamily: theme.theme.typography.fontFamily.bold,
+                  color: theme.theme.colors.text,
+                  textShadowColor: theme.theme.dark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.6)',
+                }
+              ]}>
+                {text}
+              </Text>
+            )}
+            {icon}
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -143,13 +171,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.1)',
     borderRadius: 12,
   },
+  contentContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+  },
   waterContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    width: '100%',
-    overflow: 'hidden',
   },
   waterBackground: {
     position: 'absolute',
@@ -158,20 +190,13 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  wavesWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    top: 0,  // Wichtig: Die Wellen erstrecken sich über den gesamten Container
-    overflow: 'hidden',
-  },
   waveContainer: {
     position: 'absolute',
-    bottom: -5,  // Leicht nach unten versetzt, um Lücken zu vermeiden
-    left: 0,
     width: '100%',
-    height: 50,
+    height: 220, // Extrem vergrößerte Höhe für deutlich mehr sichtbare Wellen
+    left: 0,
+    bottom: -170, // Sehr viel tiefer positioniert für viel mehr sichtbare Wellen nach unten
+    zIndex: 5, // Über dem Wasserhintergrund aber unter dem Text
   },
   wave: {
     position: 'absolute',
@@ -191,10 +216,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#333',
-    textShadowColor: 'rgba(255,255,255,0.6)',
+    // Keine feste Farbdefinition hier, wird u00fcber den Style-Prop gesetzt
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowRadius: 2,
   },
 });
 

@@ -336,16 +336,17 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           </TouchableOpacity>
         </View>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, marginBottom: 8 }}>
           <TouchableOpacity
             style={{
               backgroundColor: "rgba(3, 169, 244, 0.2)",
               borderRadius: theme.theme.borderRadius.medium,
-              paddingVertical: 10,
+              paddingVertical: 16,
               paddingHorizontal: 16,
-              minWidth: 90,
+              width: 96,
               alignItems: 'center',
               justifyContent: 'center',
+              marginHorizontal: 8,
             }}
             onPress={() => addWater(100)}
             disabled={isUpdatingWater}
@@ -363,11 +364,12 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             style={{
               backgroundColor: "rgba(3, 169, 244, 0.2)",
               borderRadius: theme.theme.borderRadius.medium,
-              paddingVertical: 10,
+              paddingVertical: 16,
               paddingHorizontal: 16,
-              minWidth: 90,
+              width: 96,
               alignItems: 'center',
               justifyContent: 'center',
+              marginHorizontal: 8,
             }}
             onPress={() => addWater(250)}
             disabled={isUpdatingWater}
@@ -385,11 +387,12 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             style={{
               backgroundColor: "rgba(3, 169, 244, 0.2)",
               borderRadius: theme.theme.borderRadius.medium,
-              paddingVertical: 10,
+              paddingVertical: 16,
               paddingHorizontal: 16,
-              minWidth: 90,
+              width: 96,
               alignItems: 'center',
               justifyContent: 'center',
+              marginHorizontal: 8,
             }}
             onPress={() => addWater(500)}
             disabled={isUpdatingWater}
