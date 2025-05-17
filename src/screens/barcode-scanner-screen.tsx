@@ -18,7 +18,7 @@ import { FoodItem } from "../types";
 import { getFoodDataByBarcode, searchFoodByName } from "../services/barcode-service";
 import { useTheme } from "../theme/theme-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Camera, CameraView, FocusMode } from "expo-camera";
+import { Camera, CameraView } from "expo-camera";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -41,6 +41,7 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   const [lastScannedData, setLastScannedData] = useState<string>('');
   const [lastScannedType, setLastScannedType] = useState<string>('');
   const [isTorchOn, setIsTorchOn] = useState(false);
+  const [autofocus, setAutofocus] = useState<'on' | 'off'>('on');
 
   // Scanner-Steuerung
   const isScanningRef = useRef(false); // Ref statt State für sofortige Wirkung ohne Re-Rendering
@@ -50,6 +51,17 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === "granted");
     })();
+  }, []);
+
+  // Hilfsfunktion: schalte kurz aus…
+  const triggerFocus = () => {
+    setAutofocus('off');
+    setTimeout(() => setAutofocus('on'), 100); // nach 100 ms neu fokussieren
+  };
+
+  useEffect(() => {
+    const interval = setInterval(triggerFocus, 1000);
+    return () => clearInterval(interval);
   }, []);
   
   // Automatisches Reset des Scanners, wenn der Screen wieder fokussiert wird
@@ -222,34 +234,6 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
     isScanningRef.current = false;
   };
 
-  // Funktion zum manuellen Hinzufügen eines Lebensmittels
-  const handleManualAdd = () => {
-    try {
-      // Navigiere zum FoodDetail-Screen mit manualEntry-Flag
-      const parent = navigation.getParent();
-      if (parent) {
-        // Hier nutzen wir die Parent-Navigation, die korrekt typisiert ist
-        parent.navigate("FoodDetail", { 
-          mealType, 
-          manualEntry: true
-        });
-        console.log("Navigiere zum Food Detail Screen für manuelle Eingabe");
-        return;
-      }
-      
-      // Bei direkter Navigation müssen wir TypeScript-Fehler ignorieren da wir wissen,
-      // dass der Screen existiert
-      // @ts-ignore - Wir wissen, dass FoodDetail existiert
-      navigation.navigate("FoodDetail", {
-        mealType,
-        manualEntry: true
-      });
-    } catch (e) {
-      console.error("Navigation error:", e);
-      Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");
-    }
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       <KeyboardAvoidingView
@@ -294,7 +278,7 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
                   style={styles.preview}
                   facing="back"
                   enableTorch={isTorchOn}
-                  autofocus="on"
+                  autofocus={autofocus}
                   onCameraReady={() => console.log("📸 Camera ready")}
                   onMountError={(err) => console.error("❌ Camera error:", err)}
                   onBarcodeScanned={scanned || isScanningRef.current ? undefined : handleBarcodeScanned}
@@ -367,24 +351,6 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
           </View>
         )}
 
-        {/* Button zum manuellen Hinzufügen */}
-        <TouchableOpacity
-          style={[
-            styles.manualAddButton, 
-            { 
-              backgroundColor: theme.colors.primary,
-              marginVertical: 16,
-              marginHorizontal: 16,
-              borderRadius: theme.borderRadius.medium,
-            }
-          ]}
-          onPress={handleManualAdd}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-            Manuell hinzufügen
-          </Text>
-        </TouchableOpacity>
-
         {/* Suchergebnisse */}
         {searchResults.length > 0 && (
           <FlatList
@@ -406,7 +372,20 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
           />
         )}
 
-        {/* Hier war ein doppelter Button, den wir entfernt haben */}
+        {/* Manueller Eintrag */}
+        <TouchableOpacity
+          style={[styles.manualEntryButton, { borderColor: theme.colors.border }]}
+          onPress={() => {
+            try {
+              navigation.getParent()?.navigate("FoodDetail", { mealType });
+            } catch (e) {
+              console.error("Navigation error:", e);
+              Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");
+            }
+          }}
+        >
+          <Text style={{ color: theme.colors.text }}>Manuell eingeben</Text>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </View>
   );
@@ -416,15 +395,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16 },
   content: { flex: 1 },
   instructionText: { fontSize: 16, textAlign: "center", marginVertical: 12 },
-  manualAddButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    shadowOffset: { width: 0, height: 1 },
-  },
   tabContainer: { flexDirection: "row", marginBottom: 12 },
   tabButton: {
     flex: 1,

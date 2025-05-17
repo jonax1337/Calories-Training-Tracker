@@ -258,7 +258,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             {foodItem?.nutrition && (
               <NutritionalInfoCard
               nutrition={foodItem.nutrition}
-              servingMultiplier={parseFloat(servings) / foodItem.nutrition.servingSizeGrams}
+              servingMultiplier={parseFloat(servings) / 100} /* Korrigiert: Immer durch 100 teilen, da Nährwerte pro 100g/ml gespeichert sind */
             />
             )}
 
