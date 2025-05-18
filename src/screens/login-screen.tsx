@@ -40,12 +40,6 @@ const LoginScreen = () => {
         // The NavigationContent component will detect the auth change and switch to AppStack
         setIsLoading(false);
         setError(null);
-        // Force app reload to refresh navigation state
-        setTimeout(() => {
-          // This timeout is just to give the user visual feedback that login succeeded
-          // The navigation will happen automatically when the app detects the auth token
-          alert('Login erfolgreich!');
-        }, 500);
         return; // Exit early to prevent further setError calls
       } else {
         setError('Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.');

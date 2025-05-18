@@ -150,6 +150,21 @@ exports.saveDailyLog = async (req, res) => {
     
     const { date, foodEntries, waterIntake, dailyNotes, userId } = req.body;
     
+    // Log the received data for debugging
+    console.log('Saving daily log with water intake:', waterIntake);
+    console.log('Date received from client:', date);
+    
+    // Ensure waterIntake is a valid number
+    const sanitizedWaterIntake = typeof waterIntake === 'number' ? Math.max(0, waterIntake) : 0;
+    
+    // Normalize the date format to ensure consistency (YYYY-MM-DD)
+    let normalizedDate = date;
+    if (date && date.includes('T')) {
+      // Remove any time component if present
+      normalizedDate = date.split('T')[0];
+    }
+    console.log('Normalized date for DB query:', normalizedDate);
+    
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
     }
@@ -157,7 +172,7 @@ exports.saveDailyLog = async (req, res) => {
     // Check if log exists for this date and user
     const [existingLogs] = await connection.query(
       'SELECT id FROM daily_logs WHERE date = ? AND user_id = ?',
-      [date, userId]
+      [normalizedDate, userId]
     );
     
     let logId;
@@ -167,8 +182,10 @@ exports.saveDailyLog = async (req, res) => {
       logId = existingLogs[0].id;
       await connection.query(
         'UPDATE daily_logs SET water_intake = ?, daily_notes = ? WHERE id = ?',
-        [waterIntake, dailyNotes, logId]
+        [sanitizedWaterIntake, dailyNotes, logId]
       );
+      
+      console.log(`Updated daily log ${logId} with water intake: ${sanitizedWaterIntake}ml`);
       
       // Delete existing food entries for this log
       await connection.query(
@@ -179,8 +196,10 @@ exports.saveDailyLog = async (req, res) => {
       // Create new log
       const [result] = await connection.query(
         'INSERT INTO daily_logs (date, user_id, water_intake, daily_notes) VALUES (?, ?, ?, ?)',
-        [date, userId, waterIntake, dailyNotes]
+        [normalizedDate, userId, sanitizedWaterIntake, dailyNotes]
       );
+      
+      console.log(`Created new daily log for date ${normalizedDate} with water intake: ${sanitizedWaterIntake}ml`);
       
       logId = result.insertId;
     }

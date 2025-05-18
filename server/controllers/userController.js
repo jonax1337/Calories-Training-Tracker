@@ -53,6 +53,13 @@ exports.saveUserProfile = async (req, res) => {
     
     if (existingUser.length > 0) {
       // Update existing user
+      // Format birthDate to YYYY-MM-DD format (MySQL format)
+      let formattedBirthDate = birthDate;
+      if (birthDate && birthDate.includes('T')) {
+        // If ISO format, extract just the date part 
+        formattedBirthDate = birthDate.split('T')[0];
+      }
+      
       await pool.query(
         `UPDATE users SET 
         name = ?, birth_date = ?, age = ?, weight = ?, height = ?, 
@@ -60,7 +67,7 @@ exports.saveUserProfile = async (req, res) => {
         daily_carbs = ?, daily_fat = ?, daily_water = ?, weight_goal = ? 
         WHERE id = ?`,
         [
-          name, birthDate, age, weight, height, gender, activityLevel,
+          name, formattedBirthDate, age, weight, height, gender, activityLevel,
           goals.dailyCalories, goals.dailyProtein, goals.dailyCarbs,
           goals.dailyFat, goals.dailyWater, goals.weightGoal, id
         ]

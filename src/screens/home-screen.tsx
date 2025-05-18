@@ -161,17 +161,29 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     
     setIsUpdatingWater(true);
     try {
+      // Ensure waterIntake is a number (may be null or undefined)
+      const currentIntake = todayLog.waterIntake || 0;
+      
+      // Make sure the date is in the correct format (YYYY-MM-DD)
+      const formattedDate = today;
+      console.log(`Using date format for water update: ${formattedDate}`);
+      
       // Aktualisiere lokalen State
       const updatedLog = {
         ...todayLog,
-        waterIntake: todayLog.waterIntake + amount
+        date: formattedDate, // Ensure consistent date format
+        waterIntake: currentIntake + amount
       };
       
+      console.log(`Adding water: ${amount}ml. New total: ${updatedLog.waterIntake}ml`);
+      
+      // Update local state first
       setTodayLog(updatedLog);
+      
+      // Then save to server
       await saveDailyLog(updatedLog);
       
       // Animation wird automatisch durch Änderung des Prozentwerts ausgelöst
-      // Optionale Toast/Feedback-Nachricht könnte hier hinzugefügt werden
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Wasserverbrauchs:', error);
     } finally {
@@ -184,17 +196,25 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     if (!todayLog) return;
     
     // Sicherstellen, dass der Wert nicht negativ ist
-    const newAmount = Math.max(0, amount);
+    const newAmount = Math.max(0, Math.round(amount));
     
     setIsUpdatingWater(true);
     try {
+      // Make sure the date is in the correct format (YYYY-MM-DD)
+      const formattedDate = today;
+      console.log(`Setting water intake to: ${newAmount}ml using date: ${formattedDate}`);
+      
       // Aktualisiere lokalen State
       const updatedLog = {
         ...todayLog,
+        date: formattedDate, // Ensure consistent date format
         waterIntake: newAmount
       };
       
+      // Update local state first
       setTodayLog(updatedLog);
+      
+      // Then save to server
       await saveDailyLog(updatedLog);
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Wasserverbrauchs:', error);

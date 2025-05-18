@@ -11,7 +11,7 @@ import {
   fetchFavoriteFoodIds,
   toggleFavoriteFood as apiToggleFavoriteFood
 } from './api-service';
-import { getCurrentUserId } from './auth-service';
+import { getCurrentUserId, isAuthenticated } from './auth-service';
 
 // Default ID for fallback
 const DEFAULT_USER_ID = 'default_user_id';
@@ -39,6 +39,13 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
 
 export async function getUserProfile(): Promise<UserProfile | null> {
   try {
+    // Check if user is authenticated first
+    const isUserAuthenticated = await isAuthenticated();
+    if (!isUserAuthenticated) {
+      // Don't make API calls if not authenticated
+      return null;
+    }
+    
     // Get the authenticated user ID or use default
     const userId = await getCurrentUserId() || DEFAULT_USER_ID;
     
@@ -106,6 +113,13 @@ export async function getDailyLogs(): Promise<DailyLog[]> {
 
 export async function getDailyLogByDate(date: string): Promise<DailyLog> {
   try {
+    // Check if user is authenticated first
+    const isUserAuthenticated = await isAuthenticated();
+    if (!isUserAuthenticated) {
+      // Return empty log without making API calls if not authenticated
+      return createEmptyDailyLog(date, DEFAULT_USER_ID);
+    }
+    
     // Get the authenticated user ID or use default
     const userId = await getCurrentUserId() || DEFAULT_USER_ID;
     
@@ -117,7 +131,10 @@ export async function getDailyLogByDate(date: string): Promise<DailyLog> {
     } catch (error: any) { // Type the error as any to access response property
       // If log doesn't exist (404), return a default empty log instead of null
       if (error.response && error.response.status === 404) {
-        console.log(`Creating default empty log for ${date}`);
+        // Only log this for authenticated users to avoid noise during logout
+        if (isUserAuthenticated) {
+          console.log(`Creating default empty log for ${date}`);
+        }
         // Create an empty daily log with required fields
         return createEmptyDailyLog(date, userId);
       }

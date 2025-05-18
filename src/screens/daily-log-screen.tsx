@@ -50,7 +50,8 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
           const newLog: DailyLog = {
             date,
             foodEntries: [],
-            waterIntake: 0
+            waterIntake: 0,
+            dailyNotes: ''
           };
           setDailyLog(newLog);
           await saveDailyLog(newLog);
@@ -477,47 +478,6 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                 Fette
               </Text>
             </View>
-          </View>
-        </View>
-
-        {/* Water tracking */}
-        <View style={[styles.waterCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
-          <View style={styles.waterHeader}>
-            <Text style={[styles.waterTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-              Wasser
-            </Text>
-            <Text style={[styles.waterValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
-              {dailyLog?.waterIntake || 0} ml
-            </Text>
-          </View>
-          
-          <View style={styles.waterButtons}>
-            <TouchableOpacity 
-              style={[styles.waterButton, { backgroundColor: theme.colors.primaryLight, borderRadius: theme.borderRadius.small }]} 
-              onPress={() => handleAddWater(100)}
-            >
-              <Text style={[styles.waterButtonText, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }]}>
-                +100ml
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.waterButton, { backgroundColor: theme.colors.primaryLight, borderRadius: theme.borderRadius.small }]} 
-              onPress={() => handleAddWater(250)}
-            >
-              <Text style={[styles.waterButtonText, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }]}>
-                +250ml
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.waterButton, { backgroundColor: theme.colors.primaryLight, borderRadius: theme.borderRadius.small }]} 
-              onPress={() => handleAddWater(500)}
-            >
-              <Text style={[styles.waterButtonText, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }]}>
-                +500ml
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
 
