@@ -56,11 +56,11 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   // Hilfsfunktion: schalte kurz aus…
   const triggerFocus = () => {
     setAutofocus('off');
-    setTimeout(() => setAutofocus('on'), 100); // nach 100 ms neu fokussieren
+    setTimeout(() => setAutofocus('on'), 150); // nach 100 ms neu fokussieren
   };
 
   useEffect(() => {
-    const interval = setInterval(triggerFocus, 1000);
+    const interval = setInterval(triggerFocus, 2000);
     return () => clearInterval(interval);
   }, []);
   
@@ -240,7 +240,10 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.content}
       >
-        <Text style={[styles.instructionText, { color: theme.colors.textLight }]}>
+        <Text style={[styles.instructionText, { 
+          color: theme.colors.text, 
+          fontFamily: theme.typography.fontFamily.medium 
+        }]}>
           Barcode scannen oder Produktname suchen
         </Text>
 
@@ -258,8 +261,14 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
               <Text style={[
                 styles.tabButtonText,
                 activeTab === tab
-                  ? { color: theme.colors.primary, fontWeight: "bold" }
-                  : { color: theme.colors.text }
+                  ? { 
+                      color: theme.colors.primary, 
+                      fontFamily: theme.typography.fontFamily.bold 
+                    }
+                  : { 
+                      color: theme.colors.text, 
+                      fontFamily: theme.typography.fontFamily.regular 
+                    }
               ]}>
                 {tab === "barcode" ? "Barcode" : "Produktname"}
               </Text>
@@ -300,14 +309,14 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
                   }}
                   videoStabilizationMode="off"
                 />
-                <View style={[styles.overlay, { borderColor: theme.colors.primary }]} />
+                <View style={{ borderColor: theme.colors.primary }} />
 
                 {/* Taschenlampen-Button */}
                 <TouchableOpacity
                   style={[styles.torchButton, { backgroundColor: isTorchOn ? theme.colors.primary : 'rgba(0,0,0,0.5)' }]}
                   onPress={() => setIsTorchOn(prev => !prev)}
                 >
-                  <Text style={{ color: 'white', fontSize: 12 }}>
+                  <Text style={{ color: 'white', fontSize: 16, fontFamily: theme.typography.fontFamily.bold }}>
                     {isTorchOn ? '🔦' : '🔦'}
                   </Text>
                 </TouchableOpacity>
@@ -331,7 +340,7 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
               onPress={handleSearchByName}
               disabled={isLoading}
             >
-              <Text style={{ color: "white", fontWeight: "bold" }}>Suchen</Text>
+              <Text style={{ color: "white", fontFamily: theme.typography.fontFamily.bold }}>Suchen</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -340,7 +349,7 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
         {isLoading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={{ color: theme.colors.text }}>Bitte warten…</Text>
+            <Text style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.regular }}>Bitte warten…</Text>
           </View>
         )}
 
@@ -362,9 +371,9 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
                 style={[styles.resultItem, { backgroundColor: theme.colors.card }]}
                 onPress={() => handleSelectProduct(item)}
               >
-                <Text style={{ fontWeight: "bold", color: theme.colors.text }}>{item.name}</Text>
-                {item.brand && <Text style={{ color: theme.colors.textLight }}>{item.brand}</Text>}
-                <Text style={{ color: theme.colors.textLight }}>
+                <Text style={{ fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }}>{item.name}</Text>
+                {item.brand && <Text style={{ color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}>{item.brand}</Text>}
+                <Text style={{ color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}>
                   {Math.round(item.nutrition.calories)} kcal/100g
                 </Text>
               </TouchableOpacity>
@@ -384,7 +393,7 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
             }
           }}
         >
-          <Text style={{ color: theme.colors.text }}>Manuell eingeben</Text>
+          <Text style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.medium }}>Manuell eingeben</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </View>
@@ -394,11 +403,11 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16 },
   content: { flex: 1 },
-  instructionText: { fontSize: 16, textAlign: "center", marginVertical: 12 },
-  tabContainer: { flexDirection: "row", marginBottom: 12 },
+  instructionText: { fontSize: 16, textAlign: "center", marginVertical: 16 },
+  tabContainer: { flexDirection: "row", marginBottom: 16 },
   tabButton: {
     flex: 1,
-    padding: 10,
+    padding: 16,
     alignItems: "center",
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
@@ -408,7 +417,7 @@ const styles = StyleSheet.create({
   scannerContainer: { alignItems: "center", marginBottom: 24 },
   previewWrapper: {
     width: SCREEN_WIDTH * 0.9,
-    height: 300,
+    height: 320, // Anpassung auf ein Vielfaches von 8
     overflow: "hidden",
   },
   preview: {
@@ -433,13 +442,15 @@ const styles = StyleSheet.create({
   debugText: { color: "white", fontSize: 12, textAlign: "center" },
   torchButton: {
     position: "absolute",
-    bottom: 12,
+    bottom: 16,
     left: "50%",
-    transform: [{ translateX: -30 }],
+    transform: [{ translateX: -32 }],
     padding: 8,
-    borderRadius: 20,
-    width: 60,
+    borderRadius: 24,
+    width: 64,
+    height: 64,
     alignItems: "center",
+    justifyContent: "center",
     zIndex: 999,
   },
   rescanButton: {
@@ -450,20 +461,20 @@ const styles = StyleSheet.create({
   inputContainer: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
   barcodeInput: {
     flex: 1,
-    height: 48,
+    height: 56,
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     marginRight: 8,
   },
   submitButton: {
-    height: 48,
+    height: 56,
     paddingHorizontal: 16,
     justifyContent: "center",
     borderRadius: 8,
   },
   loadingContainer: { alignItems: "center", marginVertical: 24 },
-  errorContainer: { marginVertical: 16, padding: 12, borderRadius: 8 },
+  errorContainer: { marginVertical: 16, padding: 16, borderRadius: 8 },
   resultsContainer: { flex: 1 },
   resultItem: { padding: 16, marginBottom: 8, borderRadius: 8 },
   manualEntryButton: {
