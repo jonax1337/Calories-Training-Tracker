@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
-import { AppNavigation } from './src/navigation';
+import AppNavigation from './src/navigation';
 import { useEffect } from 'react';
 import { configureHealthKitForIOS, configureGoogleFitForAndroid } from './src/services/health-service';
 import { Platform } from 'react-native';

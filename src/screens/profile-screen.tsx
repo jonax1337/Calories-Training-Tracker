@@ -18,6 +18,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   const [profile, setProfile] = useState<UserProfile>({
     id: 'user_1',
     name: '',
+  
     goals: {
       dailyCalories: 2000,
       dailyProtein: 50,
@@ -486,27 +487,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         >
           Persönliche Daten und Fitnessprofile
         </Text>
-      
-      {/* Name */}
-      <View style={styles.inputContainer}>
-        <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-          Name
-        </Text>
-        <TextInput
-          style={[styles.textInput, { 
-            fontFamily: theme.typography.fontFamily.regular, 
-            color: theme.colors.text,
-            backgroundColor: theme.colors.card,
-            borderColor: theme.colors.border,
-            borderRadius: theme.borderRadius.medium
-          }]}
-          value={profile.name}
-          onChangeText={(value) => handleTextChange('name', value)}
-          placeholder="Name"
-          placeholderTextColor={theme.colors.placeholder}
-        />
-      </View>
-      
+
       {/* Birth Date (statt Alter) */}
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 

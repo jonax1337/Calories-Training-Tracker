@@ -5,7 +5,7 @@ import { DailyLog, FoodItem, UserProfile } from '../types';
 // Use the actual IP address or hostname of your server, not localhost
 // localhost only works when testing in a web browser on the same machine as the server
 // For mobile devices, you need to use your computer's IP address or hostname
-const API_BASE_URL = 'http://192.168.178.32:3001/api';
+export const API_BASE_URL = 'http://192.168.178.32:3001';
 
 // Create axios instance
 const api = axios.create({
@@ -18,7 +18,7 @@ const api = axios.create({
 // User profile functions
 export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   try {
-    const response = await api.get(`/users/${userId}`);
+    const response = await api.get(`/api/users/${userId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -28,7 +28,7 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
 
 export async function createOrUpdateUserProfile(profile: UserProfile): Promise<boolean> {
   try {
-    await api.post('/users', profile);
+    await api.post('/api/users', profile);
     return true;
   } catch (error) {
     console.error('Error saving user profile:', error);
@@ -39,7 +39,7 @@ export async function createOrUpdateUserProfile(profile: UserProfile): Promise<b
 // Food items functions
 export async function fetchFoodItems(): Promise<FoodItem[]> {
   try {
-    const response = await api.get('/food-items');
+    const response = await api.get('/api/food-items');
     return response.data;
   } catch (error) {
     console.error('Error fetching food items:', error);
@@ -49,7 +49,7 @@ export async function fetchFoodItems(): Promise<FoodItem[]> {
 
 export async function fetchFoodItemById(id: string): Promise<FoodItem | null> {
   try {
-    const response = await api.get(`/food-items/${id}`);
+    const response = await api.get(`/api/food-items/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching food item:', error);
@@ -80,7 +80,7 @@ export async function deleteFoodItem(id: string): Promise<boolean> {
 // Daily logs functions
 export async function fetchDailyLogs(userId: string): Promise<DailyLog[]> {
   try {
-    const response = await api.get('/daily-logs', {
+    const response = await api.get('/api/daily-logs', {
       params: { userId }
     });
     return response.data;
@@ -92,19 +92,23 @@ export async function fetchDailyLogs(userId: string): Promise<DailyLog[]> {
 
 export async function fetchDailyLogByDate(date: string, userId: string): Promise<DailyLog | null> {
   try {
-    const response = await api.get(`/daily-logs/${date}`, {
+    const response = await api.get(`/api/daily-logs/${date}`, {
       params: { userId }
     });
     return response.data;
-  } catch (error) {
-    console.error('Error fetching daily log:', error);
-    return null;
+  } catch (error: any) {
+    // Don't log 404 errors as they're expected for new users with no logs
+    if (!error.response || error.response.status !== 404) {
+      console.error('Error fetching daily log:', error);
+    }
+    // Let the calling function handle the error
+    throw error;
   }
 }
 
 export async function createOrUpdateDailyLog(log: DailyLog, userId: string): Promise<boolean> {
   try {
-    await api.post('/daily-logs', { ...log, userId });
+    await api.post('/api/daily-logs', { ...log, userId });
     return true;
   } catch (error) {
     console.error('Error saving daily log:', error);
@@ -115,7 +119,7 @@ export async function createOrUpdateDailyLog(log: DailyLog, userId: string): Pro
 // Favorite foods functions
 export async function fetchFavoriteFoodIds(userId: string): Promise<string[]> {
   try {
-    const response = await api.get('/favorites', {
+    const response = await api.get('/api/favorites', {
       params: { userId }
     });
     return response.data;
@@ -127,7 +131,7 @@ export async function fetchFavoriteFoodIds(userId: string): Promise<string[]> {
 
 export async function toggleFavoriteFood(userId: string, foodId: string): Promise<boolean> {
   try {
-    const response = await api.post('/favorites/toggle', { userId, foodId });
+    const response = await api.post('/api/favorites/toggle', { userId, foodId });
     return response.data.isFavorite;
   } catch (error) {
     console.error('Error toggling favorite food:', error);

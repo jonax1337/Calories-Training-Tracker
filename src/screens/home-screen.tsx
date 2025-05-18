@@ -10,6 +10,22 @@ import { useTheme } from '../theme/theme-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// Helper function to check if user profile is complete with minimum required data
+function isProfileComplete(profile: UserProfile | null): boolean {
+  if (!profile) return false;
+  
+  // Check required fields for properly tracking calories and health
+  return (
+    profile.weight !== undefined && 
+    profile.weight > 0 &&
+    profile.height !== undefined && 
+    profile.height > 0 &&
+    profile.gender !== undefined &&
+    profile.birthDate !== undefined &&
+    profile.activityLevel !== undefined
+  );
+}
+
 export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets(); // Get safe area insets
@@ -214,6 +230,70 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         userProfile?.weight
       )
     : 0;
+
+  // Check if profile is complete - if not, show a message directing to profile screen
+  if (!isProfileComplete(userProfile)) {
+    return (
+      <View style={[styles.container, { 
+        backgroundColor: theme.theme.colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20 
+      }]}>
+        <View style={{
+          backgroundColor: theme.theme.colors.card,
+          borderRadius: 16,
+          padding: 24,
+          width: '100%',
+          alignItems: 'center',
+          shadowColor: theme.theme.colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <Ionicons name="person-circle-outline" size={80} color={theme.theme.colors.primary} style={{ marginBottom: 20 }} />
+          <Text style={{
+            fontFamily: theme.theme.typography.fontFamily.bold,
+            fontSize: 22,
+            color: theme.theme.colors.text,
+            textAlign: 'center',
+            marginBottom: 12
+          }}>
+            Profil vervollständigen
+          </Text>
+          <Text style={{
+            fontFamily: theme.theme.typography.fontFamily.regular,
+            fontSize: 16,
+            color: theme.theme.colors.secondary,
+            textAlign: 'center',
+            marginBottom: 24
+          }}>
+            Bitte vervollständige dein Profil, um deine Kalorien und Aktivitäten richtig zu verfolgen.
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.theme.colors.primary,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+              borderRadius: 8,
+              width: '100%',
+              alignItems: 'center'
+            }}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Text style={{
+              fontFamily: theme.theme.typography.fontFamily.medium,
+              fontSize: 16,
+              color: '#fff'
+            }}>
+              Zum Profil
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.theme.colors.background }]}>
@@ -464,7 +544,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               fontSize: 24,
               color: theme.theme.colors.text
             }}>
-              {currentWeight !== undefined ? `${currentWeight.toFixed(1)} kg` : '-'}
+              {(currentWeight !== undefined && currentWeight !== null) ? `${currentWeight.toFixed(1)} kg` : '-'}
             </Text>
           </View>
           

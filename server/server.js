@@ -7,6 +7,7 @@ require('dotenv').config();
 const { initServer } = require('./utils/initServer');
 
 // Import routes
+const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const foodItemsRoutes = require('./routes/foodItems');
 const dailyLogsRoutes = require('./routes/dailyLogs');
@@ -27,6 +28,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Use routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/food-items', foodItemsRoutes);
 app.use('/api/daily-logs', dailyLogsRoutes);

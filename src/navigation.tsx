@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -12,6 +12,12 @@ import BarcodeScannerScreen from './screens/barcode-scanner-screen';
 import DailyLogScreen from './screens/daily-log-screen';
 import SettingsScreen from './screens/settings-screen';
 import FoodDetailScreen from './screens/food-detail-screen';
+import LoginScreen from './screens/login-screen';
+import RegisterScreen from './screens/register-screen';
+
+// Auth service
+import { isAuthenticated } from './services/auth-service';
+import { resetAuthState } from './services/reset-auth';
 
 // Importiere Navigationstypen
 import { 
@@ -29,7 +35,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Define the combined navigator param list types
 export type RootStackParamList = {
-  // Stack screens
+  // Auth screens
+  Login: undefined;
+  Register: undefined;
+  // Main app screens
   TabNavigator: undefined;
   BarcodeScanner: { mealType?: string };
   FoodDetail: { barcode?: string; foodId?: string; mealType?: string; foodItem?: any };
@@ -123,14 +132,39 @@ function TabNavigator() {
   );
 }
 
-// Main Navigation Component with Theme Loading
-function NavigationContent() {
-  const { theme, isThemeLoaded, isFontLoaded } = useTheme();
+// Auth Stack Navigator (Login & Register screens)
+function AuthStack() {
+  const { theme } = useTheme();
   
-  // Show loading screen until theme and fonts are loaded
-  if (!isThemeLoaded || !isFontLoaded) {
-    return <LoadingScreen message="App wird geladen..." />;
-  }
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.primary,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontFamily: theme.typography.fontFamily.bold,
+        },
+      }}
+    >
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{ title: 'Registrieren' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Main App Stack Navigator (Protected routes)
+function AppStack() {
+  const { theme } = useTheme();
   
   return (
     <Stack.Navigator 
@@ -203,13 +237,48 @@ function NavigationContent() {
   );
 }
 
+// Main Navigation Component with Authentication Flow
+function NavigationContent() {
+  const { theme, isThemeLoaded, isFontLoaded } = useTheme();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  
+  // Check authentication status on mount and periodically
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Comment out the next line when you don't want to force logout on app start
+      // await resetAuthState();
+      
+      const authStatus = await isAuthenticated();
+      setIsLoggedIn(authStatus);
+    };
+    
+    // Initial check
+    checkAuth();
+    
+    // Set up interval to check auth status every 2 seconds
+    // This helps detect when the user has logged in via the login/register screens
+    const authCheckInterval = setInterval(checkAuth, 2000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(authCheckInterval);
+  }, []);
+  
+  // Show loading screen until theme, fonts, and auth state are loaded
+  if (!isThemeLoaded || !isFontLoaded || isLoggedIn === null) {
+    return <LoadingScreen message="App wird geladen..." />;
+  }
+  
+  // Return either Auth Stack or App Stack based on login status
+  return isLoggedIn ? <AppStack /> : <AuthStack />;
+}
+
 // App Navigation Component
-export function AppNavigation() {
+export default function AppNavigation() {
   return (
-    <ThemeProvider>
-      <NavigationContainer>
+    <NavigationContainer>
+      <ThemeProvider>
         <NavigationContent />
-      </NavigationContainer>
-    </ThemeProvider>
+      </ThemeProvider>
+    </NavigationContainer>
   );
 }

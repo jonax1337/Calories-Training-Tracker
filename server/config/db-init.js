@@ -4,10 +4,12 @@ async function initializeDatabase() {
   try {
     const connection = await pool.getConnection();
     
-    // Create users table
+    // Create users table with authentication fields
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(36) PRIMARY KEY,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         birth_date DATE,
         age INT,
@@ -15,7 +17,7 @@ async function initializeDatabase() {
         height FLOAT,
         gender ENUM('male', 'female', 'divers'),
         activity_level ENUM('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'),
-        daily_calories INT NOT NULL,
+        daily_calories INT,
         daily_protein FLOAT,
         daily_carbs FLOAT,
         daily_fat FLOAT,
