@@ -32,10 +32,7 @@ export async function requestHealthPermissions(): Promise<boolean> {
  * Fetches the latest health data from the device.
  * @returns A promise that resolves to the latest health data
  */
-export async function fetchHealthData(): Promise<HealthData> {
-  // In a real app, implement API calls to HealthKit or Google Fit here
-  console.log('Fetching health data...');
-  
+export async function fetchHealthData(): Promise<HealthData> {  
   // Simulate fetching data by returning mock data with some random variations
   mockHealthData = {
     steps: Math.floor(1000 + Math.random() * 9000), // Random steps between 1000-10000

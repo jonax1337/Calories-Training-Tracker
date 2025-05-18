@@ -69,7 +69,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     loadUserData();
 
     // Set up a refresh interval
-    const refreshInterval = setInterval(loadUserData, 30000); // Refresh every 30 seconds
+    const refreshInterval = setInterval(loadUserData, 1000); // Refresh every second
 
     // Clean up interval on unmount
     return () => clearInterval(refreshInterval);

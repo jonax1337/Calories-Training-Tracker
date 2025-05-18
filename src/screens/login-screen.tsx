@@ -72,25 +72,63 @@ const LoginScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.primary }]}>Calories Tracker</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.text }]}>Melden Sie sich an, um Ihre Ernährung zu verfolgen</Text>
+          <Text style={{
+            fontSize: 32,
+            color: theme.colors.primary,
+            marginBottom: theme.spacing.m,
+            fontFamily: theme.typography.fontFamily.bold,
+            textAlign: 'center'
+          }}>
+            Calories Tracker
+          </Text>
+          <Text style={{
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.secondary,
+            marginBottom: theme.spacing.xl,
+            fontFamily: theme.typography.fontFamily.regular,
+            textAlign: 'center'
+          }}>
+            Melden Sie sich an, um Ihre Ernährung zu verfolgen
+          </Text>
         </View>
 
         {error && (
-          <View style={[styles.errorContainer, { backgroundColor: theme.colors.error + '20' }]}>
-            <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
+          <View style={{
+            backgroundColor: `${theme.colors.errorLight}`,
+            padding: theme.spacing.m,
+            borderRadius: theme.borderRadius.medium,
+            marginBottom: theme.spacing.m
+          }}>
+            <Text style={{
+              color: theme.colors.error,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              {error}
+            </Text>
           </View>
         )}
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>E-Mail</Text>
+        <View style={{ paddingHorizontal: theme.spacing.m }}>
+          <View style={{ marginBottom: theme.spacing.l }}>
+            <Text style={{
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.text,
+              marginBottom: theme.spacing.xs,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              E-Mail
+            </Text>
             <TextInput
-              style={[styles.input, { 
+              style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border
-              }]}
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
+                fontSize: theme.typography.fontSize.m,
+                fontFamily: theme.typography.fontFamily.regular
+              }}
               value={email}
               onChangeText={setEmail}
               placeholder="Ihre E-Mail-Adresse"
@@ -101,14 +139,26 @@ const LoginScreen = () => {
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Passwort</Text>
+          <View style={{ marginBottom: theme.spacing.xl }}>
+            <Text style={{
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.text,
+              marginBottom: theme.spacing.xs,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              Passwort
+            </Text>
             <TextInput
-              style={[styles.input, { 
+              style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border
-              }]}
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
+                fontSize: theme.typography.fontSize.m,
+                fontFamily: theme.typography.fontFamily.regular
+              }}
               value={password}
               onChangeText={setPassword}
               placeholder="Ihr Passwort"
@@ -118,21 +168,48 @@ const LoginScreen = () => {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: theme.colors.primary }]}
+            style={{
+              backgroundColor: theme.colors.primary,
+              paddingVertical: theme.spacing.m,
+              borderRadius: theme.borderRadius.medium,
+              alignItems: 'center',
+              marginBottom: theme.spacing.l,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 2
+            }}
             onPress={handleLogin}
             disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: theme.typography.fontSize.m,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
               {isLoading ? 'Anmeldung läuft...' : 'Anmelden'}
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.registerContainer}>
-            <Text style={[styles.registerText, { color: theme.colors.text }]}>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: theme.spacing.m
+          }}>
+            <Text style={{
+              color: theme.colors.text,
+              fontFamily: theme.typography.fontFamily.regular,
+              marginRight: theme.spacing.xs
+            }}>
               Noch kein Konto?
             </Text>
             <TouchableOpacity onPress={navigateToRegister}>
-              <Text style={[styles.registerLink, { color: theme.colors.primary }]}>
+              <Text style={{
+                color: theme.colors.primary,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
                 Jetzt registrieren
               </Text>
             </TouchableOpacity>

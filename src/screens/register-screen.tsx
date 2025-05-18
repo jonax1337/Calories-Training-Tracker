@@ -102,26 +102,65 @@ const RegisterScreen = () => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.primary }]}>Neues Konto erstellen</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.text }]}>Registrieren Sie sich, um Ihre Ernährung zu verfolgen</Text>
+        <View style={{ alignItems: 'center', marginBottom: theme.spacing.l }}>
+          <Text style={{
+            fontSize: 28,
+            color: theme.colors.primary,
+            marginBottom: theme.spacing.m,
+            fontFamily: theme.typography.fontFamily.bold,
+            textAlign: 'center'
+          }}>
+            Neues Konto erstellen
+          </Text>
+          <Text style={{
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.secondary,
+            marginBottom: theme.spacing.m,
+            fontFamily: theme.typography.fontFamily.regular,
+            textAlign: 'center'
+          }}>
+            Registrieren Sie sich, um Ihre Ernährung zu verfolgen
+          </Text>
         </View>
 
         {error && (
-          <View style={[styles.errorContainer, { backgroundColor: theme.colors.error + '20' }]}>
-            <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
+          <View style={{
+            backgroundColor: `${theme.colors.errorLight}`,
+            padding: theme.spacing.m,
+            borderRadius: theme.borderRadius.medium,
+            marginHorizontal: theme.spacing.m,
+            marginBottom: theme.spacing.m
+          }}>
+            <Text style={{
+              color: theme.colors.error,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              {error}
+            </Text>
           </View>
         )}
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Name</Text>
+        <View style={{ paddingHorizontal: theme.spacing.m }}>
+          <View style={{ marginBottom: theme.spacing.l }}>
+            <Text style={{
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.text,
+              marginBottom: theme.spacing.xs,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              Name
+            </Text>
             <TextInput
-              style={[styles.input, { 
+              style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border
-              }]}
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
+                fontSize: theme.typography.fontSize.m,
+                fontFamily: theme.typography.fontFamily.regular
+              }}
               value={name}
               onChangeText={setName}
               placeholder="Ihr vollständiger Name"
@@ -130,14 +169,26 @@ const RegisterScreen = () => {
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>E-Mail</Text>
+          <View style={{ marginBottom: theme.spacing.l }}>
+            <Text style={{
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.text,
+              marginBottom: theme.spacing.xs,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              E-Mail
+            </Text>
             <TextInput
-              style={[styles.input, { 
+              style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border
-              }]}
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
+                fontSize: theme.typography.fontSize.m,
+                fontFamily: theme.typography.fontFamily.regular
+              }}
               value={email}
               onChangeText={setEmail}
               placeholder="Ihre E-Mail-Adresse"
@@ -148,30 +199,54 @@ const RegisterScreen = () => {
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Passwort</Text>
+          <View style={{ marginBottom: theme.spacing.l }}>
+            <Text style={{
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.text,
+              marginBottom: theme.spacing.xs,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              Passwort
+            </Text>
             <TextInput
-              style={[styles.input, { 
+              style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border
-              }]}
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
+                fontSize: theme.typography.fontSize.m,
+                fontFamily: theme.typography.fontFamily.regular
+              }}
               value={password}
               onChangeText={setPassword}
-              placeholder="Passwort erstellen"
+              placeholder="Ihr Passwort"
               placeholderTextColor={theme.colors.disabled}
               secureTextEntry
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Passwort bestätigen</Text>
+          <View style={{ marginBottom: theme.spacing.l }}>
+            <Text style={{
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.text,
+              marginBottom: theme.spacing.xs,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              Passwort bestätigen
+            </Text>
             <TextInput
-              style={[styles.input, { 
+              style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border
-              }]}
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
+                fontSize: theme.typography.fontSize.m,
+                fontFamily: theme.typography.fontFamily.regular
+              }}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               placeholder="Passwort wiederholen"
@@ -180,20 +255,35 @@ const RegisterScreen = () => {
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Geburtsdatum</Text>
-            <TouchableOpacity 
-              onPress={showDatePickerModal}
-              style={[styles.input, { 
+          <View style={{ marginBottom: theme.spacing.xl }}>
+            <Text style={{
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.text,
+              marginBottom: theme.spacing.xs,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
+              Geburtsdatum
+            </Text>
+            <TouchableOpacity
+              style={{
                 backgroundColor: theme.colors.card,
                 borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.borderRadius.medium,
+                padding: theme.spacing.m,
                 justifyContent: 'center'
-              }]}
+              }}
+              onPress={showDatePickerModal}
             >
-              <Text style={{ color: birthDate ? theme.colors.text : theme.colors.disabled }}>
+              <Text style={{
+                color: birthDate ? theme.colors.text : theme.colors.disabled,
+                fontSize: theme.typography.fontSize.m,
+                fontFamily: theme.typography.fontFamily.regular
+              }}>
                 {birthDate ? birthDate.toLocaleDateString() : 'Geburtsdatum auswählen'}
               </Text>
             </TouchableOpacity>
+            
             {showDatePicker && (
               <DateTimePicker
                 value={birthDate || new Date()}
@@ -201,27 +291,54 @@ const RegisterScreen = () => {
                 display="default"
                 onChange={handleDateChange}
                 maximumDate={new Date()}
-                minimumDate={new Date(1900, 0, 1)}
               />
             )}
           </View>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: theme.colors.primary }]}
+            style={{
+              backgroundColor: theme.colors.primary,
+              paddingVertical: theme.spacing.m,
+              borderRadius: theme.borderRadius.medium,
+              alignItems: 'center',
+              marginBottom: theme.spacing.l,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 2
+            }}
             onPress={handleRegister}
             disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: theme.typography.fontSize.m,
+              fontFamily: theme.typography.fontFamily.medium
+            }}>
               {isLoading ? 'Registrierung läuft...' : 'Registrieren'}
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.loginContainer}>
-            <Text style={[styles.loginText, { color: theme.colors.text }]}>
-              Bereits ein Konto?
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: theme.spacing.m,
+            marginBottom: theme.spacing.xl
+          }}>
+            <Text style={{
+              color: theme.colors.text,
+              fontFamily: theme.typography.fontFamily.regular,
+              marginRight: theme.spacing.xs
+            }}>
+              Bereits registriert?
             </Text>
             <TouchableOpacity onPress={navigateToLogin}>
-              <Text style={[styles.loginLink, { color: theme.colors.primary }]}>
+              <Text style={{
+                color: theme.colors.primary,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
                 Jetzt anmelden
               </Text>
             </TouchableOpacity>

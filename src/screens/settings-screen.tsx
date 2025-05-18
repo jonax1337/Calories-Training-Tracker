@@ -1,16 +1,46 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useTheme } from '../theme/theme-context';
 import { ThemeType } from '../theme/theme-types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { logout } from '../services/auth-service';
 
 type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { theme, themeType, setTheme } = useTheme();
   const insets = useSafeAreaInsets(); // Safe Area Insets für Notch und Navigation Bar
+
+  // Handle user logout
+  const handleLogout = async () => {
+    Alert.alert(
+      'Abmelden',
+      'Möchten Sie sich wirklich abmelden?',
+      [
+        {
+          text: 'Abbrechen',
+          style: 'cancel',
+        },
+        {
+          text: 'Abmelden',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await logout();
+            if (success) {
+              // The app will automatically navigate to the login screen
+              // because of the auth check in NavigationContent
+              console.log('User logged out successfully');
+            } else {
+              Alert.alert('Fehler', 'Beim Abmelden ist ein Fehler aufgetreten.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   // Theme options
   const themeOptions: Array<{ type: ThemeType; label: string; description: string }> = [
@@ -213,6 +243,47 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           Entwickelt mit React Native und Expo
         </Text>
       </View>
+
+      <Text 
+        style={[
+          styles.sectionTitle, 
+          { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.bold,
+            fontSize: theme.typography.fontSize.xl,
+            marginTop: theme.spacing.l,
+            marginBottom: theme.spacing.m,
+          }
+        ]}
+      >
+        Konto
+      </Text>
+
+      <TouchableOpacity
+        style={{
+          backgroundColor: theme.colors.errorLight,
+          padding: theme.spacing.m,
+          borderRadius: theme.borderRadius.medium,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: theme.spacing.l,
+          shadowColor: theme.colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+          elevation: 2
+        }}
+        onPress={handleLogout}
+      >
+        <Text style={{
+          color: theme.colors.error,
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m,
+        }}>
+          Abmelden
+        </Text>
+      </TouchableOpacity>
+      
       </ScrollView>
     </View>
   );
