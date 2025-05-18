@@ -77,8 +77,15 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   
   // Aktualisiert das Geburtsdatum im Profil
   const updateBirthDate = (date: Date) => {
-    // ISO-Format: YYYY-MM-DD
-    const formattedDate = date.toISOString().split('T')[0];
+    // Create a date string in YYYY-MM-DD format that preserves the exact date
+    // without timezone shifts
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
+    console.log(`Selected date: ${date.toDateString()}, formatted as: ${formattedDate}`);
+    
     const age = calculateAge(date);
     
     // Aktualisiere sowohl Geburtsdatum als auch Alter im Profil
@@ -267,7 +274,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       console.log('Saving profile data...');
       
       // Geburtsdatum aufbereiten und Alter berechnen
-      const formattedDate = birthDate.toISOString().split('T')[0]; // YYYY-MM-DD Format
+      // Create a timezone-safe date string in YYYY-MM-DD format
+      const year = birthDate.getFullYear();
+      const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+      const day = String(birthDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      console.log(`Birth date being saved: ${birthDate.toDateString()}, formatted as: ${formattedDate}`);
+      
       const calculatedAge = calculateAge(birthDate);
       
       // Profil mit den aktuellen Werten aktualisieren

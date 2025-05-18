@@ -59,7 +59,9 @@ export async function fetchFoodItemById(id: string): Promise<FoodItem | null> {
 
 export async function createOrUpdateFoodItem(item: FoodItem): Promise<boolean> {
   try {
-    await api.post('/food-items', item);
+    console.log('Saving food item to database:', item);
+    await api.post('/api/food-items', item);
+    console.log('Food item saved successfully');
     return true;
   } catch (error) {
     console.error('Error saving food item:', error);
@@ -69,7 +71,7 @@ export async function createOrUpdateFoodItem(item: FoodItem): Promise<boolean> {
 
 export async function deleteFoodItem(id: string): Promise<boolean> {
   try {
-    await api.delete(`/food-items/${id}`);
+    await api.delete(`/api/food-items/${id}`);
     return true;
   } catch (error) {
     console.error('Error deleting food item:', error);
@@ -108,7 +110,22 @@ export async function fetchDailyLogByDate(date: string, userId: string): Promise
 
 export async function createOrUpdateDailyLog(log: DailyLog, userId: string): Promise<boolean> {
   try {
-    await api.post('/api/daily-logs', { ...log, userId });
+    // Create a consistent date string that matches what we're using to fetch
+    const consistentDate = (typeof log.date === 'string') ? log.date : new Date(log.date).toISOString().split('T')[0];
+    
+    // Log the exact dates being used for debugging
+    console.log('Creating/updating daily log with date:', {
+      originalDate: log.date,
+      consistentDate: consistentDate,
+      userId: userId
+    });
+    
+    // Make the API call with the consistent date format
+    await api.post('/api/daily-logs', { 
+      ...log, 
+      date: consistentDate, // Use the formatted consistent date
+      userId 
+    });
     return true;
   } catch (error) {
     console.error('Error saving daily log:', error);

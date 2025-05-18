@@ -98,7 +98,7 @@ function TabNavigator() {
               iconName = focused ? 'home' : 'home-outline';
               break;
             case 'Journal':
-              iconName = focused ? 'journal' : 'journal-outline';
+              iconName = focused ? 'fast-food' : 'fast-food-outline';
               break;
             case 'Profile':
               iconName = focused ? 'person' : 'person-outline';

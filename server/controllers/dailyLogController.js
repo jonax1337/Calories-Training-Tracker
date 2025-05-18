@@ -91,8 +91,11 @@ exports.getDailyLogByDate = async (req, res) => {
     const log = logs[0];
     
     // Get food entries for this log
+    console.log(`Retrieving food entries for daily log ID ${log.id} (date ${date})`);
     const [entries] = await pool.query(
-      `SELECT fe.*, fi.* 
+      `SELECT fe.id as entry_id, fe.daily_log_id, fe.food_item_id, fe.serving_amount, fe.meal_type, fe.time_consumed,
+              fi.id as food_id, fi.name, fi.brand, fi.barcode, fi.calories, fi.protein, fi.carbs, fi.fat, 
+              fi.sugar, fi.fiber, fi.sodium, fi.serving_size, fi.serving_size_grams, fi.image
        FROM food_entries fe 
        JOIN food_items fi ON fe.food_item_id = fi.id 
        WHERE fe.daily_log_id = ? 
@@ -100,11 +103,16 @@ exports.getDailyLogByDate = async (req, res) => {
       [log.id]
     );
     
-    // Transform entries to app model
+    console.log(`Found ${entries.length} food entries for log ID ${log.id}`);
+    if (entries.length > 0) {
+      console.log('First entry sample:', JSON.stringify(entries[0], null, 2));
+    }
+    
+    // Transform entries to app model using the correct column aliases from our SQL query
     const foodEntries = entries.map(entry => ({
-      id: entry.id,
+      id: entry.entry_id, // Using the aliased column entry_id instead of id
       foodItem: {
-        id: entry.food_item_id,
+        id: entry.food_id, // Using the aliased food_id from our query
         name: entry.name,
         brand: entry.brand,
         barcode: entry.barcode,
@@ -150,9 +158,21 @@ exports.saveDailyLog = async (req, res) => {
     
     const { date, foodEntries, waterIntake, dailyNotes, userId } = req.body;
     
-    // Log the received data for debugging
+    // Enhanced logging for debugging the date mismatch issue
+    console.log('-------- DAILY LOG SAVING ---------');
+    console.log('Full request body:', JSON.stringify(req.body, null, 2));
     console.log('Saving daily log with water intake:', waterIntake);
     console.log('Date received from client:', date);
+    
+    if (date) {
+      const currentDate = new Date();
+      console.log('Current server time:', currentDate.toISOString());
+      console.log('Current server local date components:', {
+        year: currentDate.getFullYear(),
+        month: currentDate.getMonth() + 1,
+        day: currentDate.getDate()
+      });
+    }
     
     // Ensure waterIntake is a valid number
     const sanitizedWaterIntake = typeof waterIntake === 'number' ? Math.max(0, waterIntake) : 0;
@@ -163,7 +183,9 @@ exports.saveDailyLog = async (req, res) => {
       // Remove any time component if present
       normalizedDate = date.split('T')[0];
     }
+    
     console.log('Normalized date for DB query:', normalizedDate);
+    console.log('-------- END LOG SAVING INFO ---------');
     
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
@@ -207,6 +229,15 @@ exports.saveDailyLog = async (req, res) => {
     // Insert food entries
     if (foodEntries && foodEntries.length > 0) {
       for (const entry of foodEntries) {
+        // Format the timestamp to be MySQL compatible - converting from ISO format to MySQL format
+        let formattedTimeConsumed = entry.timeConsumed;
+        if (entry.timeConsumed && entry.timeConsumed.includes('T')) {
+          // Convert ISO timestamp to MySQL format (YYYY-MM-DD HH:MM:SS)
+          const date = new Date(entry.timeConsumed);
+          formattedTimeConsumed = date.toISOString().slice(0, 19).replace('T', ' ');
+          console.log(`Formatted time_consumed from ${entry.timeConsumed} to ${formattedTimeConsumed}`);
+        }
+
         await connection.query(
           `INSERT INTO food_entries (
             id, daily_log_id, food_item_id, serving_amount, meal_type, time_consumed
@@ -217,7 +248,7 @@ exports.saveDailyLog = async (req, res) => {
             entry.foodItem.id,
             entry.servingAmount,
             entry.mealType,
-            entry.timeConsumed
+            formattedTimeConsumed
           ]
         );
       }

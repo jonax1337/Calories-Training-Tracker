@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, ScrollView, ViewStyle, TextStyle } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, ScrollView, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { JournalTabScreenProps } from '../types/navigation-types';
@@ -7,6 +7,7 @@ import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   // Get theme from context
@@ -37,76 +38,142 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
       [mealType]: !prev[mealType]
     }));
   };
-  // Load daily log data
-  useEffect(() => {
-    const loadDailyLog = async () => {
-      setIsLoading(true);
-      try {
-        const log = await getDailyLogByDate(date);
-        if (log) {
-          setDailyLog(log);
-        } else {
-          // If no log exists for this date, create a new empty one
-          const newLog: DailyLog = {
-            date,
-            foodEntries: [],
-            waterIntake: 0,
-            dailyNotes: ''
-          };
-          setDailyLog(newLog);
-          await saveDailyLog(newLog);
-        }
-      } catch (error) {
-        console.error('Error loading daily log:', error);
-      } finally {
-        setIsLoading(false);
+  // Function to load daily log data
+  const loadDailyLog = useCallback(async () => {
+    console.log('Loading daily log data...');
+    setIsLoading(true);
+    try {
+      // CRITICAL: Ensure we use the same date format throughout the app
+      // Get local date from device in user's timezone
+      const now = new Date();
+      
+      // Force date to be calculated in local timezone by extracting components
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+      const day = String(now.getDate()).padStart(2, '0');
+      
+      // Build YYYY-MM-DD format consistently
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      // Extensive logging for debugging date issues
+      console.log('========== DAILY LOG DATE INFO ==========');
+      console.log(`Raw Date object: ${now}`);
+      console.log(`ISO string (UTC): ${now.toISOString()}`);
+      console.log(`Local date string: ${now.toLocaleDateString()}`);
+      console.log(`Local time string: ${now.toLocaleTimeString()}`);
+      console.log(`Timezone offset in minutes: ${now.getTimezoneOffset()}`);
+      console.log(`Local date components: Year=${year}, Month=${month}, Day=${day}`);
+      console.log(`Formatted date for API call: ${formattedDate}`);
+      console.log('==========================================');
+      const log = await getDailyLogByDate(formattedDate);
+      
+      if (log) {
+        console.log(`Loaded daily log with ${log.foodEntries.length} food entries`);
+        setDailyLog(log);
+      } else {
+        // If no log exists for this date, create a new empty one
+        console.log('No daily log found, creating a new one');
+        const newLog: DailyLog = {
+          date: formattedDate,
+          foodEntries: [],
+          waterIntake: 0,
+          dailyNotes: ''
+        };
+        setDailyLog(newLog);
+        await saveDailyLog(newLog);
       }
-    };
+    } catch (error) {
+      console.error('Error loading daily log:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
+  // Use useFocusEffect to reload data when the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadDailyLog();
+      // Return a cleanup function (optional)
+      return () => {
+        // Any cleanup code if needed
+      };
+    }, [loadDailyLog])
+  );
+
+  // Also load on initial mount
+  useEffect(() => {
     loadDailyLog();
-  }, [date]);
+  }, [loadDailyLog]);
 
   // Handle removing a food entry
   const handleRemoveEntry = async (entryId: string) => {
     Alert.alert(
-      'Remove Food Entry',
-      'Are you sure you want to remove this entry?',
+      'Eintrag entfernen',
+      'Möchtest du diesen Eintrag wirklich entfernen?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Abbrechen', style: 'cancel' },
         {
-          text: 'Remove',
+          text: 'Entfernen',
           style: 'destructive',
           onPress: async () => {
             if (!dailyLog) return;
+            
+            try {
+              // First update local state for immediate UI feedback
+              const updatedEntries = dailyLog.foodEntries.filter(
+                entry => entry.id !== entryId
+              );
 
-            const updatedEntries = dailyLog.foodEntries.filter(
-              entry => entry.id !== entryId
-            );
+              const updatedLog = {
+                ...dailyLog,
+                foodEntries: updatedEntries
+              };
 
-            const updatedLog = {
-              ...dailyLog,
-              foodEntries: updatedEntries
-            };
-
-            setDailyLog(updatedLog);
-            await saveDailyLog(updatedLog);
+              // Set the updated log in state
+              setDailyLog(updatedLog);
+              
+              // Save to database
+              console.log(`Removing food entry: ${entryId}`);
+              await saveDailyLog(updatedLog);
+              
+              // Reload data from database to ensure UI is up-to-date
+              console.log('Reloading daily log after removing entry');
+              await loadDailyLog();
+            } catch (error) {
+              console.error('Error removing food entry:', error);
+              Alert.alert('Fehler', 'Der Eintrag konnte nicht entfernt werden.');
+            }
           }
         }
       ]
     );
   };
 
-  // Handle adding water intake
+  // Handle adding water intake with debouncing
   const handleAddWater = async (amount: number) => {
     if (!dailyLog) return;
+    
+    try {
+      // First update local state for immediate UI feedback
+      const updatedLog = {
+        ...dailyLog,
+        waterIntake: Math.max(0, dailyLog.waterIntake + amount) // Ensure we don't go below 0
+      };
 
-    const updatedLog = {
-      ...dailyLog,
-      waterIntake: dailyLog.waterIntake + amount
-    };
-
-    setDailyLog(updatedLog);
-    await saveDailyLog(updatedLog);
+      // Set the updated log in state
+      setDailyLog(updatedLog);
+      
+      // Save to database
+      console.log(`Updating water intake by ${amount}ml, new total: ${updatedLog.waterIntake}ml`);
+      await saveDailyLog(updatedLog);
+      
+      // Reload data from database to ensure UI is up-to-date
+      console.log('Reloading daily log after updating water intake');
+      await loadDailyLog();
+    } catch (error) {
+      console.error('Error updating water intake:', error);
+      Alert.alert('Fehler', 'Die Wassermenge konnte nicht aktualisiert werden.');
+    }
   };
 
   // Funktion zum Öffnen der Food-Details eines Eintrags

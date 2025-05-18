@@ -132,10 +132,19 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         name: customName || foodItem.name,
       };
 
-      // Save the food item to storage
-      await saveFoodItem(updatedFoodItem);
+      console.log('Saving food item before adding to log:', JSON.stringify(updatedFoodItem));
+      
+      // STEP 1: Save the food item to storage - this is where errors happen
+      try {
+        await saveFoodItem(updatedFoodItem);
+        console.log('Food item saved successfully');
+      } catch (saveError) {
+        console.error('Failed to save food item:', saveError);
+        Alert.alert('Fehler beim Speichern', 'Das Lebensmittel konnte nicht in der Datenbank gespeichert werden.');
+        return;
+      }
 
-      // Create a food entry
+      // STEP 2: Create a food entry for the daily log
       const entry: FoodEntry = {
         id: generateSimpleId(),
         foodItem: updatedFoodItem,
@@ -144,24 +153,60 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         timeConsumed: new Date().toISOString(),
       };
       
-      // Aktuelles Datum im Format YYYY-MM-DD
-      const today = new Date().toISOString().split('T')[0];
+      // CRITICAL: Ensure we use the same date format as daily-log-screen.tsx
+      // Get local date from device in user's timezone
+      const now = new Date();
       
-      // Holen des aktuellen Daily Logs
-      const dailyLog = await getDailyLogByDate(today) || {
-        date: today,
-        foodEntries: [],
-        waterIntake: 0
-      };
+      // Force date to be calculated in local timezone by extracting components
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+      const day = String(now.getDate()).padStart(2, '0');
       
-      // Hinzufügen des neuen Eintrags
+      // Build YYYY-MM-DD format consistently
+      const today = `${year}-${month}-${day}`;
+      
+      // Extensive logging for debugging date issues
+      console.log('========== FOOD ENTRY DATE INFO ==========');
+      console.log(`Raw Date object: ${now}`);
+      console.log(`ISO string (UTC): ${now.toISOString()}`);
+      console.log(`Local date string: ${now.toLocaleDateString()}`);
+      console.log(`Local time string: ${now.toLocaleTimeString()}`);
+      console.log(`Timezone offset in minutes: ${now.getTimezoneOffset()}`);
+      console.log(`Local date components: Year=${year}, Month=${month}, Day=${day}`);
+      console.log(`Formatted date for daily log: ${today}`);
+      console.log('==========================================');
+      
+      // STEP 3: Get the current daily log
+      let dailyLog;
+      try {
+        dailyLog = await getDailyLogByDate(today);
+        console.log('Current daily log retrieved:', dailyLog ? 'found' : 'not found');
+      } catch (logError) {
+        console.error('Error getting daily log:', logError);
+        // Create a default log if one doesn't exist
+        dailyLog = {
+          date: today,
+          foodEntries: [],
+          waterIntake: 0,
+          dailyNotes: ''
+        };
+        console.log('Created default daily log');
+      }
+      
+      // STEP 4: Add the entry to the daily log
       dailyLog.foodEntries.push(entry);
+      console.log(`Added food entry ${entry.id} to daily log, now has ${dailyLog.foodEntries.length} entries`);
       
-      // Speichern des aktualisierten Logs
-      await saveDailyLog(dailyLog);
+      // STEP 5: Save the updated log
+      try {
+        await saveDailyLog(dailyLog);
+        console.log('Daily log saved successfully');
+      } catch (saveLogError) {
+        console.error('Error saving daily log:', saveLogError);
+        Alert.alert('Fehler beim Speichern', 'Der Tageseintrag konnte nicht gespeichert werden');
+        return;
+      }
       
-      console.log('Food entry added to daily log:', entry.id);
-
       // Show success message
       Alert.alert(
         'Erfolg',
@@ -175,8 +220,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         }]
       );
     } catch (err) {
-      console.error('Error adding food to log:', err);
-      Alert.alert('Fehler', 'Lebensmittel konnte nicht zum Tagebuch hinzugefügt werden');
+      console.error('Error in handleAddToLog:', err);
+      Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten beim Hinzufügen des Lebensmittels');
     }
   };
 
