@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { HomeTabScreenProps } from '../types/navigation-types';
+import { useFocusEffect } from '@react-navigation/native';
 import { getDailyLogByDate, getUserProfile, saveUserProfile, saveDailyLog } from '../services/storage-service';
 import { fetchHealthData, calculateTotalCaloriesBurned } from '../services/health-service';
 import ProgressBar from '../components/ui/progress-bar';
@@ -36,44 +37,50 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [currentWeight, setCurrentWeight] = useState<number | undefined>(undefined);
   const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
   const [isUpdatingWater, setIsUpdatingWater] = useState(false);
+  const [lastWaterUpdateTime, setLastWaterUpdateTime] = useState(0);
   const [showWaterModal, setShowWaterModal] = useState(false);
   const [manualWaterAmount, setManualWaterAmount] = useState('');
 
   // Format current date as ISO string date portion for today's log
   const today = new Date().toISOString().split('T')[0];
 
-  // Load user data when component mounts
+  // Create a function to load user data that can be called when needed
+  const loadUserData = async () => {
+    setIsLoading(true);
+    try {
+      // Load user profile
+      const profile = await getUserProfile();
+      setUserProfile(profile);
+      setCurrentWeight(profile?.weight);
+
+      // Load today's log
+      const log = await getDailyLogByDate(today);
+      setTodayLog(log);
+
+      // Load health data
+      const health = await fetchHealthData();
+      setHealthData(health);
+      
+      console.log('Data loaded successfully');
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load data when component mounts or date changes
   useEffect(() => {
-    const loadUserData = async () => {
-      setIsLoading(true);
-      try {
-        // Load user profile
-        const profile = await getUserProfile();
-        setUserProfile(profile);
-        setCurrentWeight(profile?.weight);
-
-        // Load today's log
-        const log = await getDailyLogByDate(today);
-        setTodayLog(log);
-
-        // Load health data
-        const health = await fetchHealthData();
-        setHealthData(health);
-      } catch (error) {
-        console.error('Error loading user data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadUserData();
-
-    // Set up a refresh interval
-    const refreshInterval = setInterval(loadUserData, 1000); // Refresh every second
-
-    // Clean up interval on unmount
-    return () => clearInterval(refreshInterval);
   }, [today]);
+  
+  // Load data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserData();
+      return () => {};
+    }, [today])
+  );
 
   // Calculate nutrition totals for today
   const calculateNutritionTotals = () => {
@@ -155,11 +162,23 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     }
   };
 
-  // Funktion zum Hinzufügen von Wasser
+  // Funktion zum Hinzufügen von Wasser mit Debouncing
   const addWater = async (amount: number) => {
+    // Skip if no log or already updating
     if (!todayLog) return;
     
+    // Implement debouncing - prevent updates too close together
+    const now = Date.now();
+    const minTimeBetweenUpdates = 500; // 500ms minimum between updates
+    
+    if (isUpdatingWater || (now - lastWaterUpdateTime < minTimeBetweenUpdates)) {
+      console.log('Skipping water update - too soon after previous update');
+      return;
+    }
+    
+    setLastWaterUpdateTime(now);
     setIsUpdatingWater(true);
+    
     try {
       // Ensure waterIntake is a number (may be null or undefined)
       const currentIntake = todayLog.waterIntake || 0;
@@ -183,6 +202,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       // Then save to server
       await saveDailyLog(updatedLog);
       
+      // Reload data to ensure everything is in sync
+      await loadUserData();
+      
       // Animation wird automatisch durch Änderung des Prozentwerts ausgelöst
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Wasserverbrauchs:', error);
@@ -191,14 +213,25 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     }
   };
 
-  // Funktion zum direkten Setzen des Wasserstands
+  // Funktion zum direkten Setzen des Wasserstands mit Debouncing
   const setWaterAmount = async (amount: number) => {
     if (!todayLog) return;
+    
+    // Implement debouncing - prevent updates too close together
+    const now = Date.now();
+    const minTimeBetweenUpdates = 10; // 500ms minimum between updates
+    
+    if (isUpdatingWater || (now - lastWaterUpdateTime < minTimeBetweenUpdates)) {
+      console.log('Skipping manual water update - too soon after previous update');
+      return;
+    }
     
     // Sicherstellen, dass der Wert nicht negativ ist
     const newAmount = Math.max(0, Math.round(amount));
     
+    setLastWaterUpdateTime(now);
     setIsUpdatingWater(true);
+    
     try {
       // Make sure the date is in the correct format (YYYY-MM-DD)
       const formattedDate = today;
@@ -216,6 +249,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       
       // Then save to server
       await saveDailyLog(updatedLog);
+      
+      // Reload data to ensure everything is in sync
+      await loadUserData();
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Wasserverbrauchs:', error);
     } finally {

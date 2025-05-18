@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform, Modal } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform, Modal, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect } from '@react-navigation/native';
 import { ProfileTabScreenProps } from '../types/navigation-types';
 import { ActivityLevel, UserProfile } from '../types';
 import { getUserProfile, saveUserProfile } from '../services/storage-service';
@@ -85,42 +86,54 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     handleTextChange('age', age.toString());
   };
 
-  // Load user profile and check health permissions
-  useEffect(() => {
-    const loadProfile = async () => {
-      setIsLoading(true);
-      try {
-        const savedProfile = await getUserProfile();
-        if (savedProfile) {
-          setProfile(savedProfile);
-          
-          // Initialisiere auch die Slider-Werte und das Geburtsdatum, wenn das Profil geladen wird
-          if (savedProfile.weight) setWeightSliderValue(savedProfile.weight);
-          if (savedProfile.height) setHeightSliderValue(savedProfile.height);
-          
-          // Wenn ein Geburtsdatum existiert, setze es; andernfalls berechne es aus dem Alter (wenn vorhanden)
-          if (savedProfile.birthDate) {
-            // Format YYYY-MM-DD
-            setBirthDate(new Date(savedProfile.birthDate));
-          } else if (savedProfile.age) {
-            // Setze ein ungefähres Geburtsdatum basierend auf dem vorhandenen Alter
-            const approximateBirthYear = new Date().getFullYear() - savedProfile.age;
-            setBirthDate(new Date(approximateBirthYear, 0, 1)); // 1. Januar des Geburtsjahres
-          }
+  // Create a function to load profile data that can be called when needed
+  const loadProfile = async () => {
+    setIsLoading(true);
+    try {
+      console.log('Loading profile data...');
+      const savedProfile = await getUserProfile();
+      if (savedProfile) {
+        setProfile(savedProfile);
+        
+        // Initialisiere auch die Slider-Werte und das Geburtsdatum, wenn das Profil geladen wird
+        if (savedProfile.weight) setWeightSliderValue(savedProfile.weight);
+        if (savedProfile.height) setHeightSliderValue(savedProfile.height);
+        
+        // Wenn ein Geburtsdatum existiert, setze es; andernfalls berechne es aus dem Alter (wenn vorhanden)
+        if (savedProfile.birthDate) {
+          // Format YYYY-MM-DD
+          setBirthDate(new Date(savedProfile.birthDate));
+        } else if (savedProfile.age) {
+          // Setze ein ungefähres Geburtsdatum basierend auf dem vorhandenen Alter
+          const approximateBirthYear = new Date().getFullYear() - savedProfile.age;
+          setBirthDate(new Date(approximateBirthYear, 0, 1)); // 1. Januar des Geburtsjahres
         }
         
-        // Check health permissions
-        const hasPermission = await requestHealthPermissions();
-        setHealthPermission(hasPermission);
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      } finally {
-        setIsLoading(false);
+        console.log('Profile data loaded successfully');
       }
-    };
+      
+      // Check health permissions
+      const hasPermission = await requestHealthPermissions();
+      setHealthPermission(hasPermission);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  // Load data when component mounts
+  useEffect(() => {
     loadProfile();
   }, []);
+  
+  // Load data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+      return () => {};
+    }, [])
+  );
   
   // Berechne und setze Ernährungsempfehlungen wenn alle benötigten Daten vorhanden sind
   useEffect(() => {
@@ -240,14 +253,18 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     }));
   };
 
-  // Handle saving profile
+  // Handle saving profile with improved error handling and data reload
   const handleSave = async () => {
+    setIsLoading(true);
     try {
       // Basic validation
       if (!profile.name) {
         Alert.alert('Error', 'Please enter your name');
+        setIsLoading(false);
         return;
       }
+      
+      console.log('Saving profile data...');
       
       // Geburtsdatum aufbereiten und Alter berechnen
       const formattedDate = birthDate.toISOString().split('T')[0]; // YYYY-MM-DD Format
@@ -260,7 +277,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         age: calculatedAge
       };
       
+      // Save profile to server
       await saveUserProfile(updatedProfile);
+      
+      // Reload profile data to ensure everything is in sync
+      await loadProfile();
+      
+      console.log('Profile saved and reloaded successfully');
       
       Alert.alert('Success', 'Profile saved successfully', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -268,6 +291,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     } catch (error) {
       console.error('Error saving profile:', error);
       Alert.alert('Error', 'Failed to save profile');
+    } finally {
+      setIsLoading(false);
     }
   };
 
