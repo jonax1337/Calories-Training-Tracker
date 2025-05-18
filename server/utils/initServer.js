@@ -1,5 +1,6 @@
 const { testConnection } = require('../config/db');
 const { initializeDatabase } = require('../config/db-init');
+const { initDefaultData } = require('./initDefaultData');
 
 async function initServer() {
   console.log('Initializing server...');
@@ -18,6 +19,14 @@ async function initServer() {
   if (!initialized) {
     console.error('Failed to initialize database schema. Please check the error logs.');
     process.exit(1);
+  }
+  
+  // Initialize default data if needed
+  try {
+    await initDefaultData();
+  } catch (error) {
+    console.error('Warning: Failed to initialize default data:', error);
+    // Continue server startup even if default data initialization fails
   }
   
   console.log('Server initialization completed successfully.');

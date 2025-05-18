@@ -2,7 +2,10 @@ import axios from 'axios';
 import { DailyLog, FoodItem, UserProfile } from '../types';
 
 // API configuration
-const API_BASE_URL = 'http://localhost:3001/api';
+// Use the actual IP address or hostname of your server, not localhost
+// localhost only works when testing in a web browser on the same machine as the server
+// For mobile devices, you need to use your computer's IP address or hostname
+const API_BASE_URL = 'http://192.168.178.32:3001/api';
 
 // Create axios instance
 const api = axios.create({
