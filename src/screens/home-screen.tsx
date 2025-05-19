@@ -12,6 +12,7 @@ import { useTheme } from '../theme/theme-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, getTodayFormatted } from '../utils/date-utils';
+import { useDateContext } from '../context/date-context';
 
 // Helper function to check if user profile is complete with minimum required data
 function isProfileComplete(profile: UserProfile | null): boolean {
@@ -43,8 +44,8 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [showWaterModal, setShowWaterModal] = useState(false);
   const [manualWaterAmount, setManualWaterAmount] = useState('');
   
-  // Use selected date state instead of hardcoded today's date
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayFormatted());
+  // Verwende den gemeinsamen DateContext statt lokalem State
+  const { selectedDate, setSelectedDate } = useDateContext();
 
   // Create a function to load user data that can be called when needed
   const loadUserData = async () => {

@@ -272,12 +272,17 @@ function NavigationContent() {
   return isLoggedIn ? <AppStack /> : <AuthStack />;
 }
 
+// Importiere DateProvider
+import { DateProvider } from './context/date-context';
+
 // App Navigation Component
 export default function AppNavigation() {
   return (
     <NavigationContainer>
       <ThemeProvider>
-        <NavigationContent />
+        <DateProvider>
+          <NavigationContent />
+        </DateProvider>
       </ThemeProvider>
     </NavigationContainer>
   );

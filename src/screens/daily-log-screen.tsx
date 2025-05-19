@@ -9,6 +9,7 @@ import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatToLocalISODate, formatDateForDisplay, getTodayFormatted } from '../utils/date-utils';
+import { useDateContext } from '../context/date-context';
 
 export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   // Get theme from context
@@ -16,8 +17,8 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   // Get safe area insets
   const insets = useSafeAreaInsets();
   
-  // In Tab navigation, we use today's date by default - use consistent date formatting
-  const date = getTodayFormatted();
+  // Verwende den gemeinsamen DateContext statt lokalem State
+  const { selectedDate, setSelectedDate } = useDateContext();
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -25,7 +26,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
 
   // Format the date for display using our utility function
-  const formattedDate = formatDateForDisplay(date);
+  const formattedDate = formatDateForDisplay(selectedDate);
 
   // Toggle expand/collapse state for meal sections
   const toggleMealAccordion = (mealType: string) => {
@@ -39,19 +40,15 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     console.log('Loading daily log data...');
     setIsLoading(true);
     try {
-      // Get today's date in local timezone using our standard utility
-      const formattedDate = getTodayFormatted();
-      
       // Log details for debugging purposes
-      console.log(`Loading daily log for date: ${formattedDate}`);
-      console.log(`Today formatted (local timezone): ${formattedDate}`);
+      console.log(`Loading daily log for date: ${selectedDate}`);
       
       // Get the current date object for timezone reference
       const now = new Date();
       console.log(`Current time in ISO format: ${now.toISOString()}`);
       console.log(`Local timezone offset: ${now.getTimezoneOffset()} minutes`);
 
-      const log = await getDailyLogByDate(formattedDate);
+      const log = await getDailyLogByDate(selectedDate);
       
       if (log) {
         console.log(`Loaded daily log with ${log.foodEntries.length} food entries`);
@@ -60,7 +57,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         // If no log exists for this date, create a new empty one
         console.log('No daily log found, creating a new one');
         const newLog: DailyLog = {
-          date: formattedDate,
+          date: selectedDate,
           foodEntries: [],
           waterIntake: 0,
           dailyNotes: ''
@@ -75,15 +72,12 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     }
   }, []);
 
-  // Use useFocusEffect to reload data when the screen comes into focus
+  // Use useFocusEffect to reload data when the screen comes into focus or when date changes
   useFocusEffect(
     useCallback(() => {
       loadDailyLog();
-      // Return a cleanup function (optional)
-      return () => {
-        // Any cleanup code if needed
-      };
-    }, [loadDailyLog])
+      return () => {};
+    }, [loadDailyLog, selectedDate])
   );
 
   // Also load on initial mount
@@ -479,9 +473,42 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
           elevation: 3,
         }
       ]}>
-        <Text style={[styles.dateHeader, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-          {formattedDate}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
+          <TouchableOpacity
+            onPress={() => {
+              const prevDate = new Date(selectedDate);
+              prevDate.setDate(prevDate.getDate() - 1);
+              setSelectedDate(formatToLocalISODate(prevDate));
+            }}
+          >
+            <Ionicons name="chevron-back" size={18} color={theme.colors.primary} />
+          </TouchableOpacity>
+          
+          <Text style={[
+            styles.dateHeader, 
+            { 
+              fontFamily: theme.typography.fontFamily.bold,
+              color: selectedDate === getTodayFormatted() ? theme.colors.primary : theme.colors.text
+            }
+          ]}>
+            {new Date(selectedDate).toLocaleDateString('de-DE', { 
+              weekday: 'long', 
+              day: 'numeric',
+              month: 'long', 
+              year: 'numeric'
+            })}
+          </Text>
+          
+          <TouchableOpacity
+            onPress={() => {
+              const nextDate = new Date(selectedDate);
+              nextDate.setDate(nextDate.getDate() + 1);
+              setSelectedDate(formatToLocalISODate(nextDate));
+            }}
+          >
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -1111,9 +1138,8 @@ const styles = StyleSheet.create<Styles>({
     flex: 1,
   },
   dateHeader: {
-    fontSize: 20, // Anpassung an die anderen Screens (wie headerText)
+    fontSize: 20,
     textAlign: 'center',
-    marginVertical: 8, // 1 Grid-Punkt (8px)
   },
   summaryCard: {
     padding: 16, // 2 Grid-Punkte (16px)
