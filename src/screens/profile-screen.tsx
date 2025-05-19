@@ -10,6 +10,7 @@ import { getUserProfile, saveUserProfile } from '../services/storage-service';
 import { requestHealthPermissions } from '../services/health-service';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { formatToLocalISODate, formatDateForDisplay, getLocalDateComponents } from '../utils/date-utils';
 
 function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // Get theme from context

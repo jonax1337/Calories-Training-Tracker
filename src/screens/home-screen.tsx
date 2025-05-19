@@ -6,10 +6,12 @@ import { getDailyLogByDate, getUserProfile, saveUserProfile, saveDailyLog } from
 import { fetchHealthData, calculateTotalCaloriesBurned } from '../services/health-service';
 import ProgressBar from '../components/ui/progress-bar';
 import WaveAnimation from '../components/ui/wave-animation';
+import DateSelector from '../components/ui/date-selector';
 import { DailyLog, HealthData, UserProfile } from '../types';
 import { useTheme } from '../theme/theme-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { formatToLocalISODate, getTodayFormatted } from '../utils/date-utils';
 
 // Helper function to check if user profile is complete with minimum required data
 function isProfileComplete(profile: UserProfile | null): boolean {
@@ -40,9 +42,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [lastWaterUpdateTime, setLastWaterUpdateTime] = useState(0);
   const [showWaterModal, setShowWaterModal] = useState(false);
   const [manualWaterAmount, setManualWaterAmount] = useState('');
-
-  // Format current date as ISO string date portion for today's log
-  const today = new Date().toISOString().split('T')[0];
+  
+  // Use selected date state instead of hardcoded today's date
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayFormatted());
 
   // Create a function to load user data that can be called when needed
   const loadUserData = async () => {
@@ -53,8 +55,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       setUserProfile(profile);
       setCurrentWeight(profile?.weight);
 
-      // Load today's log
-      const log = await getDailyLogByDate(today);
+      // Load the selected date's log
+      console.log(`Loading data for date: ${selectedDate}`);
+      const log = await getDailyLogByDate(selectedDate);
       setTodayLog(log);
 
       // Load health data
@@ -72,14 +75,14 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   // Load data when component mounts or date changes
   useEffect(() => {
     loadUserData();
-  }, [today]);
+  }, [selectedDate]);
   
   // Load data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       loadUserData();
       return () => {};
-    }, [today])
+    }, [selectedDate])
   );
 
   // Calculate nutrition totals for today
@@ -183,14 +186,13 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       // Ensure waterIntake is a number (may be null or undefined)
       const currentIntake = todayLog.waterIntake || 0;
       
-      // Make sure the date is in the correct format (YYYY-MM-DD)
-      const formattedDate = today;
-      console.log(`Using date format for water update: ${formattedDate}`);
+      // Use the selected date in the correct format (YYYY-MM-DD)
+      console.log(`Using date format for water update: ${selectedDate}`);
       
       // Aktualisiere lokalen State
       const updatedLog = {
         ...todayLog,
-        date: formattedDate, // Ensure consistent date format
+        date: selectedDate, // Ensure consistent date format
         waterIntake: currentIntake + amount
       };
       
@@ -233,14 +235,13 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     setIsUpdatingWater(true);
     
     try {
-      // Make sure the date is in the correct format (YYYY-MM-DD)
-      const formattedDate = today;
-      console.log(`Setting water intake to: ${newAmount}ml using date: ${formattedDate}`);
+      // Use the selected date in the correct format (YYYY-MM-DD)
+      console.log(`Setting water intake to: ${newAmount}ml using date: ${selectedDate}`);
       
       // Aktualisiere lokalen State
       const updatedLog = {
         ...todayLog,
-        date: formattedDate, // Ensure consistent date format
+        date: selectedDate, // Ensure consistent date format
         waterIntake: newAmount
       };
       

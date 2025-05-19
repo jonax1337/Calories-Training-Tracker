@@ -231,11 +231,36 @@ exports.saveDailyLog = async (req, res) => {
       for (const entry of foodEntries) {
         // Format the timestamp to be MySQL compatible - converting from ISO format to MySQL format
         let formattedTimeConsumed = entry.timeConsumed;
-        if (entry.timeConsumed && entry.timeConsumed.includes('T')) {
-          // Convert ISO timestamp to MySQL format (YYYY-MM-DD HH:MM:SS)
-          const date = new Date(entry.timeConsumed);
-          formattedTimeConsumed = date.toISOString().slice(0, 19).replace('T', ' ');
-          console.log(`Formatted time_consumed from ${entry.timeConsumed} to ${formattedTimeConsumed}`);
+        
+        try {
+          if (entry.timeConsumed) {
+            if (entry.timeConsumed.includes('T')) {
+              // Convert ISO timestamp to MySQL format (YYYY-MM-DD HH:MM:SS)
+              const date = new Date(entry.timeConsumed);
+              formattedTimeConsumed = date.toISOString().slice(0, 19).replace('T', ' ');
+              console.log(`Formatted time_consumed from ${entry.timeConsumed} to ${formattedTimeConsumed}`);
+            } else if (entry.timeConsumed.includes(' ')) {
+              // Already in MySQL format, use as is
+              formattedTimeConsumed = entry.timeConsumed;
+              console.log(`Time already in MySQL format: ${formattedTimeConsumed}`);
+            } else {
+              // Unknown format, use current time
+              const now = new Date();
+              formattedTimeConsumed = now.toISOString().slice(0, 19).replace('T', ' ');
+              console.log(`Unknown time format, using current time: ${formattedTimeConsumed}`);
+            }
+          } else {
+            // No time provided, use current time
+            const now = new Date();
+            formattedTimeConsumed = now.toISOString().slice(0, 19).replace('T', ' ');
+            console.log(`No time provided, using current time: ${formattedTimeConsumed}`);
+          }
+        } catch (timeError) {
+          // Handle any errors in date conversion
+          console.error('Error formatting time:', timeError);
+          const now = new Date();
+          formattedTimeConsumed = now.toISOString().slice(0, 19).replace('T', ' ');
+          console.log(`Error in time format, using current time: ${formattedTimeConsumed}`);
         }
 
         await connection.query(

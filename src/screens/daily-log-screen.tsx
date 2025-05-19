@@ -8,6 +8,7 @@ import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { formatToLocalISODate, formatDateForDisplay, getTodayFormatted } from '../utils/date-utils';
 
 export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   // Get theme from context
@@ -15,21 +16,16 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   // Get safe area insets
   const insets = useSafeAreaInsets();
   
-  // In Tab navigation, we use today's date by default
-  const date = new Date().toISOString().split('T')[0];
+  // In Tab navigation, we use today's date by default - use consistent date formatting
+  const date = getTodayFormatted();
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // State for tracking expanded meal sections
   const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
 
-  // Format the date for display
-  const formattedDate = new Date(date).toLocaleDateString('de-DE', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  // Format the date for display using our utility function
+  const formattedDate = formatDateForDisplay(date);
 
   // Toggle expand/collapse state for meal sections
   const toggleMealAccordion = (mealType: string) => {
@@ -43,28 +39,18 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     console.log('Loading daily log data...');
     setIsLoading(true);
     try {
-      // CRITICAL: Ensure we use the same date format throughout the app
-      // Get local date from device in user's timezone
+      // Get today's date in local timezone using our standard utility
+      const formattedDate = getTodayFormatted();
+      
+      // Log details for debugging purposes
+      console.log(`Loading daily log for date: ${formattedDate}`);
+      console.log(`Today formatted (local timezone): ${formattedDate}`);
+      
+      // Get the current date object for timezone reference
       const now = new Date();
-      
-      // Force date to be calculated in local timezone by extracting components
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-      const day = String(now.getDate()).padStart(2, '0');
-      
-      // Build YYYY-MM-DD format consistently
-      const formattedDate = `${year}-${month}-${day}`;
-      
-      // Extensive logging for debugging date issues
-      console.log('========== DAILY LOG DATE INFO ==========');
-      console.log(`Raw Date object: ${now}`);
-      console.log(`ISO string (UTC): ${now.toISOString()}`);
-      console.log(`Local date string: ${now.toLocaleDateString()}`);
-      console.log(`Local time string: ${now.toLocaleTimeString()}`);
-      console.log(`Timezone offset in minutes: ${now.getTimezoneOffset()}`);
-      console.log(`Local date components: Year=${year}, Month=${month}, Day=${day}`);
-      console.log(`Formatted date for API call: ${formattedDate}`);
-      console.log('==========================================');
+      console.log(`Current time in ISO format: ${now.toISOString()}`);
+      console.log(`Local timezone offset: ${now.getTimezoneOffset()} minutes`);
+
       const log = await getDailyLogByDate(formattedDate);
       
       if (log) {

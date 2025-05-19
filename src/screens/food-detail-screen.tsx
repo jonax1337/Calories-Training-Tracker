@@ -7,12 +7,11 @@ import { FoodItem, MealType, FoodEntry } from '../types';
 import NutritionalInfoCard from '../components/ui/nutritional-info-card';
 import { getFoodDataByBarcode } from '../services/barcode-service';
 import { saveFoodItem, getDailyLogByDate, saveDailyLog } from '../services/storage-service';
-// Eigene UUID-Generierung statt uuidv4, da es Probleme mit crypto.getRandomValues() gibt
-function generateSimpleId() {
-  return 'food_' + Date.now().toString() + '_' + Math.random().toString(36).substring(2, 11);
-}
+import generateSimpleId from '../utils/id-generator';
+import { formatToLocalISODate, getTodayFormatted, dateToMySQLDateTime } from '../utils/date-utils';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DateSelector from '../components/ui/date-selector';
 
 type FoodDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'FoodDetail'>;
 
@@ -36,6 +35,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   
   const [customName, setCustomName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  
+  // Add state for the selected date (default to today)
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayFormatted());
 
   // Load food data when component mounts or create empty food item for manual entry
   useEffect(() => {
@@ -153,39 +155,27 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         timeConsumed: new Date().toISOString(),
       };
       
-      // CRITICAL: Ensure we use the same date format as daily-log-screen.tsx
-      // Get local date from device in user's timezone
+      // Use the selected date instead of today for the daily log
+      console.log(`Using selected date for daily log: ${selectedDate}`);
+      
+      // Format the entry time for MySQL compatibility
       const now = new Date();
+      const mysqlCompatibleTime = dateToMySQLDateTime(now);
+      console.log(`Created food entry at: ${mysqlCompatibleTime} (local time)`);
       
-      // Force date to be calculated in local timezone by extracting components
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-      const day = String(now.getDate()).padStart(2, '0');
+      // Update the entry's time to use MySQL compatible format
+      entry.timeConsumed = now.toISOString();
       
-      // Build YYYY-MM-DD format consistently
-      const today = `${year}-${month}-${day}`;
-      
-      // Extensive logging for debugging date issues
-      console.log('========== FOOD ENTRY DATE INFO ==========');
-      console.log(`Raw Date object: ${now}`);
-      console.log(`ISO string (UTC): ${now.toISOString()}`);
-      console.log(`Local date string: ${now.toLocaleDateString()}`);
-      console.log(`Local time string: ${now.toLocaleTimeString()}`);
-      console.log(`Timezone offset in minutes: ${now.getTimezoneOffset()}`);
-      console.log(`Local date components: Year=${year}, Month=${month}, Day=${day}`);
-      console.log(`Formatted date for daily log: ${today}`);
-      console.log('==========================================');
-      
-      // STEP 3: Get the current daily log
+      // STEP 3: Get the daily log for the selected date
       let dailyLog;
       try {
-        dailyLog = await getDailyLogByDate(today);
-        console.log('Current daily log retrieved:', dailyLog ? 'found' : 'not found');
+        dailyLog = await getDailyLogByDate(selectedDate);
+        console.log('Daily log retrieved for selected date:', dailyLog ? 'found' : 'not found');
       } catch (logError) {
         console.error('Error getting daily log:', logError);
         // Create a default log if one doesn't exist
         dailyLog = {
-          date: today,
+          date: selectedDate,
           foodEntries: [],
           waterIntake: 0,
           dailyNotes: ''
@@ -443,7 +433,42 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               </View>
             </View>
 
+            {/* Date selector */}
+            <Text style={[
+              styles.sectionTitle, 
+              { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium
+              }
+            ]}>Datum auswählen</Text>
+            <View style={{
+              marginBottom: theme.spacing.m,
+              marginTop: theme.spacing.xs
+            }}>
+              <DateSelector
+                date={selectedDate}
+                onDateChange={(newDate) => {
+                  console.log(`Selected date changed to: ${newDate}`);
+                  setSelectedDate(newDate);
+                }}
+                containerStyle={{
+                  backgroundColor: theme.colors.card,
+                  borderRadius: theme.borderRadius.medium,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  padding: theme.spacing.xs,
+                }}
+              />
+            </View>
+
             {/* Meal type selection */}
+            <Text style={[
+              styles.sectionTitle, 
+              { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium
+              }
+            ]}>Mahlzeit auswählen</Text>
             <View style={[styles.sectionContainer, { marginBottom: theme.spacing.l }]}>
               <Text style={[styles.sectionTitle, { 
                 color: theme.colors.text,
