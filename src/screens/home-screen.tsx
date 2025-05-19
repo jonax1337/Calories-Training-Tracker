@@ -378,7 +378,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               setSelectedDate(formatToLocalISODate(prevDate));
             }}
           >
-            <Ionicons name="chevron-back" size={18} color={theme.theme.colors.primary} />
+            <Ionicons name="chevron-back" size={24} color={theme.theme.colors.primary} />
           </TouchableOpacity>
           
           <Text style={[
@@ -403,7 +403,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               setSelectedDate(formatToLocalISODate(nextDate));
             }}
           >
-            <Ionicons name="chevron-forward" size={18} color={theme.theme.colors.primary} />
+            <Ionicons name="chevron-forward" size={24} color={theme.theme.colors.primary} />
           </TouchableOpacity>
         </View>
       </View>

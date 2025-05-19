@@ -496,8 +496,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       <ScrollView
         style={styles.scrollContent}
         contentContainerStyle={{
-          paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-          paddingBottom: 16 // 2 Grid-Punkte (16px)
+          padding: theme.spacing.m, // 2 Grid-Punkte (16px)
+          paddingBottom: 0
         }}
       >
         <Text 
@@ -1819,7 +1819,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 24, // 3 Grid-Punkte (24px)
+    marginTop: 0, // 3 Grid-Punkte (24px)
     marginBottom: 8, // 1 Grid-Punkt (8px)
   },
   sectionDescription: {

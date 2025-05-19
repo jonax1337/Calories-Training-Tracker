@@ -481,7 +481,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               setSelectedDate(formatToLocalISODate(prevDate));
             }}
           >
-            <Ionicons name="chevron-back" size={18} color={theme.colors.primary} />
+            <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
           </TouchableOpacity>
           
           <Text style={[
@@ -506,7 +506,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               setSelectedDate(formatToLocalISODate(nextDate));
             }}
           >
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+            <Ionicons name="chevron-forward" size={24} color={theme.colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
