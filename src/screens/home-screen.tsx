@@ -369,20 +369,42 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           elevation: 3,
         }
       ]}>
-        <Text style={[
-          styles.dateHeader, 
-          { 
-            fontFamily: theme.theme.typography.fontFamily.bold,
-            color: theme.theme.colors.text
-          }
-        ]}>
-          {new Date().toLocaleDateString('de-DE', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
+          <TouchableOpacity
+            onPress={() => {
+              const prevDate = new Date(selectedDate);
+              prevDate.setDate(prevDate.getDate() - 1);
+              setSelectedDate(formatToLocalISODate(prevDate));
+            }}
+          >
+            <Ionicons name="chevron-back" size={18} color={theme.theme.colors.primary} />
+          </TouchableOpacity>
+          
+          <Text style={[
+            styles.dateHeader, 
+            { 
+              fontFamily: theme.theme.typography.fontFamily.bold,
+              color: selectedDate === getTodayFormatted() ? theme.theme.colors.primary : theme.theme.colors.text
+            }
+          ]}>
+            {new Date(selectedDate).toLocaleDateString('de-DE', { 
+              weekday: 'long', 
+              day: 'numeric',
+              month: 'long', 
+              year: 'numeric'
+            })}
+          </Text>
+          
+          <TouchableOpacity
+            onPress={() => {
+              const nextDate = new Date(selectedDate);
+              nextDate.setDate(nextDate.getDate() + 1);
+              setSelectedDate(formatToLocalISODate(nextDate));
+            }}
+          >
+            <Ionicons name="chevron-forward" size={18} color={theme.theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -782,8 +804,7 @@ const styles = StyleSheet.create({
   },
   dateHeader: {
     fontSize: 20, // Anpassung an die anderen Screens (wie headerText)
-    textAlign: 'center',
-    marginVertical: 8, // 1 Grid-Punkt (8px)
+    textAlign: 'center'
   },
   summaryCard: {
     padding: 16,
