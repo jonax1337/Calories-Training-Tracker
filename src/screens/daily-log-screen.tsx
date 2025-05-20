@@ -11,8 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatToLocalISODate, formatDateForDisplay, getTodayFormatted } from '../utils/date-utils';
 import { useDateContext } from '../context/date-context';
-// Import des SwipeNavigationContainer
-import SwipeNavigationContainer from '../components/ui/swipe-navigation-container';
 
 export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   // Get theme from context
@@ -461,9 +459,8 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   };
 
   return (
-    <SwipeNavigationContainer currentTab="Journal">
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        {/* Sticky Header */}
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
         { 
@@ -1198,8 +1195,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
           )}
         </View>
       </ScrollView>
-      </View>
-    </SwipeNavigationContainer>
+    </View>
   );
 };
 
