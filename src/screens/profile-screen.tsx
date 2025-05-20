@@ -488,7 +488,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           elevation: 3,
         }
       ]}>
-        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
           Profil
         </Text>
       </View>

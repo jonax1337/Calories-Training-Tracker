@@ -150,7 +150,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           elevation: 3,
         }
       ]}>
-        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
           Einstellungen
         </Text>
       </View>
