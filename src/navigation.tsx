@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { NavigationContainer, useNavigationState } from '@react-navigation/native';
+import { View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Screen imports
 import HomeScreen from './screens/home-screen';
@@ -28,9 +27,6 @@ import {
   AddTabScreenProps,
   SettingsTabScreenProps
 } from './types/navigation-types';
-
-// Swipe Handler for Tab Navigation
-import SwipeHandler from './components/navigation/swipe-handler';
 
 // Theme provider
 import { ThemeProvider, useTheme } from './theme/theme-context';
@@ -66,25 +62,6 @@ export type TabParamList = {
 // Create navigators
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
-
-// Tab Screen wrappers that enable swipe navigation
-function HomeTabContent({ navigation, route }: HomeTabScreenProps) {
-  // Verwende 'as any' Cast, um TypeScript-Fehler zu vermeiden
-  // Zur Laufzeit sind die Navigation-Objekte kompatibel
-  return <SwipeHandler currentTab="Home"><HomeScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
-}
-
-function JournalTabContent({ navigation, route }: JournalTabScreenProps) {
-  return <SwipeHandler currentTab="Journal"><DailyLogScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
-}
-
-function ProfileTabContent({ navigation, route }: ProfileTabScreenProps) {
-  return <SwipeHandler currentTab="Profile"><ProfileScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
-}
-
-function SettingsTabContent({ navigation, route }: SettingsTabScreenProps) {
-  return <SwipeHandler currentTab="Settings"><SettingsScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
-}
 
 // Bottom Tab Navigator
 function TabNavigator() {
@@ -137,19 +114,19 @@ function TabNavigator() {
     >
       <Tab.Screen 
         name="Home" 
-        component={HomeTabContent} 
+        component={HomeScreen} 
       />
       <Tab.Screen 
         name="Journal" 
-        component={JournalTabContent} 
+        component={DailyLogScreen as React.ComponentType<any>} 
       />
       <Tab.Screen 
         name="Profile" 
-        component={ProfileTabContent} 
+        component={ProfileScreen} 
       />
       <Tab.Screen 
         name="Settings" 
-        component={SettingsTabContent} 
+        component={SettingsScreen} 
       />
     </Tab.Navigator>
   );
@@ -216,58 +193,45 @@ function AppStack() {
           
           if (mealType) {
             const mealEmojis = {
-              breakfast: 'ud83eudd95',
-              lunch: 'ud83cudf5d',
-              dinner: 'ud83cudf72',
-              snack: 'ud83cudf6a'
+              breakfast: '🥞',
+              lunch: '🍝',
+              dinner: '🍲',
+              snack: '🍪'
             };
             
-            const mealNames = {
-              breakfast: 'Fru00fchstu00fcck',
+            const mealLabels = {
+              breakfast: 'Frühstück',
               lunch: 'Mittagessen',
               dinner: 'Abendessen',
               snack: 'Snack'
             };
             
             const emoji = mealEmojis[mealType as keyof typeof mealEmojis] || '';
-            const mealName = mealNames[mealType as keyof typeof mealNames] || mealType;
+            const label = mealLabels[mealType as keyof typeof mealLabels] || '';
             
-            title = `${emoji} ${mealName} hinzufu00fcgen`;
+            title = `${emoji} ${label} hinzufügen`;
           }
           
           return { 
             title,
-            headerBackTitle: 'Zuru00fcck'
+            animation: 'slide_from_bottom'
           };
         }} 
       />
       <Stack.Screen 
         name="FoodDetail" 
-        component={FoodDetailScreen as React.ComponentType<any>} 
-        options={({ route }) => ({
-          title: route.params?.foodItem ? route.params.foodItem.name : 'Nahrungsmittel-Details',
-          headerBackTitle: 'Zuru00fcck'
-        })}
+        component={FoodDetailScreen} 
+        options={{ title: 'Lebensmittel-Details' }} 
       />
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen as React.ComponentType<any>}
-        options={{ headerShown: false }}
+      <Stack.Screen 
+        name="DailyLog" 
+        component={DailyLogScreen as React.ComponentType<any>} 
+        options={{ title: 'Tagesbericht', animation: 'slide_from_right' }} 
       />
-      <Stack.Screen
-        name="Profile"
-        component={ProfileScreen as React.ComponentType<any>}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Journal"
-        component={DailyLogScreen as React.ComponentType<any>}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Settings"
-        component={SettingsScreen as React.ComponentType<any>}
-        options={{ headerShown: false }}
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen} 
+        options={{ title: 'Einstellungen' }} 
       />
     </Stack.Navigator>
   );
@@ -275,33 +239,36 @@ function AppStack() {
 
 // Main Navigation Component with Authentication Flow
 function NavigationContent() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Check if user is authenticated when component mounts
+  const { theme, isThemeLoaded, isFontLoaded } = useTheme();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  
+  // Check authentication status on mount and periodically
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const authenticated = await isAuthenticated();
-        setIsLoggedIn(authenticated);
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        setIsLoggedIn(false);
-      } finally {
-        setIsLoading(false);
-      }
+      // Comment out the next line when you don't want to force logout on app start
+      // await resetAuthState();
+      
+      const authStatus = await isAuthenticated();
+      setIsLoggedIn(authStatus);
     };
-
+    
+    // Initial check
     checkAuth();
     
-    // Only for development: Reset auth state if needed
-    // resetAuthState().then(() => console.log('Auth state reset for development'));
+    // Set up interval to check auth status every 2 seconds
+    // This helps detect when the user has logged in via the login/register screens
+    const authCheckInterval = setInterval(checkAuth, 2000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(authCheckInterval);
   }, []);
-
-  if (isLoading) {
-    return <LoadingScreen />;
+  
+  // Show loading screen until theme, fonts, and auth state are loaded
+  if (!isThemeLoaded || !isFontLoaded || isLoggedIn === null) {
+    return <LoadingScreen message="App wird geladen..." />;
   }
-
+  
+  // Return either Auth Stack or App Stack based on login status
   return isLoggedIn ? <AppStack /> : <AuthStack />;
 }
 
@@ -311,14 +278,12 @@ import { DateProvider } from './context/date-context';
 // App Navigation Component
 export default function AppNavigation() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <NavigationContainer>
       <ThemeProvider>
         <DateProvider>
-          <NavigationContainer>
-            <NavigationContent />
-          </NavigationContainer>
+          <NavigationContent />
         </DateProvider>
       </ThemeProvider>
-    </GestureHandlerRootView>
+    </NavigationContainer>
   );
 }

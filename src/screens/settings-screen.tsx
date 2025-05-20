@@ -6,6 +6,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logout } from '../services/auth-service';
+// Import der SwipeNavigationContainer
+import SwipeNavigationContainer from '../components/ui/swipe-navigation-container';
 
 type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -134,8 +136,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Sticky Header */}
+    <SwipeNavigationContainer currentTab="Settings">
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
         { 
@@ -150,7 +153,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           elevation: 3,
         }
       ]}>
-        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
+        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
           Einstellungen
         </Text>
       </View>
@@ -285,7 +288,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       </TouchableOpacity>
       
       </ScrollView>
-    </View>
+      </View>
+    </SwipeNavigationContainer>
   );
 }
 
