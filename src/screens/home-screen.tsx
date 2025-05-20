@@ -6,7 +6,6 @@ import { getDailyLogByDate, getUserProfile, saveUserProfile, saveDailyLog } from
 import { fetchHealthData, calculateTotalCaloriesBurned } from '../services/health-service';
 import ProgressBar from '../components/ui/progress-bar';
 import WaveAnimation from '../components/ui/wave-animation';
-import DateSelector from '../components/ui/date-selector';
 import { DailyLog, HealthData, UserProfile } from '../types';
 import { useTheme } from '../theme/theme-context';
 import { Ionicons } from '@expo/vector-icons';

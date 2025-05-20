@@ -11,7 +11,6 @@ import generateSimpleId from '../utils/id-generator';
 import { formatToLocalISODate, getTodayFormatted, dateToMySQLDateTime } from '../utils/date-utils';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DateSelector from '../components/ui/date-selector';
 
 type FoodDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'FoodDetail'>;
 
@@ -431,34 +430,6 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                   fontSize: theme.typography.fontSize.xs
                 }}>500</Text>
               </View>
-            </View>
-
-            {/* Date selector */}
-            <Text style={[
-              styles.sectionTitle, 
-              { 
-                color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.medium
-              }
-            ]}>Datum auswählen</Text>
-            <View style={{
-              marginBottom: theme.spacing.m,
-              marginTop: theme.spacing.xs
-            }}>
-              <DateSelector
-                date={selectedDate}
-                onDateChange={(newDate) => {
-                  console.log(`Selected date changed to: ${newDate}`);
-                  setSelectedDate(newDate);
-                }}
-                containerStyle={{
-                  backgroundColor: theme.colors.card,
-                  borderRadius: theme.borderRadius.medium,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  padding: theme.spacing.xs,
-                }}
-              />
             </View>
 
             {/* Meal type selection */}
