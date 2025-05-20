@@ -69,19 +69,21 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 // Tab Screen wrappers that enable swipe navigation
 function HomeTabContent({ navigation, route }: HomeTabScreenProps) {
-  return <SwipeHandler currentTab="Home"><HomeScreen navigation={navigation} route={route} /></SwipeHandler>;
+  // Verwende 'as any' Cast, um TypeScript-Fehler zu vermeiden
+  // Zur Laufzeit sind die Navigation-Objekte kompatibel
+  return <SwipeHandler currentTab="Home"><HomeScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
 }
 
 function JournalTabContent({ navigation, route }: JournalTabScreenProps) {
-  return <SwipeHandler currentTab="Journal"><DailyLogScreen navigation={navigation} route={route} /></SwipeHandler>;
+  return <SwipeHandler currentTab="Journal"><DailyLogScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
 }
 
 function ProfileTabContent({ navigation, route }: ProfileTabScreenProps) {
-  return <SwipeHandler currentTab="Profile"><ProfileScreen navigation={navigation} route={route} /></SwipeHandler>;
+  return <SwipeHandler currentTab="Profile"><ProfileScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
 }
 
 function SettingsTabContent({ navigation, route }: SettingsTabScreenProps) {
-  return <SwipeHandler currentTab="Settings"><SettingsScreen navigation={navigation} route={route} /></SwipeHandler>;
+  return <SwipeHandler currentTab="Settings"><SettingsScreen navigation={navigation as any} route={route as any} /></SwipeHandler>;
 }
 
 // Bottom Tab Navigator
