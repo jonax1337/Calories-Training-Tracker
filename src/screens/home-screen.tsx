@@ -30,6 +30,9 @@ function isProfileComplete(profile: UserProfile | null): boolean {
   );
 }
 
+// Import des SwipeNavigationContainer
+import SwipeNavigationContainer from '../components/ui/swipe-navigation-container';
+
 export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets(); // Get safe area insets
@@ -355,8 +358,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.theme.colors.background }]}>
-      {/* Sticky Header */}
+    <SwipeNavigationContainer currentTab="Home">
+      <View style={[styles.container, { backgroundColor: theme.theme.colors.background }]}>
+        {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
         { 
@@ -863,7 +867,8 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         </View>
       )}
       </ScrollView>
-    </View>
+      </View>
+    </SwipeNavigationContainer>
   );
 }
 

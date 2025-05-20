@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Screen imports
 import HomeScreen from './screens/home-screen';
@@ -278,12 +279,14 @@ import { DateProvider } from './context/date-context';
 // App Navigation Component
 export default function AppNavigation() {
   return (
-    <NavigationContainer>
-      <ThemeProvider>
-        <DateProvider>
-          <NavigationContent />
-        </DateProvider>
-      </ThemeProvider>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <ThemeProvider>
+          <DateProvider>
+            <NavigationContent />
+          </DateProvider>
+        </ThemeProvider>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }

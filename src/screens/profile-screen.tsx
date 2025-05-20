@@ -11,6 +11,8 @@ import { requestHealthPermissions } from '../services/health-service';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, formatDateForDisplay, getLocalDateComponents } from '../utils/date-utils';
+// Import des SwipeNavigationContainer
+import SwipeNavigationContainer from '../components/ui/swipe-navigation-container';
 
 function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // Get theme from context
@@ -469,29 +471,30 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* DatePicker-Modal */}
-      {renderDatePickerModal()}
-      
-      {/* Sticky Header */}
-      <View style={[
-        styles.stickyHeader, 
-        { 
-          paddingTop: insets.top,
-          backgroundColor: theme.colors.background,
-          borderBottomColor: theme.colors.border,
-          borderBottomWidth: 1,
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 3,
-        }
-      ]}>
-        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-          Profil
-        </Text>
-      </View>
+    <SwipeNavigationContainer currentTab="Profile">
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        {/* DatePicker-Modal */}
+        {renderDatePickerModal()}
+        
+        {/* Sticky Header */}
+        <View style={[
+          styles.stickyHeader, 
+          { 
+            paddingTop: insets.top,
+            backgroundColor: theme.colors.background,
+            borderBottomColor: theme.colors.border,
+            borderBottomWidth: 1,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 3,
+          }
+        ]}>
+          <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+            Profil
+          </Text>
+        </View>
 
       <ScrollView
         style={styles.scrollContent}
@@ -1759,7 +1762,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         </Text>
       </TouchableOpacity>
       </ScrollView>
-    </View>
+      </View>
+    </SwipeNavigationContainer>
   );
 }
 
