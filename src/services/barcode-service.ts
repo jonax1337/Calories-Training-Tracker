@@ -2,7 +2,7 @@ import { BarcodeApiResponse, FoodItem, NutritionInfo } from '../types';
 
 // Using the Open Food Facts API for nutrition data
 const API_URL = 'https://world.openfoodfacts.org/api/v2/product/';
-const SEARCH_API_URL = 'https://world.openfoodfacts.org/cgi/search.pl';
+const SEARCH_API_URL = 'https://world.openfoodfacts.org/api/v2/search';
 
 /**
  * Fetches food data from the Open Food Facts API using a barcode
