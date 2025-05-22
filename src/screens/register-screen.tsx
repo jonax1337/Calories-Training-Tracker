@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { register } from '../services/auth-service';
 import { useTheme } from '../theme/theme-context';
 import { RootStackParamList } from '../navigation';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { createAuthStyles } from '../styles/screens/auth-styles';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
 
 const RegisterScreen = () => {
   const { theme } = useTheme();
   const navigation = useNavigation<RegisterScreenNavigationProp>();
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createAuthStyles(theme);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -102,26 +106,6 @@ const RegisterScreen = () => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{ alignItems: 'center', marginBottom: theme.spacing.l }}>
-          <Text style={{
-            fontSize: 28,
-            color: theme.colors.primary,
-            marginBottom: theme.spacing.m,
-            fontFamily: theme.typography.fontFamily.bold,
-            textAlign: 'center'
-          }}>
-            Neues Konto erstellen
-          </Text>
-          <Text style={{
-            fontSize: theme.typography.fontSize.m,
-            color: theme.colors.secondary,
-            marginBottom: theme.spacing.m,
-            fontFamily: theme.typography.fontFamily.regular,
-            textAlign: 'center'
-          }}>
-            Registrieren Sie sich, um Ihre Ernährung zu verfolgen
-          </Text>
-        </View>
 
         {error && (
           <View style={{
@@ -146,6 +130,7 @@ const RegisterScreen = () => {
               fontSize: theme.typography.fontSize.s,
               color: theme.colors.text,
               marginBottom: theme.spacing.xs,
+              marginTop: theme.spacing.m,
               fontFamily: theme.typography.fontFamily.medium
             }}>
               Name
@@ -349,78 +334,6 @@ const RegisterScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  header: {
-    marginBottom: 30,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  form: {
-    width: '100%',
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    marginBottom: 8,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-  button: {
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  errorContainer: {
-    padding: 12,
-    marginBottom: 20,
-    borderRadius: 8,
-  },
-  errorText: {
-    fontSize: 14,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  loginText: {
-    marginRight: 5,
-  },
-  loginLink: {
-    fontWeight: '600',
-  },
-});
+// Styles wurden in eine separate Datei ausgelagert
 
 export default RegisterScreen;

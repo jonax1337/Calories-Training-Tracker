@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { login } from '../services/auth-service';
 import { useTheme } from '../theme/theme-context';
 import { RootStackParamList } from '../navigation';
+import { createAuthStyles } from '../styles/screens/auth-styles';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 const LoginScreen = () => {
   const { theme } = useTheme();
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createAuthStyles(theme);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,30 +66,9 @@ const LoginScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.loginScrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <Text style={{
-            fontSize: 32,
-            color: theme.colors.primary,
-            marginBottom: theme.spacing.m,
-            fontFamily: theme.typography.fontFamily.bold,
-            textAlign: 'center'
-          }}>
-            Calories Tracker
-          </Text>
-          <Text style={{
-            fontSize: theme.typography.fontSize.m,
-            color: theme.colors.secondary,
-            marginBottom: theme.spacing.xl,
-            fontFamily: theme.typography.fontFamily.regular,
-            textAlign: 'center'
-          }}>
-            Melden Sie sich an, um Ihre Ernährung zu verfolgen
-          </Text>
-        </View>
-
         {error && (
           <View style={{
             backgroundColor: `${theme.colors.errorLight}`,
@@ -213,78 +196,5 @@ const LoginScreen = () => {
     </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  header: {
-    marginBottom: 40,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  form: {
-    width: '100%',
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    marginBottom: 8,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-  button: {
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  errorContainer: {
-    padding: 12,
-    marginBottom: 20,
-    borderRadius: 8,
-  },
-  errorText: {
-    fontSize: 14,
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  registerText: {
-    marginRight: 5,
-  },
-  registerLink: {
-    fontWeight: '600',
-  },
-});
 
 export default LoginScreen;
