@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useDateContext } from '../context/date-context';
 import { 
   StyleSheet, 
   Text, 
@@ -26,6 +27,9 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { mealType } = route.params || {};
+  
+  // Verwende den DateContext, um das ausgewählte Datum zu bekommen
+  const { selectedDate } = useDateContext();
 
   // States für manuelle Suche
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -107,8 +111,8 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
         if (parent) {
           // Wenn Produkt nicht gefunden, mit manualEntry-Flag navigieren
           const params = productData 
-            ? { barcode: data, mealType } 
-            : { barcode: data, mealType, manualEntry: true };
+            ? { barcode: data, mealType, selectedDate } 
+            : { barcode: data, mealType, selectedDate, manualEntry: true };
             
           parent.navigate("FoodDetail", params);
           console.log("Navigation erfolgt über Parent-Navigator");
@@ -117,8 +121,8 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
 
         // Fallback: Direkte Navigation
         const params = productData 
-          ? { barcode: data, mealType } 
-          : { barcode: data, mealType, manualEntry: true };
+          ? { barcode: data, mealType, selectedDate } 
+          : { barcode: data, mealType, selectedDate, manualEntry: true };
           
         // @ts-ignore - Ignoriere TypeScript-Fehler, da wir wissen, dass dieser Screen existiert
         navigation.navigate("FoodDetail", params);
@@ -138,10 +142,10 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
       try {
         const parent = navigation.getParent();
         if (parent) {
-          parent.navigate("FoodDetail", { barcode: data, mealType, manualEntry: true });
+          parent.navigate("FoodDetail", { barcode: data, mealType, selectedDate, manualEntry: true });
         } else {
           // @ts-ignore
-          navigation.navigate("FoodDetail", { barcode: data, mealType, manualEntry: true });
+          navigation.navigate("FoodDetail", { barcode: data, mealType, selectedDate, manualEntry: true });
         }
       } catch (e) {
         console.error("Navigation error:", e);

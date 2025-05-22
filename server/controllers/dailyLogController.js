@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const dateUtils = require('../utils/date-utils');
 
 // Get all daily logs for a user
 exports.getDailyLogs = async (req, res) => {
@@ -54,7 +55,7 @@ exports.getDailyLogs = async (req, res) => {
       
       // Return the daily log with its entries
       return {
-        date: log.date.toISOString().split('T')[0],
+        date: dateUtils.formatToLocalISODate(log.date),
         foodEntries: foodEntries,
         waterIntake: log.water_intake,
         dailyNotes: log.daily_notes
@@ -136,7 +137,7 @@ exports.getDailyLogByDate = async (req, res) => {
     
     // Return the daily log with its entries
     const dailyLog = {
-      date: log.date.toISOString().split('T')[0],
+      date: dateUtils.formatToLocalISODate(log.date),
       foodEntries: foodEntries,
       waterIntake: log.water_intake,
       dailyNotes: log.daily_notes
@@ -177,11 +178,12 @@ exports.saveDailyLog = async (req, res) => {
     // Ensure waterIntake is a valid number
     const sanitizedWaterIntake = typeof waterIntake === 'number' ? Math.max(0, waterIntake) : 0;
     
-    // Normalize the date format to ensure consistency (YYYY-MM-DD)
-    let normalizedDate = date;
-    if (date && date.includes('T')) {
-      // Remove any time component if present
-      normalizedDate = date.split('T')[0];
+    // Use the date-utils to ensure consistent date format
+    let normalizedDate = dateUtils.parseDateString(date);
+    
+    // If no date is provided, use today's date
+    if (!normalizedDate) {
+      normalizedDate = dateUtils.getTodayFormatted();
     }
     
     console.log('Normalized date for DB query:', normalizedDate);
@@ -229,37 +231,24 @@ exports.saveDailyLog = async (req, res) => {
     // Insert food entries
     if (foodEntries && foodEntries.length > 0) {
       for (const entry of foodEntries) {
-        // Format the timestamp to be MySQL compatible - converting from ISO format to MySQL format
-        let formattedTimeConsumed = entry.timeConsumed;
+        // Format the timestamp to be MySQL compatible using our utility function
+        let formattedTimeConsumed;
         
         try {
           if (entry.timeConsumed) {
-            if (entry.timeConsumed.includes('T')) {
-              // Convert ISO timestamp to MySQL format (YYYY-MM-DD HH:MM:SS)
-              const date = new Date(entry.timeConsumed);
-              formattedTimeConsumed = date.toISOString().slice(0, 19).replace('T', ' ');
-              console.log(`Formatted time_consumed from ${entry.timeConsumed} to ${formattedTimeConsumed}`);
-            } else if (entry.timeConsumed.includes(' ')) {
-              // Already in MySQL format, use as is
-              formattedTimeConsumed = entry.timeConsumed;
-              console.log(`Time already in MySQL format: ${formattedTimeConsumed}`);
-            } else {
-              // Unknown format, use current time
-              const now = new Date();
-              formattedTimeConsumed = now.toISOString().slice(0, 19).replace('T', ' ');
-              console.log(`Unknown time format, using current time: ${formattedTimeConsumed}`);
-            }
+            // Use our utility function to convert to MySQL format
+            const timeDate = new Date(entry.timeConsumed);
+            formattedTimeConsumed = dateUtils.dateToMySQLDateTime(timeDate);
+            console.log(`Formatted time_consumed from ${entry.timeConsumed} to ${formattedTimeConsumed}`);
           } else {
             // No time provided, use current time
-            const now = new Date();
-            formattedTimeConsumed = now.toISOString().slice(0, 19).replace('T', ' ');
+            formattedTimeConsumed = dateUtils.dateToMySQLDateTime();
             console.log(`No time provided, using current time: ${formattedTimeConsumed}`);
           }
         } catch (timeError) {
           // Handle any errors in date conversion
           console.error('Error formatting time:', timeError);
-          const now = new Date();
-          formattedTimeConsumed = now.toISOString().slice(0, 19).replace('T', ' ');
+          formattedTimeConsumed = dateUtils.dateToMySQLDateTime();
           console.log(`Error in time format, using current time: ${formattedTimeConsumed}`);
         }
 

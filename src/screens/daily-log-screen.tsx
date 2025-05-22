@@ -72,7 +72,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedDate]); // Füge selectedDate als Abhängigkeit hinzu, damit die Funktion bei Datumsänderungen neu erstellt wird
 
   // Use useFocusEffect to reload data when the screen comes into focus or when date changes
   useFocusEffect(

@@ -20,7 +20,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const insets = useSafeAreaInsets();
 
   // Get parameters from navigation
-  const { barcode, foodId, mealType, foodItem: passedFoodItem } = route.params || {};
+  const { barcode, foodId, mealType, foodItem: passedFoodItem, selectedDate: passedDate } = route.params || {};
   
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
@@ -35,8 +35,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const [customName, setCustomName] = useState('');
   const [error, setError] = useState<string | null>(null);
   
-  // Add state for the selected date (default to today)
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayFormatted());
+  // Add state for the selected date (use passed date or default to today)
+  const [selectedDate, setSelectedDate] = useState<string>(passedDate || getTodayFormatted());
 
   // Load food data when component mounts or create empty food item for manual entry
   useEffect(() => {

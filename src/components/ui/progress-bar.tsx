@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useTheme } from '../../theme/theme-context';
 
 interface ProgressBarProps {
@@ -20,9 +20,33 @@ function ProgressBar({
   showPercentage = true
 }: ProgressBarProps) {
   const theme = useTheme();
+  
+  // Prüfen, ob der aktuelle Wert das Ziel überschreitet
+  const isOverTarget = current > target;
+  
   // Calculate percentage (capped at 100%)
   const percentage = Math.min(Math.round((current / target) * 100), 100);
   
+  // Animierter Wert für die Breite des Fortschrittsbalkens
+  const widthAnim = useRef(new Animated.Value(0)).current;
+  
+  // Effekt, um den Balken zu animieren, wenn sich der Prozentsatz ändert
+  useEffect(() => {
+    Animated.timing(widthAnim, {
+      toValue: percentage,
+      duration: 400, // Längere Animation für einen sanfteren Effekt
+      useNativeDriver: false, // Breite kann nicht mit dem Native Driver animiert werden
+      easing: Easing.out(Easing.ease) // Sanfte Beschleunigung/Verzögerung
+    }).start();
+  }, [percentage, widthAnim]);
+
+  // Bildschirmbreite in Prozent für die Animation
+  const widthInterpolated = widthAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+    extrapolate: 'clamp' // Stellt sicher, dass wir nie über 100% hinausgehen
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.labelContainer}>
@@ -39,7 +63,7 @@ function ProgressBar({
           styles.values, 
           { 
             fontFamily: theme.theme.typography.fontFamily.regular, 
-            color: theme.theme.colors.textLight 
+            color: isOverTarget ? theme.theme.colors.error : theme.theme.colors.textLight 
           }
         ]}>
           {current} / {target} {showPercentage && `(${percentage}%)`}
@@ -54,13 +78,13 @@ function ProgressBar({
           borderRadius: theme.theme.borderRadius.small
         }
       ]}>
-        <View 
+        <Animated.View 
           style={[
             styles.progressFill, 
             { 
-              width: `${percentage}%`, 
+              width: widthInterpolated, // Animierte Breite
               height,
-              backgroundColor: color,
+              backgroundColor: isOverTarget ? theme.theme.colors.error : color,
               borderRadius: theme.theme.borderRadius.small
             }
           ]} 
