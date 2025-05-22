@@ -116,12 +116,12 @@ export const createProfileStyles = (theme: Theme): ProfileStyles => StyleSheet.c
   sectionTitle: {
     fontSize: theme.typography.fontSize.l,
     fontFamily: theme.typography.fontFamily.bold,
-    marginTop: 0,
+    marginTop: theme.spacing.l,
     marginBottom: theme.spacing.xs,
     color: theme.colors.text,
   },
   sectionDescription: {
-    fontSize: theme.typography.fontSize.m,
+    fontSize: theme.typography.fontSize.s,
     marginBottom: theme.spacing.m,
     fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.textLight,

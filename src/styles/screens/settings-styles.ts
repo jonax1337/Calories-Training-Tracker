@@ -16,6 +16,8 @@ interface SettingsStyles {
   themeLabel: TextStyle;
   themeDescription: TextStyle;
   infoCard: ViewStyle;
+  infoHeader: ViewStyle;
+  infoVersion: TextStyle;
   infoText: TextStyle;
   logoutButton: ViewStyle;
   logoutText: TextStyle;
@@ -105,6 +107,18 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     borderRadius: theme.borderRadius.medium,
     padding: theme.spacing.m,
     marginBottom: theme.spacing.l,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+  },
+  infoHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    paddingBottom: theme.spacing.s,
+  },
+  infoVersion: {
+    color: theme.colors.primary,
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.fontSize.l,
   },
   infoText: {
     lineHeight: 24,

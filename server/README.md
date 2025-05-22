@@ -22,6 +22,7 @@ Dieser Backend-Server bildet das Herzstück der Calories Training Tracker Anwend
 - 🔄 **RESTful API-Endpunkte** für alle App-Funktionen
 - 💡 **Effiziente Datenverarbeitung** mit optimierten Abfragen
 - 📊 **Umfassende Datenvalidierung** für Datenkonsistenz
+- 🎯 **Personalisierte Ernährungsziele** mit vordefinierten und benutzerdefinierten Optionen
 
 ---
 
@@ -54,9 +55,18 @@ Dieser Backend-Server bildet das Herzstück der Calories Training Tracker Anwend
 ### ⭐ Favoriten
 
 | Methode | Endpunkt | Beschreibung | Parameter/Body |
-|---------|----------|-------------|-----------------|
+|---------|----------|-------------|------------------|
 | **GET** | `/api/favorites` | Favorisierte Lebensmittel eines Benutzers abrufen | `userId`: Benutzer-ID (Query-Parameter) |
 | **POST** | `/api/favorites/toggle` | Favoritenstatus umschalten | `{ userId, foodItemId }` |
+
+### 🎯 Benutzerziele
+
+| Methode | Endpunkt | Beschreibung | Parameter/Body |
+|---------|----------|-------------|------------------|
+| **GET** | `/api/user-goals/types` | Alle verfügbaren Zieltypen abrufen | - |
+| **GET** | `/api/user-goals/:userId` | Ziele eines Benutzers abrufen | `userId`: Benutzer-ID |
+| **POST** | `/api/user-goals/:userId` | Benutzerziel erstellen/aktualisieren | `userId`: Benutzer-ID, Body: `{ goalTypeId, isCustom, dailyCalories, dailyProtein, dailyCarbs, dailyFat, dailyWater }` |
+| **DELETE** | `/api/user-goals/:userId/:goalId` | Benutzerziel löschen | `userId`: Benutzer-ID, `goalId`: Ziel-ID |
 
 ---
 
@@ -186,6 +196,37 @@ CREATE TABLE favorite_foods (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (food_item_id) REFERENCES food_items(id) ON DELETE CASCADE,
   UNIQUE KEY user_food (user_id, food_item_id)
+);
+```
+
+### 🎯 goal_types
+```sql
+CREATE TABLE goal_types (
+  id VARCHAR(36) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  is_custom BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### 🎯 user_goals
+```sql
+CREATE TABLE user_goals (
+  id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL,
+  goal_type_id VARCHAR(36),
+  is_custom BOOLEAN DEFAULT FALSE,
+  daily_calories INT,
+  daily_protein FLOAT,
+  daily_carbs FLOAT,
+  daily_fat FLOAT,
+  daily_water FLOAT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (goal_type_id) REFERENCES goal_types(id) ON DELETE SET NULL
 );
 ```
 

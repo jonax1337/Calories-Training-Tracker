@@ -12,6 +12,7 @@ const userRoutes = require('./routes/users');
 const foodItemsRoutes = require('./routes/foodItems');
 const dailyLogsRoutes = require('./routes/dailyLogs');
 const favoritesRoutes = require('./routes/favorites');
+const userGoalsRoutes = require('./routes/userGoals');
 
 // Initialize express app
 const app = express();
@@ -33,6 +34,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/food-items', foodItemsRoutes);
 app.use('/api/daily-logs', dailyLogsRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/user-goals', userGoalsRoutes);
 
 // Root route
 app.get('/', (req, res) => {

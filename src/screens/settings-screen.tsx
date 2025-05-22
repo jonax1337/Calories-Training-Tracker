@@ -145,19 +145,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       {themeOptions.map(renderThemeOption)}
       
       <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
-        App-Informationen
-      </Text>
-      
-      <View style={styles.infoCard}>
-        <Text style={styles.infoText}>
-          Version: 1.0.0
-        </Text>
-        <Text style={[styles.infoText, { marginTop: theme.spacing.s }]}>
-          Entwickelt mit React Native und Expo
-        </Text>
-      </View>
-
-      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
         Konto
       </Text>
 
@@ -169,6 +156,27 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           Abmelden
         </Text>
       </TouchableOpacity>
+
+      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
+        App-Informationen
+      </Text>
+      
+      <View style={styles.infoCard}>
+        <View style={styles.infoHeader}>
+          <Text style={styles.infoVersion}>
+            Version: 1.0.0 (Beta)
+          </Text>
+        </View>
+        <Text style={[styles.infoText, { marginTop: theme.spacing.m }]}>
+          Calories Training Tracker - Deine All-in-One-Lösung für Ernährung und Trainingsaufzeichnung
+        </Text>
+        <Text style={[styles.infoText, { marginTop: theme.spacing.s }]}>
+          Tracke deine täglichen Kalorien, Makronährstoffe und Trainingseinheiten an einem Ort. Einfach, intuitiv und anpassbar.
+        </Text>
+        <Text style={[styles.infoText, { marginTop: theme.spacing.s, fontStyle: 'italic', color: theme.colors.textLight }]}>
+          Diese App befindet sich in der Beta-Phase. Danke für dein Feedback!
+        </Text>
+      </View>
       
       </ScrollView>
       </View>
