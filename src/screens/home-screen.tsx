@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { Text, View, ScrollView, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { HomeTabScreenProps } from '../types/navigation-types';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, getTodayFormatted } from '../utils/date-utils';
 import { useDateContext } from '../context/date-context';
+import { createHomeStyles } from '../styles/screens/home-styles';
 
 // Helper function to check if user profile is complete with minimum required data
 function isProfileComplete(profile: UserProfile | null): boolean {
@@ -33,6 +34,9 @@ function isProfileComplete(profile: UserProfile | null): boolean {
 export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets(); // Get safe area insets
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createHomeStyles(theme.theme);
   const [todayLog, setTodayLog] = useState<DailyLog | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [healthData, setHealthData] = useState<HealthData | null>(null);
@@ -867,113 +871,4 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    width: '85%',
-    padding: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
-    padding: 10,
-    fontSize: 18,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stickyHeader: {
-    width: '100%',
-    paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-    paddingBottom: 8, // 1 Grid-Punkt (8px)
-    zIndex: 10,
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  dateHeader: {
-    fontSize: 20, // Anpassung an die anderen Screens (wie headerText)
-    textAlign: 'center'
-  },
-  summaryCard: {
-    padding: 16,
-    marginBottom: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 18,
-    marginBottom: 16,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  stat: {
-    alignItems: 'center',
-    padding: 12,
-    minWidth: 100,
-  },
-  statValue: {
-    fontSize: 22,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-  },
-  actionsContainer: {
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  actionButtonText: {
-    fontSize: 16,
-  },
-  secondaryButton: {
-    borderWidth: 1,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-  },
-});
+// Styles wurden in eine separate Datei ausgelagert

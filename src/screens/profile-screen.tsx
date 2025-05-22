@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform, Modal, ActivityIndicator } from 'react-native';
+import { Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform, Modal, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -11,12 +11,16 @@ import { requestHealthPermissions } from '../services/health-service';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, formatDateForDisplay, getLocalDateComponents } from '../utils/date-utils';
+import { createProfileStyles } from '../styles/screens/profile-styles';
 
 function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // Get theme from context
   const { theme } = useTheme();
   // Get safe area insets for handling notches and navigation bars
   const insets = useSafeAreaInsets();
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createProfileStyles(theme);
   const [profile, setProfile] = useState<UserProfile>({
     id: 'user_1',
     name: '',
@@ -1763,165 +1767,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    width: '85%',
-    padding: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  datePickerContainer: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stickyHeader: {
-    width: '100%',
-    paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-    paddingBottom: 8, // 1 Grid-Punkt (8px)
-    zIndex: 10,
-  },
-  headerText: {
-    fontSize: 20,
-    textAlign: 'center',
-    marginVertical: 8, // 1 Grid-Punkt (8px)
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 0, // 3 Grid-Punkte (24px)
-    marginBottom: 8, // 1 Grid-Punkt (8px)
-  },
-  sectionDescription: {
-    fontSize: 14,
-    marginBottom: 16, // 2 Grid-Punkte (16px)
-  },
-  inputContainer: {
-    marginBottom: 16, // 2 Grid-Punkte (16px)
-  },
-  inputLabel: {
-    fontSize: 16,
-    marginBottom: 8, // 1 Grid-Punkt (8px)
-  },
-  textInput: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8, // 1 Grid-Punkt (8px)
-    padding: 16, // 2 Grid-Punkte (16px)
-    fontSize: 16,
-  },
-  rowInputs: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  halfInput: {
-    width: '48%',
-  },
-  thirdInput: {
-    width: '31%',
-  },
-  activityContainer: {
-    marginBottom: 16,
-  },
-  activityButton: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-  selectedActivityButton: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
-  },
-  activityButtonContent: {
-    padding: 12,
-  },
-  activityButtonLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  activityButtonDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
-  selectedActivityText: {
-    color: 'white',
-  },
-  permissionButton: {
-    backgroundColor: '#2196F3',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  permissionGrantedButton: {
-    backgroundColor: '#4CAF50',
-  },
-  permissionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  saveButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 40,
-  },
-  saveButtonText: {
-    fontSize: 16,
-  },
-  connectButton: {
-    marginVertical: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  connectButtonText: {
-    fontSize: 16,
-  },
-  permissionInfo: {
-    fontSize: 14,
-    marginBottom: 16,
-    textAlign: 'center',
-    paddingHorizontal: 16,
-  },
-});
+// Styles wurden in eine separate Datei ausgelagert
 
 export default ProfileScreen;
