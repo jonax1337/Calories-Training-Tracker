@@ -465,5 +465,3 @@ function getMealTypeLabel(mealType: string): string {
     default: return 'Mahlzeit';
   }
 }
-
-// Helper-Funktionen und Styles wurden in separate Dateien ausgelagert
