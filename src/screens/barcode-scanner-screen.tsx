@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDateContext } from '../context/date-context';
 import { 
-  StyleSheet, 
   Text, 
   View, 
   TextInput, 
@@ -20,12 +19,17 @@ import { getFoodDataByBarcode, searchFoodByName } from "../services/barcode-serv
 import { useTheme } from "../theme/theme-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Camera, CameraView } from "expo-camera";
+import { Ionicons } from "@expo/vector-icons";
+import { createBarcodeScannerStyles } from "../styles/screens/barcode-scanner-styles";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+// Dimensions werden jetzt in der Style-Datei importiert
 
 export default function BarcodeScannerScreen({ navigation, route }: AddTabScreenProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createBarcodeScannerStyles(theme);
   const { mealType } = route.params || {};
   
   // Verwende den DateContext, um das ausgewählte Datum zu bekommen
@@ -320,9 +324,11 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
                   style={[styles.torchButton, { backgroundColor: isTorchOn ? theme.colors.primary : 'rgba(0,0,0,0.5)' }]}
                   onPress={() => setIsTorchOn(prev => !prev)}
                 >
-                  <Text style={{ color: 'white', fontSize: 16, fontFamily: theme.typography.fontFamily.bold }}>
-                    {isTorchOn ? '🔦' : '🔦'}
-                  </Text>
+                  <Ionicons 
+                    name={isTorchOn ? "flash-outline" : "flash-off-outline"} 
+                    size={24} 
+                    color="white" 
+                  />
                 </TouchableOpacity>
               </View>
             )}
@@ -404,88 +410,4 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 16 },
-  content: { flex: 1 },
-  instructionText: { fontSize: 16, textAlign: "center", marginVertical: 16 },
-  tabContainer: { flexDirection: "row", marginBottom: 16 },
-  tabButton: {
-    flex: 1,
-    padding: 16,
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-  },
-  activeTab: {},
-  tabButtonText: { fontSize: 16 },
-  scannerContainer: { alignItems: "center", marginBottom: 24 },
-  previewWrapper: {
-    width: SCREEN_WIDTH * 0.9,
-    height: 320, // Anpassung auf ein Vielfaches von 8
-    overflow: "hidden",
-  },
-  preview: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  overlay: {
-    position: "absolute",
-    top: "15%",
-    left: "5%",
-    width: "90%",
-    height: "70%",
-    borderWidth: 2,
-  },
-  debugInfo: {
-    position: "absolute",
-    bottom: 8,
-    left: 0,
-    right: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 6,
-  },
-  debugText: { color: "white", fontSize: 12, textAlign: "center" },
-  torchButton: {
-    position: "absolute",
-    bottom: 16,
-    left: "50%",
-    transform: [{ translateX: -32 }],
-    padding: 8,
-    borderRadius: 24,
-    width: 64,
-    height: 64,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 999,
-  },
-  rescanButton: {
-    marginTop: 16,
-    padding: 10,
-    borderRadius: 6,
-  },
-  inputContainer: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
-  barcodeInput: {
-    flex: 1,
-    height: 56,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginRight: 8,
-  },
-  submitButton: {
-    height: 56,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    borderRadius: 8,
-  },
-  loadingContainer: { alignItems: "center", marginVertical: 24 },
-  errorContainer: { marginVertical: 16, padding: 16, borderRadius: 8 },
-  resultsContainer: { flex: 1 },
-  resultItem: { padding: 16, marginBottom: 8, borderRadius: 8 },
-  manualEntryButton: {
-    marginTop: 24,
-    borderWidth: 1,
-    padding: 16,
-    alignItems: "center",
-    borderRadius: 8,
-  },
-});
+// Styles wurden in eine separate Datei ausgelagert und werden oben importiert

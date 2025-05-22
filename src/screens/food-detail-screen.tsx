@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ViewStyle, TextStyle, ImageStyle, Platform } from 'react-native';
+import { Text, View, Image, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -11,6 +11,7 @@ import generateSimpleId from '../utils/id-generator';
 import { formatToLocalISODate, getTodayFormatted, dateToMySQLDateTime } from '../utils/date-utils';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { createFoodDetailStyles } from '../styles/screens/food-detail-styles';
 
 type FoodDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'FoodDetail'>;
 
@@ -18,6 +19,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Get theme and safe area insets
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createFoodDetailStyles(theme);
 
   // Get parameters from navigation
   const { barcode, foodId, mealType, foodItem: passedFoodItem, selectedDate: passedDate } = route.params || {};
@@ -432,63 +436,6 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               </View>
             </View>
 
-            {/* Meal type selection */}
-            <Text style={[
-              styles.sectionTitle, 
-              { 
-                color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.medium
-              }
-            ]}>Mahlzeit auswählen</Text>
-            <View style={[styles.sectionContainer, { marginBottom: theme.spacing.l }]}>
-              <Text style={[styles.sectionTitle, { 
-                color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.medium,
-                fontSize: theme.typography.fontSize.m,
-                marginBottom: theme.spacing.m
-              }]}>Mahlzeitentyp:</Text>
-              <View style={[styles.mealTypeContainer, { gap: theme.spacing.s }]}>
-                {Object.keys(MealType).map((meal) => (
-                  <TouchableOpacity
-                    key={meal}
-                    onPress={() => setSelectedMeal(MealType[meal as keyof typeof MealType])}
-                    style={[
-                      styles.mealButton,
-                      { 
-                        borderRadius: theme.borderRadius.medium, 
-                        padding: theme.spacing.m,
-                        borderWidth: 1,
-                        borderColor: theme.colors.border,
-                        backgroundColor: theme.colors.surfaceVariant,
-                      },
-                      selectedMeal === MealType[meal as keyof typeof MealType]
-                        ? { 
-                            backgroundColor: theme.colors.primary,
-                            borderColor: theme.colors.primary
-                          }
-                        : null,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.mealButtonText,
-                        { 
-                          fontFamily: theme.typography.fontFamily.medium,
-                          fontSize: theme.typography.fontSize.m,
-                          color: theme.colors.text
-                        },
-                        selectedMeal === MealType[meal as keyof typeof MealType]
-                          ? { color: 'white' }
-                          : null,
-                      ]}
-                    >
-                      {getMealTypeEmoji(meal)} {getMealTypeLabel(meal.toLowerCase())}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
             {/* Add to log button */}
             <TouchableOpacity
               style={[styles.addButton, { 
@@ -500,29 +447,13 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               }]}
               onPress={handleAddToLog}
             >
-              <Text style={[styles.addButtonText, { 
-                color: 'white',
-                fontFamily: theme.typography.fontFamily.bold,
-                fontSize: theme.typography.fontSize.l,
-                textAlign: 'center'
-              }]}>Hinzufügen</Text>
+              <Text style={styles.addButtonText}>Hinzufügen</Text>
             </TouchableOpacity>
           </>
         )}
       </ScrollView>
     </View>
   );
-}
-
-// Helper functions for meal type emoji and labels
-function getMealTypeEmoji(mealType: string): string {
-  switch (mealType) {
-    case 'breakfast': return '🥞';
-    case 'lunch': return '🍲';
-    case 'dinner': return '🍽️';
-    case 'snack': return '🍪';
-    default: return '🍽️';
-  }
 }
 
 function getMealTypeLabel(mealType: string): string {
@@ -535,212 +466,4 @@ function getMealTypeLabel(mealType: string): string {
   }
 }
 
-// Define StyleSheet interface
-interface Styles {
-  container: ViewStyle;
-  stickyHeader: ViewStyle;
-  headerText: TextStyle;
-  scrollContent: ViewStyle;
-  card: ViewStyle;
-  cardTitle: TextStyle; // Hinzugefügt, fehlte in der Interface-Definition
-  imagePlaceholder: ViewStyle;
-  placeholderText: TextStyle;
-  inputContainer: ViewStyle;
-  inputLabel: TextStyle;
-  textInput: TextStyle;
-  brandContainer: ViewStyle;
-  brandLabel: TextStyle;
-  brandText: TextStyle;
-  barcodeContainer: ViewStyle;
-  barcodeLabel: TextStyle;
-  barcodeText: TextStyle;
-  servingsContainer: ViewStyle;
-  servingsLabel: TextStyle;
-  servingsInput: TextStyle;
-  servingHeader: ViewStyle;
-  servingsAmount: TextStyle;
-  slider: ViewStyle;
-  sliderLabels: ViewStyle;
-  sectionContainer: ViewStyle;
-  sectionTitle: TextStyle;
-  mealTypeContainer: ViewStyle;
-  mealButton: ViewStyle;
-  selectedMealButton: ViewStyle;
-  mealButtonText: TextStyle;
-  selectedMealButtonText: TextStyle;
-  addButton: ViewStyle;
-  addButtonText: TextStyle;
-  loadingContainer: ViewStyle;
-  loadingText: TextStyle;
-  errorContainer: ViewStyle;
-  errorText: TextStyle;
-}
-
-const styles = StyleSheet.create<Styles>({
-  container: {
-    flex: 1,
-  },
-  stickyHeader: {
-    width: '100%',
-    zIndex: 10,
-  },
-  headerText: {
-    textAlign: 'center',
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  card: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  servingHeader: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  servingsAmount: {
-    textAlign: 'center',
-  },
-  slider: {
-    height: 40,
-    alignSelf: 'stretch',
-  },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    marginBottom: 8,
-  },
-  loadingContainer: {
-    padding: 16, // 2 Grid-Punkte (16px)
-    alignItems: 'center',
-    marginTop: 16, // 2 Grid-Punkte (16px)
-  },
-  loadingText: {
-    marginTop: 8, // 1 Grid-Punkt (8px)
-    fontSize: 16,
-  },
-  errorContainer: {
-    padding: 16, // 2 Grid-Punkte (16px)
-    alignItems: 'center',
-    marginTop: 16, // 2 Grid-Punkte (16px)
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: 'red',
-  },
-  cardTitle: {
-    fontSize: 18,
-    marginBottom: 16, // 2 Grid-Punkte (16px)
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8, // 1 Grid-Punkt (8px)
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: 150,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  placeholderText: {
-    color: '#888',
-    fontSize: 16,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 6,
-  },
-  textInput: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  brandContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  brandLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  brandText: {
-    fontSize: 16,
-  },
-  barcodeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  barcodeLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  barcodeText: {
-    fontSize: 16,
-    fontFamily: 'monospace',
-  },
-  servingsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  servingsLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  servingsInput: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 8,
-    width: 60,
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  sectionContainer: {
-    marginVertical: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  mealTypeContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  mealButton: {
-    minWidth: '47%',
-    alignItems: 'center',
-  },
-  selectedMealButton: {},
-  mealButtonText: {
-    textAlign: 'center',
-  },
-  selectedMealButtonText: {},
-  addButton: {
-    alignItems: 'center',
-  },
-  addButtonText: {},
-});
+// Helper-Funktionen und Styles wurden in separate Dateien ausgelagert

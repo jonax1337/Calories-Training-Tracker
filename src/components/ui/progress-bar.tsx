@@ -34,7 +34,7 @@ function ProgressBar({
   useEffect(() => {
     Animated.timing(widthAnim, {
       toValue: percentage,
-      duration: 400, // Längere Animation für einen sanfteren Effekt
+      duration: 800, // Längere Animation für einen sanfteren Effekt
       useNativeDriver: false, // Breite kann nicht mit dem Native Driver animiert werden
       easing: Easing.out(Easing.ease) // Sanfte Beschleunigung/Verzögerung
     }).start();

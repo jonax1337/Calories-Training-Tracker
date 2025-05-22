@@ -1,17 +1,21 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useTheme } from '../theme/theme-context';
 import { ThemeType } from '../theme/theme-types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logout } from '../services/auth-service';
+import { createSettingsStyles } from '../styles/screens/settings-styles';
 
 type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { theme, themeType, setTheme } = useTheme();
   const insets = useSafeAreaInsets(); // Safe Area Insets für Notch und Navigation Bar
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createSettingsStyles(theme);
 
   // Handle user logout
   const handleLogout = async () => {
@@ -68,10 +72,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       style={[
         styles.themeOption,
         {
-          backgroundColor: theme.colors.surface,
           borderColor: themeType === option.type ? theme.colors.primary : theme.colors.border,
-          borderRadius: theme.borderRadius.m,
-          marginBottom: theme.spacing.m, // 2 Grid-Punkte (16px)
           borderWidth: themeType === option.type ? 2 : 1,
         },
       ]}
@@ -86,7 +87,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               : option.type === 'dark' 
               ? '#121212' 
               : '#FFF5F8',
-            borderRadius: theme.borderRadius.s,
           }
         ]}
       >
@@ -105,28 +105,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         />
       </View>
       <View style={styles.themeTextContainer}>
-        <Text 
-          style={[
-            styles.themeLabel, 
-            { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: theme.typography.fontSize.l,
-            }
-          ]}
-        >
+        <Text style={styles.themeLabel}>
           {option.label}
         </Text>
-        <Text 
-          style={[
-            styles.themeDescription, 
-            { 
-              color: theme.colors.onSurface,
-              fontFamily: theme.typography.fontFamily.regular,
-              fontSize: theme.typography.fontSize.s,
-            }
-          ]}
-        >
+        <Text style={styles.themeDescription}>
           {option.description}
         </Text>
       </View>
@@ -134,23 +116,13 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={styles.container}>
         {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
-        { 
-          paddingTop: insets.top,
-          backgroundColor: theme.colors.background,
-          borderBottomColor: theme.colors.border,
-          borderBottomWidth: 1,
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 3,
-        }
+        { paddingTop: insets.top }
       ]}>
-        <Text style={[styles.headerText, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+        <Text style={styles.headerText}>
           Einstellungen
         </Text>
       </View>
@@ -158,128 +130,42 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       <ScrollView 
         style={styles.scrollContent}
         contentContainerStyle={{ 
-          padding: theme.spacing.m, // 2 Grid-Punkte (16px)
-          paddingTop: theme.spacing.m, // 2 Grid-Punkte (16px)
+          padding: theme.spacing.m,
+          paddingTop: theme.spacing.m,
           paddingBottom: Math.max(theme.spacing.m, insets.bottom) // Entweder Standard-Padding oder Safe Area
         }}
       >
-      <Text 
-        style={[
-          styles.sectionTitle, 
-          { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.bold,
-            fontSize: theme.typography.fontSize.xl,
-            marginBottom: theme.spacing.m, // 2 Grid-Punkte (16px)
-          }
-        ]}
-      >
+      <Text style={styles.sectionTitle}>
         Theme-Einstellungen
       </Text>
-      <Text 
-        style={[
-          styles.sectionDescription, 
-          { 
-            color: theme.colors.onSurface,
-            fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.m,
-            marginBottom: theme.spacing.l,
-          }
-        ]}
-      >
+      <Text style={styles.sectionDescription}>
         Wähle dein bevorzugtes App-Theme aus
       </Text>
       
       {themeOptions.map(renderThemeOption)}
       
-      <Text 
-        style={[
-          styles.sectionTitle, 
-          { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.bold,
-            fontSize: theme.typography.fontSize.xl,
-            marginTop: theme.spacing.l, // 3 Grid-Punkte (24px)
-            marginBottom: theme.spacing.m, // 2 Grid-Punkte (16px)
-          }
-        ]}
-      >
+      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
         App-Informationen
       </Text>
       
-      <View 
-        style={[
-          styles.infoCard, 
-          { 
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.borderRadius.m,
-            padding: theme.spacing.m, // 2 Grid-Punkte (16px)
-          }
-        ]}
-      >
-        <Text 
-          style={[
-            styles.infoText, 
-            { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.medium,
-              fontSize: theme.typography.fontSize.m,
-            }
-          ]}
-        >
+      <View style={styles.infoCard}>
+        <Text style={styles.infoText}>
           Version: 1.0.0
         </Text>
-        <Text 
-          style={[
-            styles.infoText, 
-            { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.medium,
-              fontSize: theme.typography.fontSize.m,
-              marginTop: theme.spacing.s,
-            }
-          ]}
-        >
+        <Text style={[styles.infoText, { marginTop: theme.spacing.s }]}>
           Entwickelt mit React Native und Expo
         </Text>
       </View>
 
-      <Text 
-        style={[
-          styles.sectionTitle, 
-          { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.bold,
-            fontSize: theme.typography.fontSize.xl,
-            marginTop: theme.spacing.l,
-            marginBottom: theme.spacing.m,
-          }
-        ]}
-      >
+      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
         Konto
       </Text>
 
       <TouchableOpacity
-        style={{
-          backgroundColor: theme.colors.errorLight,
-          padding: theme.spacing.m,
-          borderRadius: theme.borderRadius.medium,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: theme.spacing.l,
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 2
-        }}
+        style={styles.logoutButton}
         onPress={handleLogout}
       >
-        <Text style={{
-          color: theme.colors.error,
-          fontFamily: theme.typography.fontFamily.medium,
-          fontSize: theme.typography.fontSize.m,
-        }}>
+        <Text style={styles.logoutText}>
           Abmelden
         </Text>
       </TouchableOpacity>
@@ -289,59 +175,4 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  stickyHeader: {
-    width: '100%',
-    paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-    paddingBottom: 8, // 1 Grid-Punkt (8px)
-    zIndex: 10,
-  },
-  headerText: {
-    fontSize: 20,
-    textAlign: 'center',
-    marginVertical: 8, // 1 Grid-Punkt (8px)
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontWeight: 'bold',
-  },
-  sectionDescription: {
-    marginBottom: 24,
-  },
-  themeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  themeColorPreview: {
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  themeColorAccent: {
-    width: 30,
-    height: 30,
-  },
-  themeTextContainer: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  themeLabel: {
-    fontWeight: 'bold',
-  },
-  themeDescription: {
-    marginTop: 4,
-  },
-  infoCard: {
-    marginBottom: 24,
-  },
-  infoText: {
-    lineHeight: 24,
-  },
-});
+// Styles wurden in eine separate Datei ausgelagert

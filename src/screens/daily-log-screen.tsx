@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, ScrollView, ViewStyle, TextStyle, ActivityIndicator, Modal } from 'react-native';
+import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Modal } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,12 +11,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatToLocalISODate, formatDateForDisplay, getTodayFormatted } from '../utils/date-utils';
 import { useDateContext } from '../context/date-context';
+import { createDailyLogStyles } from '../styles/screens/daily-log-styles';
 
 export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   // Get theme from context
   const { theme } = useTheme();
   // Get safe area insets
   const insets = useSafeAreaInsets();
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createDailyLogStyles(theme);
   
   // Verwende den gemeinsamen DateContext statt lokalem State
   const { selectedDate, setSelectedDate } = useDateContext();
@@ -265,76 +269,76 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     const { nutrition } = foodItem;
 
     return (
-      <View style={[styles.foodEntryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
+      <View style={styles.foodEntryCard}>
         <View style={styles.foodEntryHeader}>
-          <Text style={[styles.foodName, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+          <Text style={styles.foodName}>
             {foodItem.name}
           </Text>
           <TouchableOpacity
             onPress={() => handleRemoveEntry(item.id)}
-            style={[styles.removeButton, { backgroundColor: theme.colors.errorLight, borderRadius: theme.borderRadius.small }]}
+            style={styles.removeButton}
           >
-            <Text style={[styles.removeButtonText, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.error }]}>
+            <Text style={styles.removeButtonText}>
               Entfernen
             </Text>
           </TouchableOpacity>
         </View>
 
         {foodItem.brand && (
-          <Text style={[styles.brandText, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+          <Text style={styles.brandText}>
             {foodItem.brand}
           </Text>
         )}
 
         <View style={styles.servingContainer}>
-          <Text style={[styles.servingText, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+          <Text style={styles.servingText}>
             {servingAmount} {servingAmount > 1 ? 'Portionen' : 'Portion'} ({nutrition.servingSize})
           </Text>
         </View>
 
         <View style={styles.nutritionContainer}>
           <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
+            <Text style={[styles.nutritionValue, { color: theme.colors.primary }]}>
               {Math.round(nutrition.calories * servingAmount)}
             </Text>
-            <Text style={[styles.nutritionLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+            <Text style={styles.nutritionLabel}>
               kcal
             </Text>
           </View>
 
           <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.accent }]}>
+            <Text style={[styles.nutritionValue, { color: theme.colors.accent }]}>
               {Math.round(nutrition.protein * servingAmount)}g
             </Text>
-            <Text style={[styles.nutritionLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+            <Text style={styles.nutritionLabel}>
               Eiweiß
             </Text>
           </View>
 
           <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.warning }]}>
+            <Text style={[styles.nutritionValue, { color: theme.colors.warning }]}>
               {Math.round(nutrition.carbs * servingAmount)}g
             </Text>
-            <Text style={[styles.nutritionLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+            <Text style={styles.nutritionLabel}>
               Kohlenhydrate
             </Text>
           </View>
 
           <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.error }]}>
+            <Text style={[styles.nutritionValue, { color: theme.colors.error }]}>
               {Math.round(nutrition.fat * servingAmount)}g
             </Text>
-            <Text style={[styles.nutritionLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+            <Text style={styles.nutritionLabel}>
               Fett
             </Text>
           </View>
         </View>
 
         <TouchableOpacity 
-          style={[styles.viewButton, { backgroundColor: theme.colors.primaryLight, borderRadius: theme.borderRadius.small, marginTop: 8 }]} 
+          style={styles.viewButton} 
           onPress={() => navigation.getParent()?.navigate('FoodDetail', { foodId: item.id })}
         >
-          <Text style={[styles.viewButtonText, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }]}>
+          <Text style={styles.viewButtonText}>
             Details anzeigen
           </Text>
         </TouchableOpacity>
@@ -365,36 +369,17 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
 
     return (
       <View style={styles.mealSection}>
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: theme.colors.surfaceVariant,
-          borderRadius: theme.borderRadius.medium,
-          padding: 16,
-          marginBottom: isExpanded ? 8 : 16,
-          borderLeftWidth: 4,
-          borderLeftColor: theme.colors.primary,
-        }}>
+        <View style={[styles.mealHeader, { marginBottom: isExpanded ? theme.spacing.xs : theme.spacing.m }]}>
           {/* Hauptbereich der Mahlzeit - klickbar um zum Scanner zu gehen */}
           <TouchableOpacity 
             onPress={() => navigation.getParent()?.navigate('Add', { screen: 'Scanner', params: { mealType } })}
             style={{ flex: 1 }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{
-                fontFamily: theme.typography.fontFamily.bold,
-                fontSize: 18,
-                color: theme.colors.text,
-              }}>
+              <Text style={styles.mealHeaderText}>
                 {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
               </Text>
-              <Text style={{
-                fontFamily: theme.typography.fontFamily.regular,
-                fontSize: 14,
-                color: theme.colors.textLight,
-                marginLeft: 8,
-              }}>
+              <Text style={styles.mealCountText}>
                 ({entryCount} {entryCount === 1 ? 'Eintrag' : 'Einträge'})
               </Text>
             </View>
@@ -402,12 +387,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
 
           {/* Rechte Seite: Kalorien + Accordion Icon */}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: 16,
-              color: theme.colors.primary,
-              marginRight: 8,
-            }}>
+            <Text style={styles.mealCaloriesText}>
               {Math.round(mealCalories)} kcal
             </Text>
 
@@ -417,7 +397,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                 e.stopPropagation();
                 toggleMeal(mealType);
               }}
-              style={{ padding: 8 }}
+              style={styles.accordionButton}
               accessibilityLabel={"Mahlzeit " + mealType + (isExpanded ? " einklappen" : " ausklappen")}
             >
               <Ionicons 
@@ -1199,248 +1179,4 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   );
 };
 
-interface Styles {
-  container: ViewStyle;
-  stickyHeader: ViewStyle;
-  scrollContent: ViewStyle;
-  dateHeader: TextStyle;
-  summaryCard: ViewStyle;
-  summaryTitle: TextStyle;
-  summaryContent: ViewStyle;
-  summaryItem: ViewStyle;
-  summaryValue: TextStyle;
-  summaryLabel: TextStyle;
-  waterCard: ViewStyle;
-  waterHeader: ViewStyle;
-  waterTitle: TextStyle;
-  waterValue: TextStyle;
-  waterButtons: ViewStyle;
-  waterButton: ViewStyle;
-  waterButtonText: TextStyle;
-  sectionTitle: TextStyle;
-  mealCategoryCard: ViewStyle;
-  mealCategoryContent: ViewStyle;
-  mealCategoryTitle: TextStyle;
-  mealCategorySubtitle: TextStyle;
-  mealCategoryCalories: TextStyle;
-  addFoodButton: ViewStyle;
-  addFoodButtonText: TextStyle;
-  mealList: ViewStyle;
-  mealSection: ViewStyle;
-  mealTypeHeader: TextStyle;
-  foodEntryCard: ViewStyle;
-  foodEntryHeader: ViewStyle;
-  foodName: TextStyle;
-  brandText: TextStyle;
-  servingContainer: ViewStyle;
-  servingText: TextStyle;
-  nutritionContainer: ViewStyle;
-  nutritionItem: ViewStyle;
-  nutritionValue: TextStyle;
-  nutritionLabel: TextStyle;
-  removeButton: ViewStyle;
-  removeButtonText: TextStyle;
-  viewButton: ViewStyle;
-  viewButtonText: TextStyle;
-  messageText: TextStyle;
-}
-
-const styles = StyleSheet.create<Styles>({
-  container: {
-    flex: 1,
-  },
-  stickyHeader: {
-    width: '100%',
-    paddingHorizontal: 16, // 2 Grid-Punkte (16px)
-    paddingBottom: 8, // 1 Grid-Punkt (8px)
-    zIndex: 10,
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  dateHeader: {
-    fontSize: 20,
-    textAlign: 'center',
-  },
-  summaryCard: {
-    padding: 16, // 2 Grid-Punkte (16px)
-    marginBottom: 16, // 2 Grid-Punkte (16px)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  summaryContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  summaryItem: {
-    alignItems: 'center',
-    minWidth: 70,
-  },
-  summaryValue: {
-    fontSize: 18,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  waterCard: {
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  waterHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  waterTitle: {
-    fontSize: 16,
-  },
-  waterValue: {
-    fontSize: 18,
-  },
-  waterButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  waterButton: {
-    padding: 12,
-    flex: 1,
-    marginHorizontal: 4,
-    alignItems: 'center',
-  },
-  waterButtonText: {
-    fontSize: 14,
-  },
-  addFoodButton: {
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  addFoodButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  mealCategoryCard: {
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  mealSection: {
-    marginBottom: 16,
-  },
-  mealCategoryContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  mealCategoryTitle: {
-    fontSize: 18,
-    marginBottom: 4,
-  },
-  mealCategorySubtitle: {
-    fontSize: 14,
-  },
-  mealCategoryCalories: {
-    fontSize: 20,
-  },
-  mealList: {
-    marginTop: 16,
-  },
-  mealTypeHeader: {
-    fontSize: 18,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  foodEntryCard: {
-    padding: 16,
-    marginVertical: 8,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  foodEntryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  foodName: {
-    fontSize: 16,
-    flex: 1,
-  },
-  brandText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  servingContainer: {
-    marginBottom: 12,
-  },
-  servingText: {
-    fontSize: 14,
-  },
-  nutritionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingTop: 12,
-    marginBottom: 8,
-  },
-  nutritionItem: {
-    alignItems: 'center',
-    minWidth: 60,
-  },
-  nutritionValue: {
-    fontSize: 16,
-  },
-  nutritionLabel: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  removeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  removeButtonText: {
-    fontSize: 12,
-  },
-  viewButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    fontSize: 14,
-  },
-  messageText: {
-    textAlign: 'center',
-    fontSize: 16,
-    padding: 16,
-  },
-});
+// Styles wurden in eine separate Datei ausgelagert

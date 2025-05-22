@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Easing, cancelAnimation, withDelay } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '../../theme/theme-context';
 
@@ -25,68 +25,87 @@ const WaveAnimation = ({
   
   // Animation-Werte für die Wellenposition und den Füllstand
   const waveOffset1 = useSharedValue(0);
-  const waveOffset2 = useSharedValue(0);
+  const waveOffset2 = useSharedValue(windowWidth / 2); // Versetzt starten
   const fillLevel = useSharedValue(100 - actualFillPercentage);
   
-  // Wellen-Animation starten (endlos laufend)
+  // Ref to track if animations have been initialized
+  const animationsInitialized = useRef(false);
+  
+  // Animation des Füllstands beim Update
   useEffect(() => {
-    // Animation der ersten Welle - nur einmal initialisieren
-    if (waveOffset1.value === 0) {
-      waveOffset1.value = withRepeat(
-        withTiming(windowWidth, { 
-          duration: 8000, // Längere Dauer für eine organischere Bewegung
-          easing: Easing.inOut(Easing.ease)
-        }),
-        -1, // unendlich wiederholen
-        false // nicht umkehren
-      );
-    }
-    
-    // Animation der zweiten Welle - nur einmal initialisieren
-    if (waveOffset2.value === 0) {
-      waveOffset2.value = windowWidth / 2; // Versetzt starten
-      waveOffset2.value = withRepeat(
-        withTiming(windowWidth * 1.5, { 
-          duration: 12000, // Noch längere Dauer für mehr Variation
-          easing: Easing.inOut(Easing.ease)
-        }),
-        -1, // unendlich wiederholen
-        false // nicht umkehren
-      );
-    }
-    
-    // Animation des Füllstands beim Update - dieser Teil wird bei jeder Änderung aktualisiert
+    // Animation des Füllstands wird bei jeder Änderung aktualisiert
     fillLevel.value = withTiming(
       100 - actualFillPercentage, 
       { duration: 800, easing: Easing.out(Easing.cubic) }
     );
   }, [actualFillPercentage]);
   
-  // Initialisiere die Wellenanimation einmalig beim Mounten
+  // Wellen-Animation starten (endlos laufend) - nur beim Mounting
   useEffect(() => {
-    // Die Initialisierung erfolgt im anderen useEffect
+    if (!animationsInitialized.current) {
+      // Cleanup any existing animations to prevent conflicts
+      cancelAnimation(waveOffset1);
+      cancelAnimation(waveOffset2);
+      
+      // Set initial values
+      waveOffset1.value = 0;
+      waveOffset2.value = windowWidth / 2;
+      
+      // Start the first wave animation with a smooth infinite loop
+      waveOffset1.value = withRepeat(
+        withTiming(windowWidth, { 
+          duration: 15000, // Longer duration for smoother movement
+          easing: Easing.linear // Linear easing for constant speed
+        }),
+        -1, // infinite repeat
+        false // don't reverse
+      );
+      
+      // Start the second wave animation with different timing for variety
+      waveOffset2.value = withDelay(
+        100, // Small delay for more natural-looking waves
+        withRepeat(
+          withTiming(windowWidth, { 
+            duration: 18000, // Different duration for more variation
+            easing: Easing.linear // Linear easing for constant speed
+          }),
+          -1, // infinite repeat
+          false // don't reverse
+        )
+      );
+      
+      animationsInitialized.current = true;
+    }
+    
+    // Cleanup function
     return () => {
-      // Cleanup-Funktion 
-      // Keine explizite Bereinigung erforderlich, da Reanimated dies automatisch handhabt
+      cancelAnimation(waveOffset1);
+      cancelAnimation(waveOffset2);
     };
   }, []);
   
+
+  
   // Animierter Style für die erste Welle
   const wave1Style = useAnimatedStyle(() => {
+    // We use modulo to keep the value within range but avoid visual jumps
+    const translateX = -(waveOffset1.value % windowWidth);
+    
     return {
-      transform: [{ translateX: -waveOffset1.value % windowWidth }],
+      transform: [{ translateX }],
       // Y-Position wird durch Top gesetzt: Je niedriger der fillLevel, desto weiter oben ist die Welle
-      // Kleinere Anpassung, um den Abstand zwischen Wasserstand und Animation zu verringern
-      top: `${fillLevel.value -  20}%`
+      top: `${fillLevel.value - 20}%`
     };
   });
   
   // Animierter Style für die zweite Welle
   const wave2Style = useAnimatedStyle(() => {
+    // We use modulo to keep the value within range but avoid visual jumps
+    const translateX = -(waveOffset2.value % windowWidth);
+    
     return {
-      transform: [{ translateX: -waveOffset2.value % windowWidth }],
+      transform: [{ translateX }],
       // Y-Position wird durch Top gesetzt: Je niedriger der fillLevel, desto weiter oben ist die Welle
-      // Kleinere Anpassung, um den Abstand zwischen Wasserstand und Animation zu verringern
       top: `${fillLevel.value - 20}%`
     };
   });
@@ -116,7 +135,7 @@ const WaveAnimation = ({
                  C${windowWidth*0.2},35 ${windowWidth*0.4},5 ${windowWidth*0.6},20 
                  C${windowWidth*0.8},35 ${windowWidth},10 ${windowWidth*1.2},25 
                  C${windowWidth*1.4},40 ${windowWidth*1.6},15 ${windowWidth*1.8},20 
-                 C${windowWidth*1.9},15 ${windowWidth*2},20 ${windowWidth*2},25 
+                 C${windowWidth*1.9},15 ${windowWidth*2},20 ${windowWidth*2},15 
                  L${windowWidth*2},220 L0,220 Z`}
               fill={`${color}90`}
             />
@@ -130,7 +149,7 @@ const WaveAnimation = ({
                  C${windowWidth*0.25},5 ${windowWidth*0.35},30 ${windowWidth*0.5},15 
                  C${windowWidth*0.6},5 ${windowWidth*0.8},30 ${windowWidth},15 
                  C${windowWidth*1.2},5 ${windowWidth*1.4},20 ${windowWidth*1.6},15 
-                 C${windowWidth*1.8},10 ${windowWidth*1.9},20 ${windowWidth*2},15 
+                 C${windowWidth*1.8},10 ${windowWidth*1.9},20 ${windowWidth*2},25 
                  L${windowWidth*2},220 L0,220 Z`}
               fill={`${color}60`}
             />
