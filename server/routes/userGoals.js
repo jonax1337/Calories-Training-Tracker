@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateJWT } = require('../middleware/auth');
+const { authenticate } = require('../middleware/authMiddleware');
 const { 
   getGoalTypes, 
   getUserGoals, 
@@ -12,12 +12,12 @@ const {
 router.get('/types', getGoalTypes);
 
 // Get user goals - requires authentication
-router.get('/:userId', authenticateJWT, getUserGoals);
+router.get('/:userId', authenticate, getUserGoals);
 
 // Create or update user goal - requires authentication
-router.post('/:userId', authenticateJWT, createOrUpdateUserGoal);
+router.post('/:userId', authenticate, createOrUpdateUserGoal);
 
 // Delete user goal - requires authentication
-router.delete('/:userId/:goalId', authenticateJWT, deleteUserGoal);
+router.delete('/:userId/:goalId', authenticate, deleteUserGoal);
 
 module.exports = router;
