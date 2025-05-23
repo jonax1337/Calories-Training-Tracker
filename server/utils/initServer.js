@@ -1,6 +1,5 @@
 const { testConnection } = require('../config/db');
 const { initializeDatabase } = require('../config/db-init');
-const { initializeUserGoals } = require('../config/user-goals-init');
 
 async function initServer() {
   console.log('Initializing server...');
@@ -18,14 +17,6 @@ async function initServer() {
   
   if (!initialized) {
     console.error('Failed to initialize database schema. Please check the error logs.');
-    process.exit(1);
-  }
-  
-  // Initialize user goals tables
-  const userGoalsInitialized = await initializeUserGoals();
-  
-  if (!userGoalsInitialized) {
-    console.error('Failed to initialize user goals tables. Please check the error logs.');
     process.exit(1);
   }
   
