@@ -37,11 +37,12 @@ async function initializeUserGoals() {
 
     // Insert default goal types
     const defaultGoalTypes = [
-      { id: 'weight_loss', name: 'Gewichtsabnahme', description: 'Empfohlen für Personen, die Gewicht verlieren möchten', is_custom: false },
-      { id: 'maintenance', name: 'Gewicht halten', description: 'Empfohlen für Personen, die ihr aktuelles Gewicht halten möchten', is_custom: false },
-      { id: 'weight_gain', name: 'Gewichtszunahme', description: 'Empfohlen für Personen, die Gewicht zunehmen möchten', is_custom: false },
-      { id: 'custom', name: 'Benutzerdefiniert', description: 'Benutzerdefinierte Ziele', is_custom: true }
-    ];
+        { id: 'gain', name: 'Gesunde Gewichtszunahme', description: 'Für Personen mit Untergewicht oder Muskelaufbau-Ziel.', is_custom: false },
+        { id: 'maintain', name: 'Gewicht halten & Fitness verbessern', description: 'Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.', is_custom: false },
+        { id: 'lose_moderate', name: 'Moderate Gewichtsreduktion', description: 'Für leichtes Übergewicht, langsamer aber nachhaltiger Gewichtsverlust.', is_custom: false },
+        { id: 'lose_fast', name: 'Gesunde Gewichtsreduktion', description: 'Für stärkeres Übergewicht, schnellerer Gewichtsverlust.', is_custom: false },
+        { id: 'custom', name: 'Benutzerdefiniert', description: 'Eigene Ziele manuell festlegen.', is_custom: true },
+      ];
 
     for (const goalType of defaultGoalTypes) {
       await connection.query(
