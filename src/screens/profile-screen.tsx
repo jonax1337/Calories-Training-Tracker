@@ -6,8 +6,8 @@ import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import { ProfileTabScreenProps } from '../types/navigation-types';
-import { ActivityLevel, UserProfile } from '../types';
-import { getUserProfile, saveUserProfile } from '../services/storage-service';
+import { ActivityLevel, UserProfile, UserGoal, GoalType } from '../types';
+import { saveUserProfile, getUserProfile, saveUserGoal, getUserGoals, getGoalTypes } from '../services/storage-service';
 import { requestHealthPermissions } from '../services/health-service';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -50,6 +50,10 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // State für ausgeklapptes Ziel-Menü und ausgewähltes Ziel
   const [goalsExpanded, setGoalsExpanded] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null); // null = empfohlenes Ziel
+  
+  // State für verfügbare Zieltypen und aktuelle Benutzerziele
+  const [goalTypes, setGoalTypes] = useState<GoalType[]>([]);
+  const [userGoals, setUserGoals] = useState<UserGoal[]>([]);
   
   // Funktion zum Berechnen des Alters aus dem Geburtsdatum
   const calculateAge = (birthdate: Date): number => {
@@ -104,6 +108,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     setIsLoading(true);
     try {
       console.log('Loading profile data...');
+      
+      // Lade Benutzerprofil
       const savedProfile = await getUserProfile();
       if (savedProfile) {
         setProfile(savedProfile);
@@ -124,6 +130,16 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         
         console.log('Profile data loaded successfully');
       }
+      
+      // Lade verfügbare Zieltypen
+      const availableGoalTypes = await getGoalTypes();
+      setGoalTypes(availableGoalTypes);
+      console.log('Goal types loaded:', availableGoalTypes.length);
+      
+      // Lade aktuelle Benutzerziele
+      const currentUserGoals = await getUserGoals();
+      setUserGoals(currentUserGoals);
+      console.log('User goals loaded:', currentUserGoals.length);
       
       // Check health permissions
       const hasPermission = await requestHealthPermissions();
@@ -297,8 +313,57 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         age: calculatedAge
       };
       
-      // Save profile to server
+      // 1. Save profile to server (bisherige Funktionalität beibehalten)
       await saveUserProfile(updatedProfile);
+      
+      // 2. Parallel: Speichern der Benutzerziele in der neuen API
+      try {
+        console.log('Saving user goals to new API...');
+        
+        // Bestimme den Zieltyp basierend auf der Auswahl (wenn möglich)
+        let goalTypeId: string | undefined = undefined;
+        let isCustom = false;
+        
+        // Wenn ein spezifisches Ziel ausgewählt wurde und Zieltypen geladen sind
+        if (selectedGoalId && goalTypes.length > 0) {
+          const selectedType = goalTypes.find(type => type.id === selectedGoalId);
+          if (selectedType) {
+            goalTypeId = selectedType.id;
+            isCustom = selectedType.isCustom;
+          }
+        } else {
+          // Wenn kein Ziel ausgewählt wurde, setze es als benutzerdefiniert
+          isCustom = true;
+          // Suche nach dem "custom" Zieltyp, falls vorhanden
+          const customType = goalTypes.find(type => type.id === 'custom');
+          if (customType) {
+            goalTypeId = customType.id;
+          }
+        }
+        
+        // Erstelle UserGoal-Objekt für API
+        const userGoal: UserGoal = {
+          goalTypeId,
+          isCustom,
+          dailyCalories: profile.goals.dailyCalories,
+          dailyProtein: profile.goals.dailyProtein || 0,
+          dailyCarbs: profile.goals.dailyCarbs || 0,
+          dailyFat: profile.goals.dailyFat || 0,
+          dailyWater: profile.goals.dailyWater || 0
+        };
+        
+        // Speichere Benutzerziel in der neuen API
+        const goalSaveSuccess = await saveUserGoal(userGoal);
+        if (goalSaveSuccess) {
+          console.log('User goals saved successfully to new API');
+        } else {
+          console.warn('Failed to save user goals to new API');
+        }
+      } catch (goalError) {
+        // Fehler beim Speichern der Ziele in der neuen API sollen die 
+        // ursprüngliche Speicherfunktion nicht beeinträchtigen
+        console.error('Error saving user goals to new API:', goalError);
+      }
       
       // Reload profile data to ensure everything is in sync
       await loadProfile();

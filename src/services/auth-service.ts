@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from './api-service';
+import { API_BASE_URL, AUTH_TOKEN_KEY, USER_ID_KEY } from '../config/api-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LoginCredentials {
@@ -24,39 +24,17 @@ interface AuthResponse {
   };
 }
 
-// Storage keys for authentication
-const AUTH_TOKEN_KEY = 'auth_token';
-const USER_ID_KEY = 'user_id';
+// Storage keys now imported from api-config.ts
 
 // Create axios instance for auth
 const authApi = axios.create({
-  baseURL: `${API_BASE_URL.split('/api')[0]}/api/auth`,
+  baseURL: `${API_BASE_URL}/auth`,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Create an authorized API instance for protected routes
-export const authorizedApi = axios.create({
-  baseURL: API_BASE_URL.split('/api')[0],
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add authorization header interceptor
-authorizedApi.interceptors.request.use(
-  async (config) => {
-    const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Interceptor wurde nach api-service.ts verschoben
 
 // Register new user
 export async function register(data: RegisterData): Promise<AuthResponse | null> {
@@ -131,7 +109,18 @@ export async function getCurrentUserId(): Promise<string | null> {
 // Get current user profile
 export async function getCurrentUser(): Promise<any | null> {
   try {
-    const response = await authorizedApi.get('/api/auth/me');
+    // Erstelle eine Anfrage mit authentifizierungsheader
+    const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+      return null; // Kein Token verfügbar, kann nicht authentifizieren
+    }
+    
+    const response = await axios.get(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Error getting current user profile:', error);

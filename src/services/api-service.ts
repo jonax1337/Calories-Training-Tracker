@@ -1,19 +1,42 @@
 import axios from 'axios';
 import { DailyLog, FoodItem, UserProfile, UserGoal, GoalType } from '../types';
+import { API_BASE_URL, AUTH_TOKEN_KEY } from '../config/api-config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API configuration
 // Use the actual IP address or hostname of your server, not localhost
 // localhost only works when testing in a web browser on the same machine as the server
 // For mobile devices, you need to use your computer's IP address or hostname
-export const API_BASE_URL = 'http://192.168.178.32:3001';
 
-// Create axios instance
+// Create axios instance for regular requests
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Create an authorized API instance for protected routes
+const authorizedApi = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add authorization header interceptor
+authorizedApi.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // User profile functions
 export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
@@ -159,6 +182,7 @@ export async function toggleFavoriteFood(userId: string, foodId: string): Promis
 // User goals functions
 export async function fetchGoalTypes(): Promise<GoalType[]> {
   try {
+    // Zieltypen sind öffentlich, daher kann die nicht-autorisierte API verwendet werden
     const response = await api.get('/api/user-goals/types');
     return response.data;
   } catch (error) {
@@ -169,7 +193,8 @@ export async function fetchGoalTypes(): Promise<GoalType[]> {
 
 export async function fetchUserGoals(userId: string): Promise<UserGoal[]> {
   try {
-    const response = await api.get(`/api/user-goals/${userId}`);
+    // Verwende authorizedApi für geschützte Routen
+    const response = await authorizedApi.get(`/api/user-goals/${userId}`);
     return response.data;
   } catch (error: any) {
     // Don't log 404 errors as they're expected for users with no goals
@@ -183,7 +208,8 @@ export async function fetchUserGoals(userId: string): Promise<UserGoal[]> {
 
 export async function createOrUpdateUserGoal(userId: string, goal: UserGoal): Promise<boolean> {
   try {
-    await api.post(`/api/user-goals/${userId}`, goal);
+    // Verwende authorizedApi für geschützte Routen
+    await authorizedApi.post(`/api/user-goals/${userId}`, goal);
     return true;
   } catch (error) {
     console.error('Error saving user goal:', error);
@@ -193,7 +219,8 @@ export async function createOrUpdateUserGoal(userId: string, goal: UserGoal): Pr
 
 export async function deleteUserGoal(userId: string, goalId: string): Promise<boolean> {
   try {
-    await api.delete(`/api/user-goals/${userId}/${goalId}`);
+    // Verwende authorizedApi für geschützte Routen
+    await authorizedApi.delete(`/api/user-goals/${userId}/${goalId}`);
     return true;
   } catch (error) {
     console.error('Error deleting user goal:', error);
