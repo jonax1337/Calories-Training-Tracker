@@ -73,6 +73,28 @@ export interface UserGoals {
   weightGoal?: number; // in kg
 }
 
+// Goal types for user nutrition goals
+export interface GoalType {
+  id: string;
+  name: string;
+  description?: string;
+  isCustom: boolean;
+}
+
+// User goal with goal type reference
+export interface UserGoal {
+  id?: string;
+  userId?: string;
+  goalTypeId?: string;
+  goalTypeName?: string;
+  isCustom: boolean;
+  dailyCalories: number;
+  dailyProtein: number;
+  dailyCarbs: number;
+  dailyFat: number;
+  dailyWater: number;
+}
+
 // Health data related types
 export interface HealthData {
   steps: number;

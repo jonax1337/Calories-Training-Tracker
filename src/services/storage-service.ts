@@ -1,4 +1,4 @@
-  import { DailyLog, FoodItem, UserProfile } from '../types';
+  import { DailyLog, FoodItem, UserProfile, UserGoal, GoalType } from '../types';
 import {
   fetchUserProfile,
   createOrUpdateUserProfile,
@@ -9,7 +9,11 @@ import {
   fetchDailyLogByDate,
   createOrUpdateDailyLog,
   fetchFavoriteFoodIds,
-  toggleFavoriteFood as apiToggleFavoriteFood
+  toggleFavoriteFood as apiToggleFavoriteFood,
+  fetchGoalTypes,
+  fetchUserGoals,
+  createOrUpdateUserGoal as apiCreateOrUpdateUserGoal,
+  deleteUserGoal as apiDeleteUserGoal
 } from './api-service';
 import { getCurrentUserId, isAuthenticated } from './auth-service';
 
@@ -191,5 +195,69 @@ export async function getFavoriteFoodIds(): Promise<string[]> {
   } catch (error) {
     console.error('Error getting favorite food IDs:', error);
     return [];
+  }
+}
+
+// User goals functions
+export async function getGoalTypes(): Promise<GoalType[]> {
+  try {
+    return await fetchGoalTypes();
+  } catch (error) {
+    console.error('Error getting goal types:', error);
+    return [];
+  }
+}
+
+export async function getUserGoals(): Promise<UserGoal[]> {
+  try {
+    // Check if user is authenticated first
+    const isUserAuthenticated = await isAuthenticated();
+    if (!isUserAuthenticated) {
+      // Don't make API calls if not authenticated
+      return [];
+    }
+    
+    // Get the authenticated user ID or use default
+    const userId = await getCurrentUserId() || DEFAULT_USER_ID;
+    
+    try {
+      // Try to get existing goals
+      return await fetchUserGoals(userId);
+    } catch (error: any) { // Type the error as any to access response property
+      // If no goals exist (404), return an empty array
+      if (error.response && error.response.status === 404) {
+        return [];
+      }
+      throw error; // Re-throw any other errors
+    }
+  } catch (error) {
+    console.error('Error getting user goals:', error);
+    return [];
+  }
+}
+
+export async function saveUserGoal(goal: UserGoal): Promise<boolean> {
+  try {
+    // Get the authenticated user ID or use default
+    const userId = await getCurrentUserId() || DEFAULT_USER_ID;
+    
+    // Use the API service with the current user ID
+    return await apiCreateOrUpdateUserGoal(userId, goal);
+  } catch (error) {
+    console.error('Error saving user goal:', error);
+    return false;
+  }
+}
+
+export async function deleteUserGoal(goalId: string): Promise<boolean> {
+  try {
+    // Get the authenticated user ID or use default
+    const userId = await getCurrentUserId() || DEFAULT_USER_ID;
+    
+    // Use the API service with the current user ID
+    return await apiDeleteUserGoal(userId, goalId);
+  } catch (error) {
+    console.error('Error deleting user goal:', error);
+    return false;
   }
 }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DailyLog, FoodItem, UserProfile } from '../types';
+import { DailyLog, FoodItem, UserProfile, UserGoal, GoalType } from '../types';
 
 // API configuration
 // Use the actual IP address or hostname of your server, not localhost
@@ -152,6 +152,51 @@ export async function toggleFavoriteFood(userId: string, foodId: string): Promis
     return response.data.isFavorite;
   } catch (error) {
     console.error('Error toggling favorite food:', error);
+    return false;
+  }
+}
+
+// User goals functions
+export async function fetchGoalTypes(): Promise<GoalType[]> {
+  try {
+    const response = await api.get('/api/user-goals/types');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching goal types:', error);
+    return [];
+  }
+}
+
+export async function fetchUserGoals(userId: string): Promise<UserGoal[]> {
+  try {
+    const response = await api.get(`/api/user-goals/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    // Don't log 404 errors as they're expected for users with no goals
+    if (!error.response || error.response.status !== 404) {
+      console.error('Error fetching user goals:', error);
+    }
+    // Let the calling function handle the error
+    throw error;
+  }
+}
+
+export async function createOrUpdateUserGoal(userId: string, goal: UserGoal): Promise<boolean> {
+  try {
+    await api.post(`/api/user-goals/${userId}`, goal);
+    return true;
+  } catch (error) {
+    console.error('Error saving user goal:', error);
+    return false;
+  }
+}
+
+export async function deleteUserGoal(userId: string, goalId: string): Promise<boolean> {
+  try {
+    await api.delete(`/api/user-goals/${userId}/${goalId}`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting user goal:', error);
     return false;
   }
 }
