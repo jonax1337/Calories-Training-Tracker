@@ -9,10 +9,6 @@
 
 **Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und Gesundheitsziele.**
 
-[English](#english-description) | [Deutsch](#deutsche-beschreibung)
-
-<img src="https://via.placeholder.com/300x600?text=Calories+Tracker+App" alt="App Screenshot" width="250"/>
-
 </div>
 
 ## ✨ Highlights
@@ -25,7 +21,7 @@
 
 ---
 
-## 🌟 Features {#deutsche-beschreibung}
+## 🌟 Features
 
 ### 📊 Ernährungstracking
 - **Umfassende Nährwertanalyse**: Verfolge Kalorien, Protein, Kohlenhydrate, Fette und Wasseraufnahme
@@ -146,17 +142,3 @@ Beiträge sind willkommen! Bitte lies dir die Beitragsrichtlinien durch, bevor d
 Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe die LICENSE-Datei für Details.
 
 ---
-
-## 🌍 English Description {#english-description}
-
-The Calories Training Tracker is a comprehensive mobile application for tracking your nutrition, fitness, and health goals. It allows you to track calories, macronutrients, water intake, and activity data, with features like barcode scanning for easy food entry and health app integration.
-
-For a full description of features and installation instructions, please see the German description above.
-
----
-
-<div align="center">
-
-**Entwickelt mit ❤️ von Ihrer Entwicklerteam**
-
-</div>
