@@ -613,37 +613,17 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
 
       <ScrollView
         style={styles.scrollContent}
-        contentContainerStyle={{
-          padding: theme.spacing.m, // 2 Grid-Punkte (16px)
-          paddingBottom: 0
+        contentContainerStyle={{ 
+          padding: theme.spacing.m,
+          paddingTop: theme.spacing.m,
+          paddingBottom: Math.max(theme.spacing.m, insets.bottom) // Entweder Standard-Padding oder Safe Area
         }}
       >
-        <Text 
-          style={[
-            styles.sectionTitle, 
-            { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: theme.typography.fontSize.xl,
-              marginBottom: theme.spacing.xs,
-              marginTop: theme.spacing.xs,
-            }
-          ]}
-        >
+        <Text style={styles.sectionTitle}>
           Persönliche Daten
         </Text>
 
-        <Text
-          style={[
-            styles.sectionDescription,
-            {
-              color: theme.colors.textLight,
-              fontFamily: theme.typography.fontFamily.regular,
-              fontSize: theme.typography.fontSize.s,
-              marginBottom: theme.spacing.l,
-            }
-          ]}
-        >
+        <Text style={styles.sectionDescription}>
           Persönliche Daten und Fitnessprofile
         </Text>
 

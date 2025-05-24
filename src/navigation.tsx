@@ -17,6 +17,7 @@ import RegisterScreen from './screens/register-screen';
 import TrainingScreen from './screens/training-screen';
 import HIITTimerScreen from './screens/hiit-timer-screen';
 import HIITTimerSettingsScreen from './screens/hiit-timer-settings-screen';
+import ManualFoodEntryScreen from './screens/manual-food-entry-screen';
 
 // Types for HIIT Timer
 export interface HIITSettings {
@@ -54,6 +55,7 @@ export type RootStackParamList = {
   TabNavigator: undefined;
   BarcodeScanner: { mealType?: string };
   FoodDetail: { barcode?: string; foodId?: string; mealType?: string; foodItem?: any; selectedDate?: string; manualEntry?: boolean };
+  ManualFoodEntry: { mealType?: string; selectedDate?: string };
   DailyLog: { date?: string };
   Settings: undefined;
   HIITTimer: { settings?: HIITSettings };
@@ -61,7 +63,7 @@ export type RootStackParamList = {
   // Tab screens (for backwards compatibility)
   Home: undefined;
   Profile: undefined;
-  Journal: undefined;
+  Food: undefined;
 };
 
 // Define the type for our tab navigator parameters
@@ -69,7 +71,7 @@ export type TabParamList = {
   Home: undefined;
   Profile: undefined;
   Add: { mealType?: string };
-  Journal: undefined;
+  Food: undefined;
   Settings: undefined;
   Training: undefined;
 };
@@ -93,17 +95,14 @@ function TabNavigator() {
           backgroundColor: theme.colors.card,
           borderTopWidth: 1,
           borderTopColor: theme.colors.border,
-          paddingTop: theme.spacing.xs,
+          paddingTop: theme.spacing.s,
           height: 60 + insets.bottom, // Add safe area insets to the height
           paddingBottom: insets.bottom, // Add padding to bottom to fill safe area
         },
-        tabBarItemStyle: {
-          // Position elements within the tab bar correctly, accounting for the safe area
-          paddingBottom: insets.bottom > 0 ? 0 : theme.spacing.xs, // Only add padding if not handled by safe area
-        },
         tabBarLabelStyle: {
           fontFamily: theme.typography.fontFamily.medium,
-          fontSize: 12,
+          fontSize: theme.typography.fontSize.xs,
+          display: 'flex',
         },
         tabBarIcon: ({ focused, color }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'help-circle-outline';
@@ -112,7 +111,7 @@ function TabNavigator() {
             case 'Home':
               iconName = focused ? 'home' : 'home-outline';
               break;
-            case 'Journal':
+            case 'Food':
               iconName = focused ? 'fast-food' : 'fast-food-outline';
               break;
             case 'Training':
@@ -132,10 +131,10 @@ function TabNavigator() {
     >
       <Tab.Screen 
         name="Home" 
-        component={HomeScreen} 
+        component={HomeScreen}
       />
       <Tab.Screen 
-        name="Journal" 
+        name="Food" 
         component={DailyLogScreen as React.ComponentType<any>} 
       />
       <Tab.Screen 
@@ -264,6 +263,11 @@ function AppStack() {
         name="HIITTimer" 
         component={HIITTimerScreen} 
         options={{ title: 'Timer', animation: 'slide_from_right' }}
+      />
+      <Stack.Screen 
+        name="ManualFoodEntry" 
+        component={ManualFoodEntryScreen} 
+        options={{ title: 'Lebensmittel hinzufügen', animation: 'slide_from_right' }} 
       />
     </Stack.Navigator>
   );

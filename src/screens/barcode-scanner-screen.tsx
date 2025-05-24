@@ -75,11 +75,10 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   // Automatisches Reset des Scanners, wenn der Screen wieder fokussiert wird
   useFocusEffect(
     React.useCallback(() => {
-      console.log('Scanner-Screen erhält Fokus - Scanner wird zurückgesetzt');
       // Scanner zurücksetzen, wenn der Screen wieder fokussiert wird
       setScanned(false);
       isScanningRef.current = false;
-      
+      setTimeout(() => setIsTorchOn(false), 500);
       return () => {
         // Optional: Clean-up beim Verlassen des Screens
       };
@@ -89,7 +88,6 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
   const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
     // KRITISCH: Sofortiger und definitiver Ausstieg, wenn bereits gescannt
     if (isScanningRef.current) {
-      console.log('\u274c Scan bereits in Bearbeitung - ignoriere');
       return;
     }
 
@@ -97,7 +95,6 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
     isScanningRef.current = true;
     setScanned(true); // Deaktiviert den Scanner in der UI
 
-    console.log(`\u2705 Barcode erkannt: ${type} \u2013 ${data}`);
     setLastScannedData(data);
     setLastScannedType(type);
 
@@ -159,35 +156,6 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
     }
   };
 
-  const handleSubmitBarcode = async () => {
-    if (!barcodeInput.trim()) {
-      setError("Bitte geben Sie einen Barcode ein");
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    setSearchResults([]);
-    try {
-      const foodData = await getFoodDataByBarcode(barcodeInput.trim());
-      if (foodData) {
-        try {
-          navigation.getParent()?.navigate("FoodDetail", {
-            barcode: barcodeInput.trim(),
-            mealType,
-          });
-        } catch (e) {
-          console.error("Navigation error:", e);
-          Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      setError("Fehler beim Abrufen der Produktdaten. Bitte erneut versuchen.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSearchByName = async () => {
     if (!nameInput.trim()) {
       setError("Bitte geben Sie einen Produktnamen ein");
@@ -236,24 +204,12 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
     }
   };
 
-  const handleScanAgain = () => {
-    // Vollständiges Zurücksetzen aller Scan-Flags
-    setScanned(false);
-    isScanningRef.current = false;
-  };
-
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: theme.spacing.m }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.content}
       >
-        <Text style={[styles.instructionText, { 
-          color: theme.colors.text, 
-          fontFamily: theme.typography.fontFamily.medium 
-        }]}>
-          Barcode scannen oder Produktname suchen
-        </Text>
 
         {/* Tabs */}
         <View style={styles.tabContainer}>
@@ -262,7 +218,7 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
               key={tab}
               style={[
                 styles.tabButton,
-                activeTab === tab && [styles.activeTab, { borderColor: theme.colors.primary }],
+                activeTab === tab && styles.activeTab
               ]}
               onPress={() => setActiveTab(tab as any)}
             >
@@ -275,7 +231,7 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
                     }
                   : { 
                       color: theme.colors.text, 
-                      fontFamily: theme.typography.fontFamily.regular 
+                      fontFamily: theme.typography.fontFamily.bold 
                     }
               ]}>
                 {tab === "barcode" ? "Barcode" : "Produktname"}
@@ -294,28 +250,25 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
                 <CameraView
                   style={styles.preview}
                   facing="back"
+                  selectedLens="Back Camera"
                   enableTorch={isTorchOn}
                   autofocus={autofocus}
-                  onCameraReady={() => console.log("📸 Camera ready")}
-                  onMountError={(err) => console.error("❌ Camera error:", err)}
+                  onCameraReady={() => setTimeout(() => setIsTorchOn(false), 500)}
+                  onMountError={(err) => console.error("Camera error:", err)}
                   onBarcodeScanned={scanned || isScanningRef.current ? undefined : handleBarcodeScanned}
                   barcodeScannerSettings={{
                     barcodeTypes: [
-                      "aztec",
                       "codabar",
                       "code128",
                       "code39",
                       "code93",
-                      "datamatrix",
                       "ean13",
                       "ean8",
                       "itf14",
-                      "pdf417",
-                      "qr",
                       "upc_e"
                     ],
                   }}
-                  videoStabilizationMode="off"
+                  videoStabilizationMode="auto"
                 />
                 <View style={{ borderColor: theme.colors.primary }} />
 
@@ -350,30 +303,33 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
               onPress={handleSearchByName}
               disabled={isLoading}
             >
-              <Text style={{ color: "white", fontFamily: theme.typography.fontFamily.bold }}>Suchen</Text>
+              <Ionicons name="search-outline" size={theme.typography.fontSize.m} color="white" />
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Loader */}
-        {isLoading && (
+        {/* Loader - nur anzeigen, wenn aktiv nach Namen gesucht wird */}
+        {activeTab === "name" && isLoading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.regular }}>Bitte warten…</Text>
           </View>
         )}
 
-        {/* Error */}
-        {error && (
+        {/* Error - nur anzeigen, wenn im Namen-Tab */}
+        {activeTab === "name" && error && (
           <View style={styles.errorContainer}>
             <Text style={{ color: theme.colors.error }}>{error}</Text>
           </View>
         )}
 
-        {/* Suchergebnisse */}
-        {searchResults.length > 0 && (
+        {/* Suchergebnisse - nur anzeigen, wenn im Namen-Tab */}
+        {activeTab === "name" && searchResults.length > 0 && (
+          <View style={{ height: 500 }}>
           <FlatList
-            style={styles.resultsContainer}
+            style={{ flexGrow: 1 }}              // verhindert, dass der List-Container unbegrenzt wächst
+            scrollEnabled={true}              // eigentlich Standard, aber zur Sicherheit
+            nestedScrollEnabled={true}        // wichtig, wenn du in einem ScrollView bist (Android)
+            showsVerticalScrollIndicator={true}
             data={searchResults}
             keyExtractor={(i) => i.id}
             renderItem={({ item }) => (
@@ -389,17 +345,31 @@ export default function BarcodeScannerScreen({ navigation, route }: AddTabScreen
               </TouchableOpacity>
             )}
           />
+          </View>
         )}
 
         {/* Manueller Eintrag */}
         <TouchableOpacity
           style={[styles.manualEntryButton, { borderColor: theme.colors.border }]}
           onPress={() => {
+            const navigationParams = { 
+              mealType,
+              selectedDate // Übergebe auch das ausgewählte Datum an den manuellen Eingabe-Screen
+            };
+            
             try {
-              navigation.getParent()?.navigate("FoodDetail", { mealType });
+              // Erste Variante: Über Parent-Navigator
+              const parent = navigation.getParent();
+              if (parent) {
+                parent.navigate("ManualFoodEntry", navigationParams);
+                return;
+              }           
+              // Zweite Variante: Direkte Navigation als Fallback
+              // @ts-ignore - Ignoriere TypeScript-Fehler
+              navigation.navigate("ManualFoodEntry", navigationParams);
             } catch (e) {
               console.error("Navigation error:", e);
-              Alert.alert("Fehler", "Es gab ein Problem bei der Navigation.");
+              Alert.alert("Fehler", "Es gab ein Problem bei der Navigation. Details: " + e);
             }
           }}
         >

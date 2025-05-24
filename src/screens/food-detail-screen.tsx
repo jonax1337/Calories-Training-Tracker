@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, Image, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -41,6 +41,28 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   
   // Add state for the selected date (use passed date or default to today)
   const [selectedDate, setSelectedDate] = useState<string>(passedDate || getTodayFormatted());
+
+  // Referenz zum ScrollView, um Scrollposition zu kontrollieren
+  const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Aktuellen Scrollstatus speichern und wiederherstellen
+  const [scrollPosition, setScrollPosition] = useState<{x: number, y: number}>({x: 0, y: 0});
+  
+  // Diese Funktion hilft, die Scrollposition beizubehalten
+  const maintainScrollPosition = () => {
+    if (scrollViewRef.current) {
+      // Aktuelle Position speichern
+      scrollViewRef.current.scrollTo({x: scrollPosition.x, y: scrollPosition.y, animated: false});
+    }
+  };
+  
+  // Scroll-Position beim Text-Input-Fokus beibehalten
+  const handleScrollPositionChange = (e: any) => {
+    setScrollPosition({
+      x: e.nativeEvent.contentOffset.x,
+      y: e.nativeEvent.contentOffset.y
+    });
+  };
 
   // Load food data when component mounts or create empty food item for manual entry
   useEffect(() => {
@@ -244,11 +266,15 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       backgroundColor: theme.colors.background
     }]}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollContent}
         contentContainerStyle={{
           paddingRight: 16,
           paddingLeft: 16,
         }}
+        scrollEventThrottle={16}
+        onScroll={handleScrollPositionChange}
+        keyboardShouldPersistTaps="handled"
       >
         {isLoading ? (
           <View style={[styles.loadingContainer, { marginTop: theme.spacing.xl }]}>

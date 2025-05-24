@@ -122,13 +122,25 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
   try {
     const params = new URLSearchParams({
       search_terms: query,
-      search_simple: '1',
-      action: 'process',
       json: '1',
-      page_size: '5' // Limit to 5 results for better performance
+      page_size: '50', // Limit to 50 results for better performance
+      // Nur die wirklich nötigen Felder anfordern:
+      fields: [
+        'code',
+        'product_name',
+        'brands',
+        'quantity',
+        'nutriments.energy-kcal_100g',
+        'nutriments.proteins_100g',
+        'nutriments.carbohydrates_100g',
+        'nutriments.fat_100g',
+        'nutriments.sugars_100g',
+        'nutriments.fiber_100g',
+        'nutriments.sodium_100g'
+      ].join(',')
     });
     
-    console.log(`API search request for: ${query}`);
+    console.log(`API search request for: ${SEARCH_API_URL}?${params.toString()}`);
     const response = await fetch(`${SEARCH_API_URL}?${params.toString()}`);
     
     if (!response.ok) {

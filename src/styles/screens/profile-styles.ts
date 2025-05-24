@@ -12,7 +12,7 @@ interface ProfileStyles {
   modalButton: ViewStyle;
   stickyHeader: ViewStyle;
   headerText: TextStyle;
-  scrollContent: ViewStyle;
+   scrollContent: ViewStyle;
   sectionTitle: TextStyle;
   sectionDescription: TextStyle;
   inputContainer: ViewStyle;
@@ -115,17 +115,16 @@ export const createProfileStyles = (theme: Theme): ProfileStyles => StyleSheet.c
     flex: 1,
   },
   sectionTitle: {
-    fontSize: theme.typography.fontSize.l,
-    fontFamily: theme.typography.fontFamily.bold,
-    marginTop: theme.spacing.l,
-    marginBottom: theme.spacing.xs,
     color: theme.colors.text,
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.fontSize.xl,
+    marginBottom: theme.spacing.xs,
   },
   sectionDescription: {
-    fontSize: theme.typography.fontSize.s,
-    marginBottom: theme.spacing.m,
-    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.textLight,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.s,
+    marginBottom: theme.spacing.l,
   },
   inputContainer: {
     marginBottom: theme.spacing.m,

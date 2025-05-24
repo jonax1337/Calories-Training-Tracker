@@ -161,22 +161,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         App-Informationen
       </Text>
       
-      <View style={styles.infoCard}>
-        <View style={styles.infoHeader}>
-          <Text style={styles.infoVersion}>
-            Version: 1.0.0 (Beta)
-          </Text>
-        </View>
-        <Text style={[styles.infoText, { marginTop: theme.spacing.m }]}>
-          Calories Training Tracker - Deine All-in-One-Lösung für Ernährung und Trainingsaufzeichnung
-        </Text>
-        <Text style={[styles.infoText, { marginTop: theme.spacing.s }]}>
-          Tracke deine täglichen Kalorien, Makronährstoffe und Trainingseinheiten an einem Ort. Einfach, intuitiv und anpassbar.
-        </Text>
-        <Text style={[styles.infoText, { marginTop: theme.spacing.s, fontStyle: 'italic', color: theme.colors.textLight }]}>
-          Diese App befindet sich in der Beta-Phase. Danke für dein Feedback!
-        </Text>
-      </View>
+      <Text style={styles.sectionDescription}>Diese App befindet sich in der Beta-Phase. Danke für dein Feedback! 
+        <Text style={{ color: theme.colors.primary }}> Version: 0.0.1 (Beta)</Text>
+      </Text>
       
       </ScrollView>
       </View>

@@ -643,7 +643,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
             </View>
             
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.warning }]}>
+              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.success }]}>
                 {Math.round(totals.carbs)}g
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>

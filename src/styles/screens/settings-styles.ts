@@ -58,12 +58,12 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     color: theme.colors.text,
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.typography.fontSize.xl,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.xs,
   },
   sectionDescription: {
-    color: theme.colors.onSurface,
+    color: theme.colors.textLight,
     fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.fontSize.m,
+    fontSize: theme.typography.fontSize.s,
     marginBottom: theme.spacing.l,
   },
   themeOption: {
@@ -103,12 +103,10 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     color: theme.colors.onSurface,
   },
   infoCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.medium,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.small,
     padding: theme.spacing.m,
     marginBottom: theme.spacing.l,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
   },
   infoHeader: {
     borderBottomWidth: 1,

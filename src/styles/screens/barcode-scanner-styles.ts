@@ -1,7 +1,7 @@
 import { StyleSheet, Dimensions } from 'react-native';
 import { Theme } from '../../theme/theme-types';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Erstellt und gibt die Styles zurück, basierend auf dem aktuellen Theme
 export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
@@ -20,27 +20,31 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
   },
   tabContainer: { 
     flexDirection: "row", 
-    marginBottom: theme.spacing.m 
+    marginBottom: theme.spacing.m
   },
   tabButton: {
     flex: 1,
     padding: theme.spacing.m,
     alignItems: "center",
     borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    borderBottomColor: theme.colors.border,
   },
-  activeTab: {},
+  activeTab: {
+    borderBottomColor: theme.colors.primary,
+    borderBottomWidth: 2,
+  },
   tabButtonText: { 
     fontSize: theme.typography.fontSize.m,
-    fontFamily: theme.typography.fontFamily.medium
+    fontFamily: theme.typography.fontFamily.bold
   },
   scannerContainer: { 
     alignItems: "center", 
     marginBottom: theme.spacing.l 
   },
   previewWrapper: {
-    width: SCREEN_WIDTH * 0.9,
-    height: 320, // Anpassung auf ein Vielfaches von 8
+    marginTop: theme.spacing.l,
+    width: SCREEN_WIDTH - theme.spacing.m * 2,
+    height: SCREEN_HEIGHT * 0.5,
     overflow: "hidden",
   },
   preview: {
@@ -73,7 +77,7 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
     left: "50%",
     transform: [{ translateX: -theme.spacing.xxl / 2 }],
     padding: theme.spacing.xs,
-    borderRadius: theme.borderRadius.medium,
+    borderRadius: theme.borderRadius.large,
     width: theme.spacing.xxl,
     height: theme.spacing.xxl,
     alignItems: "center",
@@ -96,6 +100,10 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
     borderRadius: theme.borderRadius.medium,
     paddingHorizontal: theme.spacing.m,
     marginRight: theme.spacing.s,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.m,
   },
   submitButton: {
     height: theme.spacing.xxl,
@@ -110,10 +118,12 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
   errorContainer: { 
     marginVertical: theme.spacing.m, 
     padding: theme.spacing.m, 
-    borderRadius: theme.borderRadius.medium 
-  },
-  resultsContainer: { 
-    flex: 1 
+    borderRadius: theme.borderRadius.medium,
+    borderColor: theme.colors.error,
+    borderWidth: 1,
+    textAlign: "center",
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.m,
   },
   resultItem: { 
     padding: theme.spacing.m, 

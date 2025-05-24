@@ -52,9 +52,9 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
       case 'rest':
         return theme.colors.success;
       case 'prepare':
-        return theme.colors.warning;
+        return theme.colors.accent;
       case 'completed':
-        return theme.colors.info;
+        return theme.colors.success;
       default:
         return theme.colors.primary;
     }
@@ -101,7 +101,7 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
       Animated.timing(rotationAnimation, {
         toValue: 1,
         duration: rotationDurationMs, // Exakt die Timer-Duration
-        easing: Easing.linear,
+        easing: Easing.bezier(0.4, 0, 0.4, 1),
         useNativeDriver: false, // Wichtig: false für SVG Transformationen
       })
     );

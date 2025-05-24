@@ -92,33 +92,33 @@ const htmlContent = `
     // Arbeitsphase-Sound
     function playWorkSound() {
       // 880 Hz = A5, lauter und etwas länger
-      playBeep(880, 300, 0.7);
+      playBeep(880, 300, 0.75);
       
       // Zweiter, kurzer Ton kurz danach
-      setTimeout(() => playBeep(988, 150, 0.5), 350);
+      setTimeout(() => playBeep(988, 150, 1.0), 350);
     }
     
     // Ruhephase-Sound
     function playRestSound() {
       // 440 Hz = A4, mittlere Lautstärke
-      playBeep(440, 350, 0.5);
+      playBeep(440, 350, 0.75);
     }
     
     // Abschluss-Sound
     function playCompleteSound() {
       // C5
-      playBeep(523, 200, 0.6);
+      playBeep(523, 200, 0.5);
       
       // E5 nach kurzer Verzögerung
-      setTimeout(() => playBeep(659, 200, 0.6), 250);
+      setTimeout(() => playBeep(659, 200, 0.75), 250);
       
       // G5 nach weiterer Verzögerung
-      setTimeout(() => playBeep(784, 400, 0.7), 500);
+      setTimeout(() => playBeep(784, 400, 1.0), 500);
     }
     
     // Countdown-Beep
     function playCountdownBeep() {
-      playBeep(1000, 100, 0.3);
+      playBeep(1000, 100, 0.5);
     }
     
     // Nachrichten von React Native empfangen
