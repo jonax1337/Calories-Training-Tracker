@@ -263,7 +263,7 @@ function AppStack() {
       <Stack.Screen 
         name="HIITTimer" 
         component={HIITTimerScreen} 
-        options={{ title: 'HIIT Timer', animation: 'slide_from_right' }} 
+        options={{ title: 'Timer', animation: 'slide_from_right' }}
       />
     </Stack.Navigator>
   );

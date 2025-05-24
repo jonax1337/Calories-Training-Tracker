@@ -42,16 +42,20 @@ const createHIITTimerStyles = (theme: any) => StyleSheet.create({
     borderRadius: theme.borderRadius.medium,
     fontSize: theme.typography.fontSize.m,
   },
+  // 🔥 WICHTIGSTE ÄNDERUNG: Feste Dimensionen für stabiles Layout
   timerContainer: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingVertical: theme.spacing.xl,
+    minHeight: 450, // Mindesthöhe für stabiles Layout
+    // Alternative: height: 450 für exakte Höhe
   },
   timerControls: {
     marginTop: theme.spacing.xl,
     width: '100%',
     alignItems: 'center',
+    height: 120, // Feste Höhe für die Controls
   },
   controlsRow: {
     flexDirection: 'row',
@@ -109,6 +113,7 @@ const defaultSettings: HIITSettings = {
   cycles: 8,
 };
 
+// 🔥 VEREINFACHT: Kein 'starting' Status mehr - direkt von idle zu running
 type TimerState = {
   status: 'idle' | 'running' | 'paused' | 'completed';
   phase: 'prepare' | 'work' | 'rest' | 'completed';
@@ -132,13 +137,11 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
     status: 'idle',
     phase: 'prepare',
     currentCycle: 1,
-    remainingTime: defaultSettings.prepareDuration,
+    remainingTime: settings.prepareDuration, // Verwende settings statt defaultSettings
     startTime: null,
     pausedAt: null,
     elapsedBeforePause: 0,
   });
-
-
 
   // Intensives Vibrationsmuster für verschiedene Phasen
   const vibrateForPhase = useCallback((phase: TimerState['phase'] | 'countdown') => {
@@ -232,7 +235,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
     });
   };
 
-  // Start the timer
+  // 🔥 VEREINFACHT: Start the timer - KEIN starting-State mehr
   const startTimer = () => {
     if (timerState.status === 'paused') {
       // Resume from pause
@@ -243,7 +246,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
         pausedAt: null,
       }));
     } else {
-      // Start fresh
+      // Start fresh - DIREKT zu running
       setTimerState(prev => ({
         ...prev,
         status: 'running',
@@ -254,7 +257,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
     }
   };
 
-  // Pause the timer
+  // 🔥 VEREINFACHT: Pause the timer - KEIN starting-State handling
   const pauseTimer = () => {
     if (timerState.status === 'running') {
       const now = Date.now();
@@ -269,7 +272,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
     }
   };
 
-  // Skip to next phase
+  // 🔥 VEREINFACHT: Skip to next phase - KEIN starting-State handling
   const skipToNextPhase = () => {
     if (timerState.status === 'running' || timerState.status === 'paused') {
       let nextPhase: TimerState['phase'] = 'prepare';
@@ -296,19 +299,21 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
         phase: nextPhase,
         currentCycle: nextCycle,
         remainingTime: nextPhaseDuration,
-        startTime: prev.status === 'running' ? Date.now() : null,
-        pausedAt: prev.status === 'paused' ? Date.now() : null,
+        status: nextPhase === 'completed' ? 'completed' : 'running',
+        startTime: nextPhase === 'completed' ? null : Date.now(),
+        pausedAt: null,
         elapsedBeforePause: 0,
       }));
     }
   };
 
-  // Timer effect
+  // 🔥 VEREINFACHT: Timer effect läuft bei 'running' Status
   useEffect(() => {
     let animationFrame: number;
     
     const updateTimer = () => {
       setTimerState(prev => {
+        // Nur laufen lassen wenn Status 'running' ist
         if (prev.status !== 'running' || !prev.startTime) return prev;
         
         const now = Date.now();
@@ -389,6 +394,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
       animationFrame = requestAnimationFrame(updateTimer);
     };
     
+    // Bei 'running' Status starten
     if (timerState.status === 'running') {
       animationFrame = requestAnimationFrame(updateTimer);
     }
@@ -400,9 +406,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
     };
   }, [timerState.status, timerState.phase, settings, vibrateForPhase]);
 
-
-
-  // Render timer UI
+  // 🔥 VEREINFACHT: Render timer UI - KEIN starting-State mehr
   const renderTimer = () => (
     <View style={styles.timerContainer}>
       <CircularTimer

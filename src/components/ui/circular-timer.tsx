@@ -127,28 +127,25 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
       fillAnimationRef.current.stop();
     }
     
-    let targetValue = 0;
-    
     if (status === 'completed') {
       // Bei 'completed' direkter voller Kreis
-      targetValue = 1;
-      stopRotationAnimation(); // Stoppe Rotation
-      fillAnimation.setValue(targetValue);
-    } else if (status === 'prepare' && remainingTime === duration) {
-      // Bei 'prepare' und noch nicht gestartet
-      targetValue = 0;
-      stopRotationAnimation(); // Keine Rotation bei prepare
-      fillAnimation.setValue(targetValue);
+      stopRotationAnimation();
+      fillAnimation.setValue(1);
     } else {
-      // Timer läuft - starte/führe Animationen fort
+      // FÜR ALLE ANDEREN STATUS: Normale Fortschritts-Berechnung
       const currentProgress = 1 - (remainingTime / duration);
       
       if (phaseChanged) {
         fillAnimation.setValue(0); // Reset bei Phasenwechsel
-        startRotationAnimation(); // Starte Rotation neu
+        if (remainingTime < duration) {
+          startRotationAnimation(); // Starte Rotation nur wenn Timer läuft
+        } else {
+          stopRotationAnimation(); // Stoppe Rotation wenn Timer noch nicht gestartet
+        }
       }
       
-      if (remainingTime > 0) {
+      if (remainingTime > 0 && remainingTime < duration) {
+        // Timer läuft - kontinuierliche Animation
         const nextProgress = 1 - ((remainingTime - 1) / duration);
         
         // Starte/führe Rotation fort, falls noch nicht aktiv
@@ -161,14 +158,16 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
           toValue: nextProgress,
           duration: 1000,
           easing: Easing.linear,
-          useNativeDriver: false, // Wichtig: false für SVG
+          useNativeDriver: false,
         });
         
         fillAnimationRef.current.start();
       } else {
-        // Timer beendet
-        fillAnimation.setValue(1);
-        stopRotationAnimation();
+        // Timer steht still (initial oder beendet)
+        fillAnimation.setValue(currentProgress);
+        if (remainingTime === 0) {
+          stopRotationAnimation();
+        }
       }
     }
     
@@ -198,9 +197,6 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
     outputRange: [0, 360],
   });
 
-  // Bestimme, ob wir Timer-Inhalte anzeigen sollen
-  const shouldShowTimerContent = status === 'completed' || status !== 'prepare' || remainingTime < duration;
-
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       {/* SVG Circle Timer */}
@@ -217,45 +213,50 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
           />
         </G>
         
-        {/* Animierter Fortschrittskreis mit kontinuierlicher Rotation */}
-        {shouldShowTimerContent && (
-          <AnimatedG
-            rotation={rotationDegrees}
-            origin={`${circleConfig.center}, ${circleConfig.center}`}
-          >
-            <G rotation="-90" origin={`${circleConfig.center}, ${circleConfig.center}`}>
-              <AnimatedCircle
-                cx={circleConfig.center}
-                cy={circleConfig.center}
-                r={circleConfig.radius}
-                stroke={getStatusColor()}
-                strokeWidth={strokeWidth}
-                strokeDasharray={circleConfig.circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                fill="transparent"
-              />
-            </G>
-          </AnimatedG>
-        )}
+        {/* Animierter Fortschrittskreis - IMMER gerendert für stabiles Layout */}
+        <AnimatedG
+          rotation={rotationDegrees}
+          origin={`${circleConfig.center}, ${circleConfig.center}`}
+        >
+          <G rotation="-90" origin={`${circleConfig.center}, ${circleConfig.center}`}>
+            <AnimatedCircle
+              cx={circleConfig.center}
+              cy={circleConfig.center}
+              r={circleConfig.radius}
+              stroke={getStatusColor()}
+              strokeWidth={strokeWidth}
+              strokeDasharray={circleConfig.circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              fill="transparent"
+            />
+          </G>
+        </AnimatedG>
       </Svg>
 
-      {/* Center Text */}
+      {/* Center Text - KOMPLETT FESTE DIMENSIONEN */}
       <View style={styles.textContainer}>
-        <Text style={[styles.statusText, { color: getStatusColor(), fontFamily: theme.typography.fontFamily.bold }]}>
-          {getStatusText()}
-        </Text>
+        {/* Status Text - FESTE BREITE UND HÖHE */}
+        <View style={styles.statusTextContainer}>
+          <Text style={[styles.statusText, { color: getStatusColor(), fontFamily: theme.typography.fontFamily.bold }]}>
+            {getStatusText()}
+          </Text>
+        </View>
         
-        {shouldShowTimerContent && (
+        {/* Timer Text - IMMER GERENDERT - KEINE BEDINGUNGEN */}
+        <View style={styles.timerTextContainer}>
           <Text style={[styles.timerText, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.bold }]}>
             {formatTime(remainingTime)}
           </Text>
-        )}
+        </View>
         
+        {/* Cycles Text - IMMER GERENDERT WENN totalCycles > 0 */}
         {totalCycles > 0 && (
-          <Text style={[styles.cyclesText, { color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.medium }]}>
-            {status !== 'completed' ? `${currentCycle}/${totalCycles}` : `${totalCycles}/${totalCycles}`}
-          </Text>
+          <View style={styles.cyclesTextContainer}>
+            <Text style={[styles.cyclesText, { color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.medium }]}>
+              {status !== 'completed' ? `${currentCycle}/${totalCycles}` : `${totalCycles}/${totalCycles}`}
+            </Text>
+          </View>
         )}
       </View>
     </View>
@@ -279,16 +280,35 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // 🔥 EXAKTE FESTE DIMENSIONEN - KEINE LAYOUT SHIFTS MEHR
+  statusTextContainer: {
+    width: 100,        // EXAKTE BREITE
+    height: 35,        // EXAKTE HÖHE
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   statusText: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  timerTextContainer: {
+    width: 120,        // EXAKTE BREITE FÜR "00:00"
+    height: 55,        // EXAKTE HÖHE
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 5,
+  },
   timerText: {
     fontSize: 36,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 5,
+  },
+  cyclesTextContainer: {
+    width: 80,         // EXAKTE BREITE FÜR "0/0"
+    height: 30,        // EXAKTE HÖHE
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cyclesText: {
     fontSize: 18,

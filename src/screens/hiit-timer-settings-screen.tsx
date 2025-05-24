@@ -42,7 +42,7 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
-      paddingTop: insets.top,
+      paddingTop: theme.spacing.xs,
     },
     scrollContent: {
       flex: 1,
@@ -53,7 +53,7 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
     headerText: {
       fontSize: theme.typography.fontSize.xl,
       textAlign: 'center',
-      marginVertical: theme.spacing.l,
+      marginVertical: theme.spacing.s,
       fontFamily: theme.typography.fontFamily.bold,
       color: theme.colors.primary,
     },
@@ -110,9 +110,6 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
       
       <ScrollView style={styles.scrollContent}>
         <View style={styles.settingsContainer}>
-          <Text style={styles.headerText}>
-            HIIT Timer Einstellungen
-          </Text>
           
           <View style={styles.settingRow}>
             <Text style={styles.settingLabel}>
