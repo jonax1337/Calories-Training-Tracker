@@ -141,72 +141,62 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
 
 
   // Intensives Vibrationsmuster für verschiedene Phasen
-  const vibrateForPhase = useCallback((phase: TimerState['phase']) => {
+  const vibrateForPhase = useCallback((phase: TimerState['phase'] | 'countdown') => {
     // Abbruch, wenn Gerät keine Vibration unterstützt
     if (!Vibration) return;
     
     switch (phase) {
       case 'work':
-        // SEHR INTENSIVES Vibrationsmuster für Arbeitsphase (mehrere starke Vibrationen)
+        // Starke, lange Vibration für Arbeitsphase
         if (Platform.OS === 'ios') {
-          // Auf iOS mehrere Haptics schnell hintereinander auslösen
+          // Längerer, einzelner Heavy Impact (am deutlichsten spürbar)
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           
-          // Zusätzliche Impulse mit Verzögerung
-          setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid), 150);
-          setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid), 300);
-          setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 450);
+          // Kontinuierliche Vibration für bessere Wahrnehmung
+          Vibration.vibrate([0, 500]);
         } else {
-          // Auf Android: Intensives Muster mit mehreren Wiederholungen
-          // [Pause, Vibration, Pause, Vibration, ...]
-          Vibration.vibrate([0, 300, 100, 300, 100, 300, 100, 300]);
+          // Auf Android: Längere, einfache Vibration
+          Vibration.vibrate([0, 500]);
         }
         break;
         
       case 'rest':
-        // Anderes Vibrationsmuster für Ruhephase (deutlich spürbar, aber anders als Work)
+        // Andere Vibration für Ruhephase (mittlere Intensität, aber deutlich)
         if (Platform.OS === 'ios') {
-          // Auf iOS andere Art von Haptics für Rest
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 200);
-          setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 400);
-          setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning), 600);
+          // Medium Impact für andere Wahrnehmung als Work
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          // Andere Vibrationsdauer als Work
+          Vibration.vibrate([0, 100]);
         } else {
-          // Auf Android: Anderes Muster als Work (längere Pausen, kürzere Vibrationen)
-          Vibration.vibrate([0, 400, 200, 200, 200, 200]);
+          // Auf Android: Kürzere Vibration als Work
+          Vibration.vibrate([0, 100]);
         }
         break;
         
       case 'completed':
-        // SEHR STARKES Vibrationsmuster für Abschluss (länger, mehrere Impulse)
+        // Längste und stärkste Vibration für Abschluss
         if (Platform.OS === 'ios') {
-          // Auf iOS: Serie von starken Impulsen
-          const completionPattern = async () => {
-            // Erste Runde starker Impulse
-            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            await new Promise(resolve => setTimeout(resolve, 150));
-            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            await new Promise(resolve => setTimeout(resolve, 150));
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            
-            // Kurze Pause
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            // Zweite Runde
-            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            await new Promise(resolve => setTimeout(resolve, 150));
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          };
-          
-          completionPattern();
+          // Auf iOS: Erfolgs-Notification + Heavy Impact
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          // Drei deutliche Vibrationsimpulse (einfaches Muster)
+          Vibration.vibrate([0, 500, 0, 500]);
         } else {
-          // Auf Android: Sehr langes, intensives Muster
-          // Mehrere lange Vibrationen mit kurzen Pausen
-          Vibration.vibrate([
-            0, 500, 100, 500, 100, 500,  // Erste Sequenz
-            300,                          // Längere Pause
-            500, 100, 700                // Finale Sequenz
-          ]);
+          // Auf Android: Drei deutliche Vibrationsimpulse
+          Vibration.vibrate([0, 500, 0, 500]);
+        }
+        break;
+
+      case 'countdown':
+        // Einzelner kurzer Impuls pro Countdown-Tick (3,2,1)
+        if (Platform.OS === 'ios') {
+          // iOS: Medium Impact (spürbar, aber nicht zu stark)
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          
+          // Kurze Vibration
+          Vibration.vibrate(100);
+        } else {
+          // Android: Kurze Vibration
+          Vibration.vibrate(100);
         }
         break;
         
@@ -313,12 +303,6 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
     }
   };
 
-  // Go back to settings screen
-  const goToSettings = () => {
-    // Navigate back to settings with current settings
-    navigation.goBack();
-  };
-
   // Timer effect
   useEffect(() => {
     let animationFrame: number;
@@ -343,13 +327,9 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
             vibrateForPhase('work');
             try { playWorkSound(); } catch (e) { console.warn('Sound-Fehler:', e); }
           } else if (prev.phase === 'work') {
-            nextPhase = 'rest';
-            // Haptisches und Sound-Feedback für Ruhephase
-            vibrateForPhase('rest');
-            try { playRestSound(); } catch (e) { console.warn('Sound-Fehler:', e); }
-          } else if (prev.phase === 'rest') {
-            nextCycle += 1;
-            if (nextCycle > settings.cycles) {
+            // Nach der Work-Phase prüfen, ob es der letzte Zyklus war
+            if (prev.currentCycle >= settings.cycles) {
+              // Letzter Zyklus abgeschlossen - direkt zu Completed gehen
               // Haptisches und Sound-Feedback für Abschluss
               vibrateForPhase('completed');
               try { playCompleteSound(); } catch (e) { console.warn('Sound-Fehler:', e); }
@@ -363,7 +343,15 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
                 pausedAt: null,
                 elapsedBeforePause: 0,
               };
+            } else {
+              // Noch nicht der letzte Zyklus - normal zur Rest-Phase gehen
+              nextPhase = 'rest';
+              // Haptisches und Sound-Feedback für Ruhephase
+              vibrateForPhase('rest');
+              try { playRestSound(); } catch (e) { console.warn('Sound-Fehler:', e); }
             }
+          } else if (prev.phase === 'rest') {
+            nextCycle += 1;
             nextPhase = 'work';
             // Haptisches und Sound-Feedback für Arbeitsphase
             vibrateForPhase('work');
@@ -382,9 +370,13 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
           };
         }
         
-        // Kurzen Countdown-Beep für die letzten Sekunden
-        if (newRemainingTime <= 3 && newRemainingTime > 0 && Math.floor(newRemainingTime) !== Math.floor(prev.remainingTime)) {
-          try { playCountdownBeep(); } catch (e) { console.warn('Sound-Fehler:', e); }
+        // Countdown-Feedback (Ton + Vibration) für jede Sekunde
+        if (Math.floor(newRemainingTime) !== Math.floor(prev.remainingTime)) {
+          // Zusätzlich Sound für die letzten drei Sekunden
+          if (newRemainingTime <= 3 && newRemainingTime > 0) {
+            vibrateForPhase('countdown');
+            try { playCountdownBeep(); } catch (e) { console.warn('Sound-Fehler:', e); }
+          }
         }
         
         // Update remaining time only

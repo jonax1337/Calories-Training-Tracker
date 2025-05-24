@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useTheme } from '../../theme/theme-context';
+import Svg, { Circle, G } from 'react-native-svg';
 
 interface CircularTimerProps {
   duration: number; // in seconds
@@ -22,18 +23,26 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
   totalCycles = 0,
 }) => {
   const { theme } = useTheme();
-  const animatedValue = useRef(new Animated.Value(0)).current;
-  const circleRef = useRef<View>(null);
+  
+  // Animation für den Füllstand des Kreises
+  const fillAnimation = useRef(new Animated.Value(0)).current;
+  // Animation für die kontinuierliche Rotation
+  const rotationAnimation = useRef(new Animated.Value(0)).current;
+  
+  // Referenzen zu den laufenden Animationen
+  const fillAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
+  const rotationAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
+  
+  // Speichern der aktuellen Phase für Vergleiche
+  const lastPhaseRef = useRef<string>(status);
 
-  // Berechne die Größen des Kreises einmal als Memo, damit sie sich nicht bei jedem Render ändern
+  // Berechne die Geometrie des Kreises
   const circleConfig = useMemo(() => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
-    return { radius, circumference };
+    const center = size / 2;
+    return { radius, circumference, center };
   }, [size, strokeWidth]);
-  
-  // Calculate progress (1 -> 0)
-  const progress = duration > 0 ? remainingTime / duration : 0;
 
   // Get status color
   const getStatusColor = () => {
@@ -74,112 +83,175 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Referenz zum Speichern der aktuellen Animation
-  const currentAnimation = useRef<Animated.CompositeAnimation | null>(null);
-
-  // Animate the progress continuously
-  useEffect(() => {
-    // Vorherige Animation stoppen, falls vorhanden
-    if (currentAnimation.current) {
-      currentAnimation.current.stop();
+  // Startet die kontinuierliche Rotationsanimation
+  const startRotationAnimation = () => {
+    // Stoppe vorherige Rotation, falls vorhanden
+    if (rotationAnimationRef.current) {
+      rotationAnimationRef.current.stop();
     }
     
-    // Start with the current progress value
-    animatedValue.setValue(1 - progress);
+    // Setze Rotation zurück auf 0
+    rotationAnimation.setValue(0);
     
-    // Animate to the next progress value smoothly (nur wenn verbleibende Zeit > 0)
-    if (remainingTime > 0) {
-      currentAnimation.current = Animated.timing(animatedValue, {
+    // Kontinuierliche Rotation - Geschwindigkeit hier anpassen:
+    // 5000 = 5 Sekunden pro Umdrehung (langsamer)
+    // 8000 = 8 Sekunden pro Umdrehung (noch langsamer)
+    // 10000 = 10 Sekunden pro Umdrehung (sehr langsam)
+    rotationAnimationRef.current = Animated.loop(
+      Animated.timing(rotationAnimation, {
         toValue: 1,
-        duration: remainingTime * 1000, // Convert to milliseconds
+        duration: 30000, // 6 Sekunden für eine Umdrehung - anpassbar
         easing: Easing.linear,
-        useNativeDriver: true,
-      });
+        useNativeDriver: false, // Wichtig: false für SVG Transformationen
+      })
+    );
+    
+    rotationAnimationRef.current.start();
+  };
+
+  // Stoppt die Rotationsanimation
+  const stopRotationAnimation = () => {
+    if (rotationAnimationRef.current) {
+      rotationAnimationRef.current.stop();
+      rotationAnimationRef.current = null;
+    }
+  };
+  
+  // Berechne den Fortschritt und aktualisiere die Animationen
+  useEffect(() => {
+    const phaseChanged = lastPhaseRef.current !== status;
+    lastPhaseRef.current = status;
+    
+    // Stoppe vorherige Füllanimation
+    if (fillAnimationRef.current) {
+      fillAnimationRef.current.stop();
+    }
+    
+    let targetValue = 0;
+    
+    if (status === 'completed') {
+      // Bei 'completed' direkter voller Kreis
+      targetValue = 1;
+      stopRotationAnimation(); // Stoppe Rotation
+      fillAnimation.setValue(targetValue);
+    } else if (status === 'prepare' && remainingTime === duration) {
+      // Bei 'prepare' und noch nicht gestartet
+      targetValue = 0;
+      stopRotationAnimation(); // Keine Rotation bei prepare
+      fillAnimation.setValue(targetValue);
+    } else {
+      // Timer läuft - starte/führe Animationen fort
+      const currentProgress = 1 - (remainingTime / duration);
       
-      currentAnimation.current.start();
+      if (phaseChanged) {
+        fillAnimation.setValue(0); // Reset bei Phasenwechsel
+        startRotationAnimation(); // Starte Rotation neu
+      }
+      
+      if (remainingTime > 0) {
+        const nextProgress = 1 - ((remainingTime - 1) / duration);
+        
+        // Starte/führe Rotation fort, falls noch nicht aktiv
+        if (!rotationAnimationRef.current) {
+          startRotationAnimation();
+        }
+        
+        // Füllanimation
+        fillAnimationRef.current = Animated.timing(fillAnimation, {
+          toValue: nextProgress,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: false, // Wichtig: false für SVG
+        });
+        
+        fillAnimationRef.current.start();
+      } else {
+        // Timer beendet
+        fillAnimation.setValue(1);
+        stopRotationAnimation();
+      }
     }
     
     return () => {
-      if (currentAnimation.current) {
-        currentAnimation.current.stop();
+      if (fillAnimationRef.current) {
+        fillAnimationRef.current.stop();
       }
     };
-  }, [remainingTime, duration, animatedValue, progress]);
+  }, [status, remainingTime, duration, fillAnimation, rotationAnimation]);
+
+  // Cleanup beim Unmount
+  useEffect(() => {
+    return () => {
+      stopRotationAnimation();
+    };
+  }, []);
+  
+  // Berechne die stroke-dashoffset basierend auf dem Füllwert
+  const strokeDashoffset = fillAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circleConfig.circumference, 0],
+  });
+  
+  // Berechne die Rotation in Grad
+  const rotationDegrees = rotationAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 360],
+  });
+
+  // Bestimme, ob wir Timer-Inhalte anzeigen sollen
+  const shouldShowTimerContent = status === 'completed' || status !== 'prepare' || remainingTime < duration;
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      <View style={styles.circleContainer}>
-        {/* Background Circle */}
-        <View
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: strokeWidth,
-            borderColor: theme.colors.border,
-            position: 'absolute',
-          }}
-        />
+      {/* SVG Circle Timer */}
+      <Svg width={size} height={size}>
+        {/* Statischer Hintergrundkreis */}
+        <G rotation="-90" origin={`${circleConfig.center}, ${circleConfig.center}`}>
+          <Circle
+            cx={circleConfig.center}
+            cy={circleConfig.center}
+            r={circleConfig.radius}
+            stroke={theme.colors.border}
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+        </G>
         
-        {/* Animated Progress Circle */}
-        <Animated.View
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: strokeWidth,
-            borderColor: getStatusColor(),
-            position: 'absolute',
-            borderLeftColor: 'transparent',
-            borderBottomColor: 'transparent',
-            transform: [
-              { rotateZ: '-90deg' },
-              {
-                rotateZ: animatedValue.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0deg', '360deg'],
-                }),
-              },
-            ],
-          }}
-        />
-        
-        {/* Second half of the progress circle */}
-        <Animated.View
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: strokeWidth,
-            borderColor: 'transparent',
-            borderRightColor: getStatusColor(),
-            borderTopColor: getStatusColor(),
-            position: 'absolute',
-            transform: [
-              { rotateZ: '-90deg' },
-              {
-                rotateZ: animatedValue.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: ['0deg', '180deg', '180deg'],
-                }),
-              },
-            ],
-            opacity: animatedValue.interpolate({
-              inputRange: [0, 0.5, 0.5001, 1],
-              outputRange: [1, 1, 0, 0],
-            }),
-          }}
-        />
-      </View>
+        {/* Animierter Fortschrittskreis mit kontinuierlicher Rotation */}
+        {shouldShowTimerContent && (
+          <AnimatedG
+            rotation={rotationDegrees}
+            origin={`${circleConfig.center}, ${circleConfig.center}`}
+          >
+            <G rotation="-90" origin={`${circleConfig.center}, ${circleConfig.center}`}>
+              <AnimatedCircle
+                cx={circleConfig.center}
+                cy={circleConfig.center}
+                r={circleConfig.radius}
+                stroke={getStatusColor()}
+                strokeWidth={strokeWidth}
+                strokeDasharray={circleConfig.circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                fill="transparent"
+              />
+            </G>
+          </AnimatedG>
+        )}
+      </Svg>
 
       {/* Center Text */}
       <View style={styles.textContainer}>
         <Text style={[styles.statusText, { color: getStatusColor(), fontFamily: theme.typography.fontFamily.bold }]}>
           {getStatusText()}
         </Text>
-        <Text style={[styles.timerText, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.bold }]}>
-          {formatTime(remainingTime)}
-        </Text>
+        
+        {shouldShowTimerContent && (
+          <Text style={[styles.timerText, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.bold }]}>
+            {formatTime(remainingTime)}
+          </Text>
+        )}
+        
         {totalCycles > 0 && (
           <Text style={[styles.cyclesText, { color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.medium }]}>
             {status !== 'completed' ? `${currentCycle}/${totalCycles}` : `${totalCycles}/${totalCycles}`}
@@ -190,33 +262,37 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
   );
 };
 
+// Animierte Komponenten
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedG = Animated.createAnimatedComponent(G);
+
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  circleContainer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
   textContainer: {
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
   statusText: {
-    fontSize: 16,
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   timerText: {
-    fontSize: 28,
+    fontSize: 36,
     fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 5,
   },
   cyclesText: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 18,
+    textAlign: 'center',
   },
 });
 
