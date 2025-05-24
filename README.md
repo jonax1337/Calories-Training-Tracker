@@ -11,6 +11,8 @@
 
 </div>
 
+---
+
 ## ✨ Highlights
 
 - 📱 **Moderne mobile App** - Entwickelt mit React Native und Expo
