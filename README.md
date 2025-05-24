@@ -1,6 +1,12 @@
 # 📊 Calories Training Tracker
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/) [![React Native](https://img.shields.io/badge/React%20Native-0.71-blue.svg)](https://reactnative.dev/) [![Expo](https://img.shields.io/badge/Expo-47.0.0-lightgrey.svg)](https://expo.dev/) [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/) 
+[![React Native](https://img.shields.io/badge/React%20Native-0.71-blue.svg)](https://reactnative.dev/) 
+[![Expo](https://img.shields.io/badge/Expo-47.0.0-lightgrey.svg)](https://expo.dev/) 
+[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/) 
+[![Yarn](https://img.shields.io/badge/Yarn-1.22-blue.svg)](https://yarnpkg.com/) 
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE.md)
+
 
 Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und Gesundheitsziele.
 
