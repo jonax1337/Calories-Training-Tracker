@@ -1,6 +1,6 @@
-# 📊 Calories Training Tracker
+# 📊 Calories Training Tracker
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/) [![React Native](https://img.shields.io/badge/React%20Native-0.71-blue.svg)](https://reactnative.dev/) [![Expo](https://img.shields.io/badge/Expo-47.0.0-lightgrey.svg)](https://expo.dev/) [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/) [![React Native](https://img.shields.io/badge/React%20Native-0.71-blue.svg)](https://reactnative.dev/) [![Expo](https://img.shields.io/badge/Expo-47.0.0-lightgrey.svg)](https://expo.dev/) [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
 Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und Gesundheitsziele.
 
@@ -15,7 +15,7 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
   * [Voraussetzungen](#voraussetzungen)
   * [Setup](#setup)
 * [▶️ Nutzung](#️-nutzung)
-* [⚙️ Technische Implementierung](#️-technische-implementierung)
+* [⚙️ Technische Implementierung](#️-technische-implementierung)
 
   * [Frontend](#frontend)
   * [Backend & APIs](#backend--apis)
@@ -29,7 +29,7 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
 
 ## ✨ Highlights
 
-* **Cross-Platform**: React Native & Expo für iOS und Android
+* **Cross-Platform**: React Native & Expo für iOS und Android
 * **Ganzheitliches Tracking**: Kalorien, Makronährstoffe, Wasseraufnahme und Aktivität
 * **Echtzeit-Synchronisation**: Mobile App ↔️ Backend-Server
 * **Sichere Authentifizierung**: JWT-basiert
@@ -47,7 +47,7 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
 
 ### Fitnesstracking
 
-* Integration mit HealthKit (iOS) und Google Fit (Android)
+* Integration mit HealthKit (iOS) und Google Fit (Android)
 * Übersichtliche Aktivitätsstatistiken (täglich, wöchentlich)
 
 ### Ziele & Fortschritt
@@ -62,9 +62,9 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
 
 ### Voraussetzungen
 
-* Node.js (LTS)
+* Node.js (LTS)
 * npm oder Yarn
-* Expo CLI (`npm install -g expo-cli`)
+* Expo CLI (`npm install -g expo-cli`)
 * iOS/Android-Simulator oder physisches Gerät
 
 ### Setup
@@ -93,7 +93,7 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
    cd ..
    npm start
    ```
-5. App im Simulator öffnen oder QR-Code mit Expo Go scannen
+5. App im Simulator öffnen oder QR-Code mit Expo Go scannen
 
 ---
 
@@ -107,11 +107,11 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
 
 ---
 
-## ⚙️ Technische Implementierung
+## ⚙️ Technische Implementierung
 
 ### Frontend
 
-* React Native & Expo
+* React Native & Expo
 * TypeScript
 * React Navigation
 * AsyncStorage für lokale Daten
@@ -119,7 +119,7 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
 
 ### Backend & APIs
 
-* Node.js + Express Server
+* Node.js + Express Server
 * MySQL Datenbank
 * Open Food Facts API
 * RESTful API-Endpunkte
@@ -127,7 +127,7 @@ Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und G
 ### Gesundheitsintegration
 
 * iOS: HealthKit
-* Android: Google Fit
+* Android: Google Fit
 
 ---
 
@@ -143,7 +143,7 @@ DB_NAME=calories_tracker
 JWT_SECRET=your_jwt_secret
 ```
 
-Um API-Schlüssel (z. B. Open Food Facts) hinzuzufügen, erstelle zusätzliche Umgebungsvariablen und lade sie im Server-Code.
+Um API-Schlüssel (z. B. Open Food Facts) hinzuzufügen, erstelle zusätzliche Umgebungsvariablen und lade sie im Server-Code.
 
 ---
 
@@ -163,7 +163,7 @@ Siehe auch die [Contributing Guidelines](CONTRIBUTING.md), wenn vorhanden.
 
 ## 📄 Lizenz
 
-Dieses Projekt steht unter der MIT-Lizenz. Details siehe [LICENSE](LICENSE).
+Dieses Projekt ist proprietär lizenziert. Siehe [LICENSE](LICENSE) für Details.
 
 ---
 
@@ -172,7 +172,7 @@ Dieses Projekt steht unter der MIT-Lizenz. Details siehe [LICENSE](LICENSE).
 Bei Fragen oder Feedback:
 
 * **Autor**: Jonas Laux
-* **E-Mail**: [jonathan@example.com](mailto:jonas.laux@hotmail.com)
+* **E-Mail**: [jonas.laux@hotmail.com](mailto:jonas.laux@hotmail.com)
 * **GitHub**: [jonax1337](https://github.com/jonax1337)
 
 Viel Spaß beim Tracken und Trainieren! 🚀
