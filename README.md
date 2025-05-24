@@ -1,146 +1,178 @@
-<div align="center">
+# 📊 Calories Training Tracker
 
-# 🍎 Calories Training Tracker 💪
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/) [![React Native](https://img.shields.io/badge/React%20Native-0.71-blue.svg)](https://reactnative.dev/) [![Expo](https://img.shields.io/badge/Expo-47.0.0-lightgrey.svg)](https://expo.dev/) [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und Gesundheitsziele.
 
-**Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und Gesundheitsziele.**
+---
 
-</div>
+## 📚 Inhaltsverzeichnis
+
+* [✨ Highlights](#-highlights)
+* [🚀 Features](#-features)
+* [💾 Installation](#-installation)
+
+  * [Voraussetzungen](#voraussetzungen)
+  * [Setup](#setup)
+* [▶️ Nutzung](#️-nutzung)
+* [⚙️ Technische Implementierung](#️-technische-implementierung)
+
+  * [Frontend](#frontend)
+  * [Backend & APIs](#backend--apis)
+  * [Gesundheitsintegration](#gesundheitsintegration)
+* [🛠️ Konfiguration](#️-konfiguration)
+* [🤝 Beitragen](#-beitragen)
+* [📄 Lizenz](#-lizenz)
+* [✉️ Kontakt](#️-kontakt)
 
 ---
 
 ## ✨ Highlights
 
-- 📱 **Moderne mobile App** - Entwickelt mit React Native und Expo
-- 📊 **Umfassendes Tracking** - Kalorien, Makronährstoffe, Wasser und Aktivitätsdaten
-- 🔄 **Nahtlose Synchronisierung** - Zwischen mobilen Geräten und Backend-Server
-- 🔒 **Sicheres Benutzerprofil** - JWT-basierte Authentifizierung
-- 📷 **Barcode-Scanner** - Lebensmittel mit einem Scan hinzufügen
+* **Cross-Platform**: React Native & Expo für iOS und Android
+* **Ganzheitliches Tracking**: Kalorien, Makronährstoffe, Wasseraufnahme und Aktivität
+* **Echtzeit-Synchronisation**: Mobile App ↔️ Backend-Server
+* **Sichere Authentifizierung**: JWT-basiert
+* **Barcode-Scanner**: Lebensmittel per Scan hinzufügen
 
 ---
 
-## 🌟 Features
+## 🚀 Features
 
-### 📊 Ernährungstracking
-- **Umfassende Nährwertanalyse**: Verfolge Kalorien, Protein, Kohlenhydrate, Fette und Wasseraufnahme
-- **Barcode-Scanning**: Scanne Produktbarcodes, um automatisch Nährwertinformationen abzurufen
-- **Tägliches Protokoll**: Führe ein detailliertes Protokoll über Mahlzeiten und Nährwertinformationen
-- **Lebensmittelfavoriten**: Speichere häufig verwendete Lebensmittel für schnellen Zugriff
+### Ernährungstracking
 
-### 🏃‍♂️ Fitnesstracking
-- **Gesundheits-App-Integration**: Verbindung mit Gesundheitsdaten des Geräts zur Verfolgung von Aktivitätsmetriken
-- **Aktivitätsübersicht**: Tägliche und wöchentliche Zusammenfassung deiner Bewegungsaktivitäten
+* Detaillierte Nährwertanalyse: Kalorien, Proteine, Kohlenhydrate, Fette und Wasser
+* Barcode-Scanning via Expo Barcode Scanner
+* Tägliches Mahlzeitenprotokoll mit Favoriten-Liste
 
-### 🎯 Ziele & Fortschritt
-- **Individuelle Ziele**: Setze persönliche Ernährungs- und Aktivitätsziele
-- **Fortschrittsvisualisierung**: Verfolge deinen Fortschritt mit intuitiven Diagrammen und Statistiken
-- **Tägliche Zusammenfassung**: Übersichtliche Darstellung deines täglichen Fortschritts
+### Fitnesstracking
 
----
+* Integration mit HealthKit (iOS) und Google Fit (Android)
+* Übersichtliche Aktivitätsstatistiken (täglich, wöchentlich)
 
-## 🚀 Installation
+### Ziele & Fortschritt
 
-### 📋 Voraussetzungen
-
-- **Node.js** (LTS-Version)
-- **npm** oder **yarn**
-- **Expo CLI** (`npm install -g expo-cli`)
-- iOS/Android-Simulator oder physisches Gerät
-
-### ⚙️ Einrichtung
-
-1. **Repository klonen**
-
-```bash
-git clone <repository-url>
-cd calories_training_tracker
-```
-
-2. **Abhängigkeiten installieren**
-
-```bash
-npm install --legacy-peer-deps
-```
-
-3. **Backend-Server starten** (in einem separaten Terminal)
-
-```bash
-cd server
-npm install
-npm start
-```
-
-4. **Entwicklungsserver starten**
-
-```bash
-npm start
-```
-
-5. **App öffnen**  
-   Öffne die App in deinem iOS/Android-Simulator oder scanne den QR-Code mit der Expo Go App auf deinem physischen Gerät
+* Individuelle Ernährungs- und Aktivitätsziele
+* Fortschrittsdiagramme mit intuitiven Grafiken
+* Tägliche Zusammenfassung als Dashboard
 
 ---
 
-## 💻 Technische Implementierung
+## 💾 Installation
 
-Diese App wurde mit modernen Technologien entwickelt:
+### Voraussetzungen
+
+* Node.js (LTS)
+* npm oder Yarn
+* Expo CLI (`npm install -g expo-cli`)
+* iOS/Android-Simulator oder physisches Gerät
+
+### Setup
+
+1. Repository klonen:
+
+   ```bash
+   git clone https://github.com/jonax1337/calories_training_tracker.git
+   cd calories_training_tracker
+   ```
+2. Abhängigkeiten installieren (Client):
+
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+3. Backend einrichten und starten:
+
+   ```bash
+   cd server
+   npm install
+   npm start
+   ```
+4. Entwicklungsserver (Client) starten:
+
+   ```bash
+   cd ..
+   npm start
+   ```
+5. App im Simulator öffnen oder QR-Code mit Expo Go scannen
+
+---
+
+## ▶️ Nutzung
+
+1. **Startbildschirm**: Tägliche Zusammenfassung und Schnellaktionen
+2. **Barcode-Scanner**: Produkt scannen und Nährwerte hinzufügen
+3. **Lebensmitteldetails**: Nährwert bearbeiten oder Favorit speichern
+4. **Tägliches Protokoll**: Mahlzeitenübersicht durch den Tag
+5. **Profil**: Persönliche Daten, Ziele und Einstellungen bearbeiten
+
+---
+
+## ⚙️ Technische Implementierung
 
 ### Frontend
-- **React Native & Expo**: Für die Cross-Platform-Entwicklung
-- **TypeScript**: Für typsichere Codeentwicklung
-- **React Navigation**: Für das App-Routing und die Navigation
-- **Expo Barcode Scanner**: Für die Barcode-Scanning-Funktionalität
-- **AsyncStorage**: Für lokale Datenpersistenz
-- **JWT Authentication**: Für sichere Benutzerauthentifizierung
+
+* React Native & Expo
+* TypeScript
+* React Navigation
+* AsyncStorage für lokale Daten
+* Expo Barcode Scanner
 
 ### Backend & APIs
-- **Node.js Express Server**: Für die Backend-API
-- **MySQL Datenbank**: Für die Datenspeicherung
-- **Open Food Facts API**: Für Produktinformationen
-- **RESTful API**: Für die Kommunikation zwischen Client und Server
+
+* Node.js + Express Server
+* MySQL Datenbank
+* Open Food Facts API
+* RESTful API-Endpunkte
 
 ### Gesundheitsintegration
-- **iOS HealthKit** / **Android Google Fit**: Für die Integration von Gesundheitsdaten
+
+* iOS: HealthKit
+* Android: Google Fit
 
 ---
 
-## 📱 Verwendung
+## 🛠️ Konfiguration
 
-1. **Startbildschirm**: Sieh dir deine tägliche Ernährungszusammenfassung und Schnellaktionen an
-2. **Barcode-Scanner**: Scanne Lebensmittelprodukte, um sie deinem Tagesprotokoll hinzuzufügen
-3. **Lebensmitteldetails**: Sieh dir Nährwertinformationen für Lebensmittel an und bearbeite sie
-4. **Tägliches Protokoll**: Verfolge deine Nahrungsaufnahme über den Tag
-5. **Profil**: Konfiguriere deine persönlichen Informationen und Ziele
+Lege im `server/.env` folgende Variablen an:
 
----
+```dotenv
+DB_HOST=your_database_host
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=calories_tracker
+JWT_SECRET=your_jwt_secret
+```
 
-## 🔄 Gesundheitsdatenintegration
-
-Die App simuliert derzeit die Integration von Gesundheitsdaten. In einer Produktionsumgebung müsstest du implementieren:
-
-- **Für iOS**: HealthKit-Integration
-- **Für Android**: Google Fit API-Integration
+Um API-Schlüssel (z. B. Open Food Facts) hinzuzufügen, erstelle zusätzliche Umgebungsvariablen und lade sie im Server-Code.
 
 ---
 
-## 👥 Beitragen
+## 🤝 Beitragen
 
-Beiträge sind willkommen! Bitte lies dir die Beitragsrichtlinien durch, bevor du Änderungen einreichst.
+Beiträge sind jederzeit willkommen! Bitte folge:
 
 1. Fork das Repository
-2. Erstelle einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit deine Änderungen (`git commit -m 'Add some AmazingFeature'`)
-4. Push zu dem Branch (`git push origin feature/AmazingFeature`)
-5. Eröffne einen Pull Request
+2. `git checkout -b feature/MeinFeature`
+3. Änderungen committen (`git commit -m "feat: Beschreibung"`)
+4. Push (`git push origin feature/MeinFeature`)
+5. Pull Request öffnen
+
+Siehe auch die [Contributing Guidelines](CONTRIBUTING.md), wenn vorhanden.
 
 ---
 
-## 📝 Lizenz
+## 📄 Lizenz
 
-Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe die LICENSE-Datei für Details.
+Dieses Projekt steht unter der MIT-Lizenz. Details siehe [LICENSE](LICENSE).
 
 ---
+
+## ✉️ Kontakt
+
+Bei Fragen oder Feedback:
+
+* **Autor**: Jonas Laux
+* **E-Mail**: [jonathan@example.com](mailto:jonas.laux@hotmail.com)
+* **GitHub**: [jonax1337](https://github.com/jonax1337)
+
+Viel Spaß beim Tracken und Trainieren! 🚀
