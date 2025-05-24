@@ -462,15 +462,6 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
             </TouchableOpacity>
           </View>
         )}
-        
-        <TouchableOpacity
-          style={[styles.linkButton, { marginTop: 16 }]}
-          onPress={goToSettings}
-        >
-          <Text style={[styles.linkButtonText, { color: theme.colors.primary, fontFamily: theme.typography.fontFamily.medium }]}>
-            Einstellungen ändern
-          </Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
