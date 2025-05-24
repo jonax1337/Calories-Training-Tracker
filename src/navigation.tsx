@@ -15,6 +15,16 @@ import FoodDetailScreen from './screens/food-detail-screen';
 import LoginScreen from './screens/login-screen';
 import RegisterScreen from './screens/register-screen';
 import TrainingScreen from './screens/training-screen';
+import HIITTimerScreen from './screens/hiit-timer-screen';
+import HIITTimerSettingsScreen from './screens/hiit-timer-settings-screen';
+
+// Types for HIIT Timer
+export interface HIITSettings {
+  workDuration: number;
+  restDuration: number;
+  prepareDuration: number;
+  cycles: number;
+}
 
 // Auth service
 import { isAuthenticated } from './services/auth-service';
@@ -46,6 +56,8 @@ export type RootStackParamList = {
   FoodDetail: { barcode?: string; foodId?: string; mealType?: string; foodItem?: any; selectedDate?: string; manualEntry?: boolean };
   DailyLog: { date?: string };
   Settings: undefined;
+  HIITTimer: { settings?: HIITSettings };
+  HIITTimerSettings: { settings?: HIITSettings };
   // Tab screens (for backwards compatibility)
   Home: undefined;
   Profile: undefined;
@@ -242,6 +254,16 @@ function AppStack() {
         name="Settings" 
         component={SettingsScreen} 
         options={{ title: 'Einstellungen' }} 
+      />
+      <Stack.Screen 
+        name="HIITTimerSettings" 
+        component={HIITTimerSettingsScreen} 
+        options={{ title: 'HIIT Timer Einstellungen', animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="HIITTimer" 
+        component={HIITTimerScreen} 
+        options={{ title: 'HIIT Timer', animation: 'slide_from_right' }} 
       />
     </Stack.Navigator>
   );

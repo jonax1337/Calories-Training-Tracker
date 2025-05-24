@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, ScrollView, StatusBar } from 'react-native';
+import { Text, View, ScrollView, StatusBar, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createTrainingStyles } from '../styles/screens/training-styles';
+import { Ionicons } from '@expo/vector-icons';
 
 // Import navigation types
 import { TrainingTabScreenProps } from '../types/navigation-types';
@@ -56,6 +57,15 @@ function TrainingScreen({ navigation }: TrainingTabScreenProps) {
             <Text style={styles.emptyStateText}>
               Hier werden bald deine Trainingseinheiten angezeigt.
             </Text>
+            <TouchableOpacity 
+              style={[styles.startTimerButton, { backgroundColor: theme.colors.primary, marginTop: 20 }]}
+              onPress={() => navigation.getParent()?.navigate('HIITTimerSettings')}
+            >
+              <Ionicons name="stopwatch-outline" size={22} color="white" style={{ marginRight: 8 }} />
+              <Text style={[styles.startTimerButtonText, { color: 'white', fontFamily: theme.typography.fontFamily.bold }]}>
+                HIIT Timer starten
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
