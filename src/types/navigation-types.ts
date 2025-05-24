@@ -65,3 +65,8 @@ export type SettingsTabScreenProps = {
   navigation: BottomTabNavigationProp<TabParamList, 'Settings'>;
   route: RouteProp<TabParamList, 'Settings'>;
 };
+
+export type TrainingTabScreenProps = {
+  navigation: BottomTabNavigationProp<TabParamList, 'Training'>;
+  route: RouteProp<TabParamList, 'Training'>;
+};

@@ -14,6 +14,7 @@ import SettingsScreen from './screens/settings-screen';
 import FoodDetailScreen from './screens/food-detail-screen';
 import LoginScreen from './screens/login-screen';
 import RegisterScreen from './screens/register-screen';
+import TrainingScreen from './screens/training-screen';
 
 // Auth service
 import { isAuthenticated } from './services/auth-service';
@@ -25,7 +26,8 @@ import {
   ProfileTabScreenProps, 
   JournalTabScreenProps,
   AddTabScreenProps,
-  SettingsTabScreenProps
+  SettingsTabScreenProps,
+  TrainingTabScreenProps
 } from './types/navigation-types';
 
 // Theme provider
@@ -57,6 +59,7 @@ export type TabParamList = {
   Add: { mealType?: string };
   Journal: undefined;
   Settings: undefined;
+  Training: undefined;
 };
 
 // Create navigators
@@ -100,6 +103,9 @@ function TabNavigator() {
             case 'Journal':
               iconName = focused ? 'fast-food' : 'fast-food-outline';
               break;
+            case 'Training':
+              iconName = focused ? 'barbell' : 'barbell-outline';
+              break;
             case 'Profile':
               iconName = focused ? 'person' : 'person-outline';
               break;
@@ -119,6 +125,10 @@ function TabNavigator() {
       <Tab.Screen 
         name="Journal" 
         component={DailyLogScreen as React.ComponentType<any>} 
+      />
+      <Tab.Screen 
+        name="Training" 
+        component={TrainingScreen} 
       />
       <Tab.Screen 
         name="Profile" 

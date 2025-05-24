@@ -1175,7 +1175,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               <View 
                 style={{
                   position: 'absolute',
-                  top: 0, // Oben im Container
+                  top: 6, // Vertikal zentriert relativ zur Skala (Skala y=10 bis y=30, Indikator y=6 bis y=34)
                   left: `${percentPosition}%`,
                   width: 4,
                   height: 28, // Höher als die Skala für bessere Sichtbarkeit
