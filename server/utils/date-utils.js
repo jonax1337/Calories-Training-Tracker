@@ -9,7 +9,15 @@
  * This is the preferred method to get a date that respects the user's timezone
  * @returns Object with year, month, day as properly formatted strings
  */
-function getLocalDateComponents(date = new Date()) {
+function getLocalDateComponents(dateInput = new Date()) {
+  let date = dateInput;
+  if (typeof dateInput === 'string') {
+    date = new Date(dateInput);
+    if (isNaN(date.getTime())) {
+      console.error(`[date-utils] Invalid date string passed to getLocalDateComponents: ${dateInput}`);
+      // Potentially throw an error or return default/error state
+    }
+  }
   const year = date.getFullYear().toString();
   // Months are 0-indexed in JavaScript Date, so add 1 and pad with 0 if needed
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -25,8 +33,16 @@ function getLocalDateComponents(date = new Date()) {
  * @param date Date to format (defaults to today)
  * @returns Formatted date string (YYYY-MM-DD)
  */
-function formatToLocalISODate(date = new Date()) {
-  const { year, month, day } = getLocalDateComponents(date);
+function formatToLocalISODate(dateInput = new Date()) {
+  let date = dateInput;
+  if (typeof dateInput === 'string') {
+    date = new Date(dateInput);
+    if (isNaN(date.getTime())) {
+      console.error(`[date-utils] Invalid date string passed to formatToLocalISODate: ${dateInput}`);
+      // Potentially throw an error or return default/error state
+    }
+  }
+  const { year, month, day } = getLocalDateComponents(date); // Ensure 'date' here is the potentially converted Date object
   return `${year}-${month}-${day}`;
 }
 

@@ -42,6 +42,7 @@ interface ProfileStyles {
   sliderLabelText: TextStyle;
   sliderValueContainer: ViewStyle;
   sliderLabelsContainer: ViewStyle;
+  modalCloseButton: ViewStyle;
 }
 
 // Erstellt und gibt die Styles zuru00fcck, basierend auf dem aktuellen Theme
@@ -263,11 +264,16 @@ export const createProfileStyles = (theme: Theme): ProfileStyles => StyleSheet.c
     paddingHorizontal: theme.spacing.s,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.small,
-    minWidth: 60,
   },
   sliderLabelsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: theme.spacing.xs,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: theme.spacing.m,
+    right: theme.spacing.m,
+    zIndex: 1,
   },
 });

@@ -28,7 +28,7 @@ interface AuthResponse {
 
 // Create axios instance for auth
 const authApi = axios.create({
-  baseURL: `${API_BASE_URL}/auth`,
+  baseURL: `${API_BASE_URL}/api/auth`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -115,7 +115,7 @@ export async function getCurrentUser(): Promise<any | null> {
       return null; // Kein Token verfügbar, kann nicht authentifizieren
     }
     
-    const response = await axios.get(`${API_BASE_URL}/auth/me`, {
+    const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`

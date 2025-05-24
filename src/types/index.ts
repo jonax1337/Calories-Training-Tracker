@@ -54,6 +54,7 @@ export interface UserProfile {
   gender?: 'male' | 'female' | 'divers';
   activityLevel?: ActivityLevel;
   goals: UserGoals;
+  activeGoalTypeId?: string | null;
 }
 
 export enum ActivityLevel {

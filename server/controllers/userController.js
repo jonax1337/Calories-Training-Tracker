@@ -45,7 +45,7 @@ exports.getUserProfile = async (req, res) => {
 exports.saveUserProfile = async (req, res) => {
   try {
     const { 
-      id, name, birthDate, age, weight, height, gender, activityLevel, goals 
+      id, name, birth_date, age, weight, height, gender, activityLevel, goals 
     } = req.body;
 
     // Check if user exists
@@ -53,11 +53,11 @@ exports.saveUserProfile = async (req, res) => {
     
     if (existingUser.length > 0) {
       // Update existing user
-      // Format birthDate to YYYY-MM-DD format (MySQL format)
-      let formattedBirthDate = birthDate;
-      if (birthDate && birthDate.includes('T')) {
+      // Format birth_date to YYYY-MM-DD format (MySQL format)
+      let formattedBirthDate = birth_date;
+      if (birth_date && typeof birth_date === 'string' && birth_date.includes('T')) {
         // If ISO format, extract just the date part 
-        formattedBirthDate = birthDate.split('T')[0];
+        formattedBirthDate = birth_date.split('T')[0];
       }
       
       await pool.query(
@@ -68,23 +68,29 @@ exports.saveUserProfile = async (req, res) => {
         WHERE id = ?`,
         [
           name, formattedBirthDate, age, weight, height, gender, activityLevel,
-          goals.dailyCalories, goals.dailyProtein, goals.dailyCarbs,
-          goals.dailyFat, goals.dailyWater, goals.weightGoal, id
+          goals?.dailyCalories, goals?.dailyProtein, goals?.dailyCarbs,
+          goals?.dailyFat, goals?.dailyWater, goals?.weightGoal, id
         ]
       );
       
       res.status(200).json({ message: 'User profile updated successfully' });
     } else {
       // Create new user
+      // Format birth_date (if necessary, though for new user it should be YYYY-MM-DD from client)
+      let formattedBirthDateForInsert = birth_date;
+      if (birth_date && typeof birth_date === 'string' && birth_date.includes('T')) {
+        formattedBirthDateForInsert = birth_date.split('T')[0];
+      }
+
       await pool.query(
         `INSERT INTO users (
           id, name, birth_date, age, weight, height, gender, activity_level,
           daily_calories, daily_protein, daily_carbs, daily_fat, daily_water, weight_goal
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id, name, birthDate, age, weight, height, gender, activityLevel,
-          goals.dailyCalories, goals.dailyProtein, goals.dailyCarbs,
-          goals.dailyFat, goals.dailyWater, goals.weightGoal
+          id, name, formattedBirthDateForInsert, age, weight, height, gender, activityLevel,
+          goals?.dailyCalories, goals?.dailyProtein, goals?.dailyCarbs,
+          goals?.dailyFat, goals?.dailyWater, goals?.weightGoal
         ]
       );
       

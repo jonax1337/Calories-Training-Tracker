@@ -9,7 +9,15 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  dateStrings: true, // Return DATE/DATETIME as strings
+  typeCast: function (field, next) {
+    // Convert TINYINT(1) to boolean
+    if (field.type === 'TINY' && field.length === 1) {
+      return (field.string() === '1');
+    }
+    return next();
+  }
 });
 
 // Test the connection

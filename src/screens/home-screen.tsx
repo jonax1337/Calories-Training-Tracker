@@ -3,11 +3,12 @@ import { Text, View, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Acti
 import { Calendar } from 'react-native-calendars';
 import { HomeTabScreenProps } from '../types/navigation-types';
 import { useFocusEffect } from '@react-navigation/native';
-import { getDailyLogByDate, getUserProfile, saveUserProfile, saveDailyLog } from '../services/storage-service';
+import { getDailyLogByDate, saveUserProfile, saveDailyLog } from '../services/storage-service';
+import { fetchUserProfile, fetchUserGoals } from '../services/profile-api';
 import { fetchHealthData, calculateTotalCaloriesBurned } from '../services/health-service';
 import ProgressBar from '../components/ui/progress-bar';
 import WaveAnimation from '../components/ui/wave-animation';
-import { DailyLog, HealthData, UserProfile } from '../types';
+import { DailyLog, HealthData, UserProfile, UserGoals } from '../types';
 import { useTheme } from '../theme/theme-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +28,8 @@ function isProfileComplete(profile: UserProfile | null): boolean {
     profile.height > 0 &&
     profile.gender !== undefined &&
     profile.birthDate !== undefined &&
-    profile.activityLevel !== undefined
+    profile.activityLevel !== undefined &&
+    profile.goals !== undefined
   );
 }
 
@@ -39,6 +41,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const styles = createHomeStyles(theme.theme);
   const [todayLog, setTodayLog] = useState<DailyLog | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [activeGoalTargets, setActiveGoalTargets] = useState<UserGoals | null>(null);
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentWeight, setCurrentWeight] = useState<number | undefined>(undefined);
@@ -56,10 +59,34 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const loadUserData = async () => {
     setIsLoading(true);
     try {
-      // Load user profile
-      const profile = await getUserProfile();
+      // Load user profile from API
+      const profile = await fetchUserProfile();
       setUserProfile(profile);
       setCurrentWeight(profile?.weight);
+
+      // Load active user goal's nutritional targets
+      const currentUserGoals = await fetchUserGoals(); // Fetches UserGoal[]
+      if (currentUserGoals && currentUserGoals.length > 0) {
+        const activeGoal = currentUserGoals[0]; // Assuming the first one is the active one
+        setActiveGoalTargets({
+          dailyCalories: activeGoal.dailyCalories,
+          dailyProtein: activeGoal.dailyProtein,
+          dailyCarbs: activeGoal.dailyCarbs,
+          dailyFat: activeGoal.dailyFat,
+          dailyWater: activeGoal.dailyWater,
+          // weightGoal is not directly on UserGoal, might be part of UserProfile or not used here
+        });
+        console.log('[DEBUG] HomeScreen - Active goal targets set from fetchUserGoals:', activeGoal);
+        console.log('[DEBUG] HomeScreen - activeGoalTargets.dailyCalories:', activeGoalTargets?.dailyCalories, 'Type:', typeof activeGoalTargets?.dailyCalories);
+      } else if (profile?.goals) {
+        // Fallback to goals possibly stored in the main user profile if no specific active goal found
+        setActiveGoalTargets(profile.goals);
+        console.log('[DEBUG] HomeScreen - Active goal targets set from profile.goals (fallback).');
+        console.log('[DEBUG] HomeScreen - Fallback activeGoalTargets.dailyCalories:', activeGoalTargets?.dailyCalories, 'Type:', typeof activeGoalTargets?.dailyCalories);
+      } else {
+        setActiveGoalTargets(null); // Or set to default goals
+        console.log('[DEBUG] HomeScreen - No active goal targets found, set to null.');
+      }
 
       // Load the selected date's log
       console.log(`Loading data for date: ${selectedDate}`);
@@ -115,19 +142,32 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   };
 
   // Get default goals or from user profile
-  const getGoals = () => {
+  const getGoals = (): UserGoals => {
+    console.log('[DEBUG] HomeScreen - getGoals called. Current activeGoalTargets:', JSON.stringify(activeGoalTargets));
+    console.log('[DEBUG] HomeScreen - getGoals: userProfile.goals:', JSON.stringify(userProfile?.goals));
+    if (activeGoalTargets && typeof activeGoalTargets.dailyCalories === 'number') {
+      console.log('[DEBUG] HomeScreen - getGoals returning activeGoalTargets:', JSON.stringify(activeGoalTargets));
+      return activeGoalTargets;
+    } else if (activeGoalTargets) {
+      console.warn('[DEBUG] HomeScreen - getGoals: activeGoalTargets found but dailyCalories is not a number. Value:', activeGoalTargets.dailyCalories);
+    }
+    // Fallback to userProfile.goals if activeGoalTargets isn't set (e.g. during initial load or error)
     if (userProfile?.goals) {
+      console.warn('[DEBUG] HomeScreen - getGoals falling back to userProfile.goals');
       return userProfile.goals;
     }
     
-    // Default goals if no user profile exists
-    return {
+    // Default goals if no user profile or active goal targets exist
+    console.warn('[DEBUG] HomeScreen - getGoals falling back to default hardcoded goals');
+    const defaultGoals = {
       dailyCalories: 2000,
       dailyProtein: 50,
       dailyCarbs: 250,
       dailyFat: 70,
       dailyWater: 2000, // ml
     };
+    console.log('[DEBUG] HomeScreen - getGoals returning default goals:', JSON.stringify(defaultGoals));
+    return defaultGoals;
   };
 
   const totals = calculateNutritionTotals();

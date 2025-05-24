@@ -7,7 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import { ProfileTabScreenProps } from '../types/navigation-types';
 import { ActivityLevel, UserProfile, UserGoal, GoalType } from '../types';
-import { saveUserProfile, getUserProfile, saveUserGoal, getUserGoals, getGoalTypes } from '../services/storage-service';
+import { fetchUserProfile, updateUserProfile, fetchGoalTypes, fetchUserGoals, createOrUpdateUserGoal } from '../services/profile-api';
 import { requestHealthPermissions } from '../services/health-service';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,6 +49,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   
   // State für ausgeklapptes Ziel-Menü und ausgewähltes Ziel
   const [goalsExpanded, setGoalsExpanded] = useState(false);
+
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null); // null = empfohlenes Ziel
   
   // State für verfügbare Zieltypen und aktuelle Benutzerziele
@@ -110,7 +111,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       console.log('Loading profile data...');
       
       // Lade Benutzerprofil
-      const savedProfile = await getUserProfile();
+      const savedProfile = await fetchUserProfile();
+      console.log('[DEBUG] loadProfile - raw savedProfile:', JSON.stringify(savedProfile, null, 2));
       if (savedProfile) {
         setProfile(savedProfile);
         
@@ -120,26 +122,51 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         
         // Wenn ein Geburtsdatum existiert, setze es; andernfalls berechne es aus dem Alter (wenn vorhanden)
         if (savedProfile.birthDate) {
-          // Format YYYY-MM-DD
-          setBirthDate(new Date(savedProfile.birthDate));
+          // Format YYYY-MM-DD, parse as local date components to avoid timezone issues
+          const parts = savedProfile.birthDate.split('-');
+          if (parts.length === 3) {
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in Date constructor
+            const day = parseInt(parts[2], 10);
+            setBirthDate(new Date(year, month, day));
+          } else {
+            // Fallback or error handling if date format is unexpected, try direct parsing
+            console.warn('Unexpected birthDate format, attempting direct parse:', savedProfile.birthDate);
+            setBirthDate(new Date(savedProfile.birthDate)); 
+          }
         } else if (savedProfile.age) {
           // Setze ein ungefähres Geburtsdatum basierend auf dem vorhandenen Alter
           const approximateBirthYear = new Date().getFullYear() - savedProfile.age;
           setBirthDate(new Date(approximateBirthYear, 0, 1)); // 1. Januar des Geburtsjahres
         }
-        
-        console.log('Profile data loaded successfully');
+
+        console.log('Basic profile data (name, weight, height, birthDate) processed.');
       }
       
       // Lade verfügbare Zieltypen
-      const availableGoalTypes = await getGoalTypes();
+      const availableGoalTypes = await fetchGoalTypes();
       setGoalTypes(availableGoalTypes);
+      console.log('[DEBUG] loadProfile - availableGoalTypes:', JSON.stringify(availableGoalTypes, null, 2));
       console.log('Goal types loaded:', availableGoalTypes.length);
       
       // Lade aktuelle Benutzerziele
-      const currentUserGoals = await getUserGoals();
+      const currentUserGoals = await fetchUserGoals();
       setUserGoals(currentUserGoals);
+      console.log('[DEBUG] loadProfile - currentUserGoals:', JSON.stringify(currentUserGoals, null, 2));
       console.log('User goals loaded:', currentUserGoals.length);
+
+      // Determine and set the activeGoalId AFTER fetching currentUserGoals
+      let activeGoalIdToSet: string | null = null;
+      if (currentUserGoals && currentUserGoals.length > 0 && currentUserGoals[0].goalTypeId) {
+        // Assuming user has at most one goal, take its goalTypeId
+        activeGoalIdToSet = currentUserGoals[0].goalTypeId;
+        console.log('[DEBUG] loadProfile - Active goal ID from currentUserGoals[0].goalTypeId:', activeGoalIdToSet);
+      } else {
+        console.log('[DEBUG] loadProfile - No active goal found in currentUserGoals or goalTypeId missing. Defaulting to null.');
+      }
+      
+      setSelectedGoalId(activeGoalIdToSet);
+      console.log('Profile, goal types, and user goals loaded. Active Goal ID set to (from user_goals):', activeGoalIdToSet);
       
       // Check health permissions
       const hasPermission = await requestHealthPermissions();
@@ -167,6 +194,15 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // Berechne und setze Ernährungsempfehlungen wenn alle benötigten Daten vorhanden sind
   useEffect(() => {
     // Nur berechnen wenn alle nötigen Daten vorhanden sind
+    // First, check if the current goal is custom. If so, do not recalculate.
+    if (selectedGoalId && goalTypes.length > 0) {
+      const currentGoalType = goalTypes.find(gt => gt.id === selectedGoalId);
+      if (currentGoalType && currentGoalType.isCustom) {
+        console.log('[DEBUG] Goal recalculation skipped: Current goal is custom.');
+        return; // Skip recalculation for custom goals
+      }
+    }
+
     if (profile.weight && profile.height && profile.gender && profile.activityLevel) {
       // BMI berechnen
       const bmi = profile.weight / Math.pow(profile.height / 100, 2);
@@ -284,6 +320,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
 
   // Handle saving profile with improved error handling and data reload
   const handleSave = async () => {
+    console.log('[DEBUG] handleSave - current profile state:', JSON.stringify(profile, null, 2));
+    console.log('[DEBUG] handleSave - current selectedGoalId state:', selectedGoalId);
     setIsLoading(true);
     try {
       // Basic validation
@@ -296,79 +334,85 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       console.log('Saving profile data...');
       
       // Geburtsdatum aufbereiten und Alter berechnen
-      // Create a timezone-safe date string in YYYY-MM-DD format
-      const year = birthDate.getFullYear();
-      const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-      const day = String(birthDate.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-      
-      console.log(`Birth date being saved: ${birthDate.toDateString()}, formatted as: ${formattedDate}`);
-      
-      const calculatedAge = calculateAge(birthDate);
-      
-      // Profil mit den aktuellen Werten aktualisieren
-      const updatedProfile = {
+      const birthDateObj = new Date(birthDate); // Ensure birthDate is a Date object
+      const year = birthDateObj.getFullYear();
+      const month = String(birthDateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(birthDateObj.getDate()).padStart(2, '0');
+      const formattedBirthDate = `${year}-${month}-${day}`;
+      const calculatedAge = calculateAge(birthDateObj);
+
+      const updatedProfileData = {
         ...profile,
-        birthDate: formattedDate,
-        age: calculatedAge
+        name: profile.name,
+        birthDate: formattedBirthDate,
+        age: calculatedAge,
+        height: Number(profile.height),
+        weight: Number(profile.weight),
+        gender: profile.gender,
+        activityLevel: profile.activityLevel,
+        activeGoalTypeId: selectedGoalId, // Persist the currently selected goal ID
+        // Ensure goals sub-object is structured as expected by the backend if it's part of updateUserProfile
+        // If goals are handled entirely by createOrUpdateUserGoal, this might not be needed here or structured differently.
+        // For now, assuming profile.goals contains the values to be saved with the main profile if applicable.
+        goals: {
+            dailyCalories: profile.goals.dailyCalories,
+            dailyProtein: profile.goals.dailyProtein,
+            dailyCarbs: profile.goals.dailyCarbs,
+            dailyFat: profile.goals.dailyFat,
+            dailyWater: profile.goals.dailyWater,
+        }
       };
-      
-      // 1. Save profile to server (bisherige Funktionalität beibehalten)
-      await saveUserProfile(updatedProfile);
-      
-      // 2. Parallel: Speichern der Benutzerziele in der neuen API
+
+      console.log('[DEBUG] handleSave - updatedProfileData object to be sent for main profile:', JSON.stringify(updatedProfileData, null, 2));
+      const response = await updateUserProfile(updatedProfileData);
+      console.log('[DEBUG] handleSave - main profile update response:', JSON.stringify(response, null, 2));
+
+      // Separate logic for saving/updating user goals via createOrUpdateUserGoal
       try {
-        console.log('Saving user goals to new API...');
-        
-        // Bestimme den Zieltyp basierend auf der Auswahl (wenn möglich)
+        console.log('[DEBUG] handleSave - Preparing to save user goals via createOrUpdateUserGoal...');
         let goalTypeId: string | undefined = undefined;
-        let isCustom = false;
-        
-        // Wenn ein spezifisches Ziel ausgewählt wurde und Zieltypen geladen sind
+        let isCustomGoal = false;
+
         if (selectedGoalId && goalTypes.length > 0) {
           const selectedType = goalTypes.find(type => type.id === selectedGoalId);
           if (selectedType) {
             goalTypeId = selectedType.id;
-            isCustom = selectedType.isCustom;
+            isCustomGoal = selectedType.isCustom;
           }
         } else {
-          // Wenn kein Ziel ausgewählt wurde, setze es als benutzerdefiniert
-          isCustom = true;
-          // Suche nach dem "custom" Zieltyp, falls vorhanden
+          isCustomGoal = true;
           const customType = goalTypes.find(type => type.id === 'custom');
           if (customType) {
             goalTypeId = customType.id;
           }
         }
-        
-        // Erstelle UserGoal-Objekt für API
-        const userGoal: UserGoal = {
+
+        const userGoalPayload: UserGoal = {
           goalTypeId,
-          isCustom,
-          dailyCalories: profile.goals.dailyCalories,
+          isCustom: isCustomGoal,
+          dailyCalories: profile.goals.dailyCalories, // Assuming these are the latest values from UI
           dailyProtein: profile.goals.dailyProtein || 0,
           dailyCarbs: profile.goals.dailyCarbs || 0,
           dailyFat: profile.goals.dailyFat || 0,
           dailyWater: profile.goals.dailyWater || 0
         };
         
-        // Speichere Benutzerziel in der neuen API
-        const goalSaveSuccess = await saveUserGoal(userGoal);
-        if (goalSaveSuccess) {
-          console.log('User goals saved successfully to new API');
+        console.log('[DEBUG] handleSave - userGoalPayload for createOrUpdateUserGoal:', JSON.stringify(userGoalPayload, null, 2));
+        const savedGoalResponse = await createOrUpdateUserGoal(userGoalPayload);
+        if (savedGoalResponse && savedGoalResponse.id) {
+          console.log('[DEBUG] handleSave - User goals saved successfully via createOrUpdateUserGoal. Response:', JSON.stringify(savedGoalResponse, null, 2));
         } else {
-          console.warn('Failed to save user goals to new API');
+          console.warn('[DEBUG] handleSave - Failed to save user goals via createOrUpdateUserGoal. Response:', JSON.stringify(savedGoalResponse, null, 2));
         }
       } catch (goalError) {
-        // Fehler beim Speichern der Ziele in der neuen API sollen die 
-        // ursprüngliche Speicherfunktion nicht beeinträchtigen
-        console.error('Error saving user goals to new API:', goalError);
+        console.error('Error saving user goals to new API (createOrUpdateUserGoal):', goalError);
       }
       
       // Reload profile data to ensure everything is in sync
       await loadProfile();
       
       console.log('Profile saved and reloaded successfully');
+        console.log('[DEBUG] handleSave - server response:', JSON.stringify(response, null, 2));
       
       Alert.alert('Success', 'Profile saved successfully', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -442,13 +486,17 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         animationType="fade"
         transparent={true}
         visible={showDatePickerModal}
-        onRequestClose={cancelDatePickerModal}
+        onRequestClose={cancelDatePickerModal} // Added onRequestClose for Android back button
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
             <Text style={[styles.modalTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
               Geburtsdatum auswählen
             </Text>
+            {/* Close button for modal */}
+            <TouchableOpacity onPress={cancelDatePickerModal} style={styles.modalCloseButton}>
+              <Ionicons name="close-circle" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
             
             <View style={styles.datePickerContainer}>
               {Platform.OS === 'web' ? (
@@ -1531,7 +1579,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                         color: theme.colors.text,
                         marginBottom: theme.spacing.xs
                       }}>
-                        {activeGoal.title}
+                        {activeGoal.title} {activeGoal.id === recommendedGoal ? <Text style={{ fontSize: theme.typography.fontSize.s, color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}> (Empfohlen)</Text> : ''}
                       </Text>
                       <Text style={{
                         fontFamily: theme.typography.fontFamily.regular,
@@ -1763,7 +1811,15 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                         }}>
                           Wähle ein alternatives Ziel:
                         </Text>
-                        {goals.filter(goal => goal.id !== selectedGoalId).map(goal => (
+                        {goalTypes.filter(goalType => {
+                            // If 'maintain' is the currently selected goal (either explicitly selectedGoalId === 'maintain' or implicitly selectedGoalId === null),
+                            // do not show 'maintain' in the alternatives.
+                            if ((selectedGoalId === 'maintain' || selectedGoalId === null) && goalType.id === 'maintain') {
+                                return false;
+                            }
+                            // Otherwise, hide the goal if it's the currently selected one.
+                            return goalType.id !== selectedGoalId;
+                          }).map(goal => (
                           <TouchableOpacity 
                             key={goal.id}
                             style={{
@@ -1822,6 +1878,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                                   carbs = Math.round((dailyCalories * 0.30) / 4);
                                   fat = Math.round((dailyCalories * 0.25) / 9);
                                   break;
+                                default: // Default to maintain weight if no specific case matches
+                                  dailyCalories = maintenanceCalories;
+                                  protein = Math.round(weight * 1.4);
+                                  carbs = Math.round((dailyCalories * 0.45) / 4);
+                                  fat = Math.round((dailyCalories * 0.30) / 9);
+                                  break;
                               }
                               
                               // Profil aktualisieren
@@ -1849,29 +1911,21 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
                               <Text style={{
                                 fontFamily: theme.typography.fontFamily.medium,
-                                fontSize: theme.typography.fontSize.m,
+                                fontSize: theme.typography.fontSize.s,
                                 color: theme.colors.text,
-                                flex: 1,
                               }}>
-                                {goal.title}
+                                {goal.name} 
                               </Text>
-                              {goal.id === recommendedGoal && (
-                                <View style={{
-                                  backgroundColor: theme.colors.primary + '20',
-                                  paddingHorizontal: theme.spacing.xs,
-                                  paddingVertical: 2,
-                                  borderRadius: theme.borderRadius.small,
-                                  marginLeft: theme.spacing.xs
+                              {goal.id === recommendedGoal ? (
+                                <Text style={{ 
+                                  fontSize: theme.typography.fontSize.xs, 
+                                  color: theme.colors.textLight, 
+                                  fontFamily: theme.typography.fontFamily.regular,
+                                  marginLeft: 4, 
                                 }}>
-                                  <Text style={{
-                                    fontSize: theme.typography.fontSize.xs,
-                                    color: theme.colors.primary,
-                                    fontFamily: theme.typography.fontFamily.medium
-                                  }}>
-                                    Empfohlen
-                                  </Text>
-                                </View>
-                              )}
+                                   (Empfohlen)
+                                </Text>
+                              ) : null}
                             </View>
                             <Text style={{
                               fontFamily: theme.typography.fontFamily.regular,
