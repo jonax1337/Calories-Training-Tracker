@@ -1,12 +1,9 @@
 # 📊 Calories Training Tracker
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/) 
-[![React Native](https://img.shields.io/badge/React%20Native-0.71-blue.svg)](https://reactnative.dev/) 
-[![Expo](https://img.shields.io/badge/Expo-47.0.0-lightgrey.svg)](https://expo.dev/) 
-[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/) 
-[![Yarn](https://img.shields.io/badge/Yarn-1.22-blue.svg)](https://yarnpkg.com/) 
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE.md)
-
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge\&logo=typescript\&logoColor=white)](https://www.typescriptlang.org/)
+[![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge\&logo=react\&logoColor=61DAFB)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge\&logo=expo\&logoColor=white)](https://expo.dev/)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](LICENSE)
 
 Eine umfassende mobile Anwendung zur Verfolgung deiner Ernährung, Fitness und Gesundheitsziele.
 
@@ -169,7 +166,7 @@ Siehe auch die [Contributing Guidelines](CONTRIBUTING.md), wenn vorhanden.
 
 ## 📄 Lizenz
 
-Dieses Projekt ist proprietär lizenziert. Siehe [LICENSE](LICENSE.md) für Details.
+Dieses Projekt ist proprietär lizenziert. Siehe [LICENSE](LICENSE) für Details.
 
 ---
 
