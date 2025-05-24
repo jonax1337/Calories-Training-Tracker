@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { configureHealthKitForIOS, configureGoogleFitForAndroid } from './src/services/health-service';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import SoundWebView from './src/components/webview/sound-webview';
 
 export default function App() {
   // Initialize health services based on platform
@@ -23,6 +24,8 @@ export default function App() {
       <View style={styles.container}>
         <StatusBar style="auto" />
         <AppNavigation />
+        {/* WebView für Sound-Erzeugung (unsichtbar) */}
+        <SoundWebView />
       </View>
     </SafeAreaProvider>
   );
