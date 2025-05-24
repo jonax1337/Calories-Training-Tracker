@@ -163,7 +163,7 @@ Siehe auch die [Contributing Guidelines](CONTRIBUTING.md), wenn vorhanden.
 
 ## 📄 Lizenz
 
-Dieses Projekt ist proprietär lizenziert. Siehe [LICENSE](LICENSE) für Details.
+Dieses Projekt ist proprietär lizenziert. Siehe [LICENSE](LICENSE.md) für Details.
 
 ---
 
