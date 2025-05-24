@@ -93,14 +93,14 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
     // Setze Rotation zurück auf 0
     rotationAnimation.setValue(0);
     
-    // Kontinuierliche Rotation - Geschwindigkeit hier anpassen:
-    // 5000 = 5 Sekunden pro Umdrehung (langsamer)
-    // 8000 = 8 Sekunden pro Umdrehung (noch langsamer)
-    // 10000 = 10 Sekunden pro Umdrehung (sehr langsam)
+    // Rotation dauert genau so lange wie der gesamte Timer
+    // Eine komplette Umdrehung = komplette Timer-Duration
+    const rotationDurationMs = duration * 1000; // duration in Sekunden → Millisekunden
+    
     rotationAnimationRef.current = Animated.loop(
       Animated.timing(rotationAnimation, {
         toValue: 1,
-        duration: 30000, // 6 Sekunden für eine Umdrehung - anpassbar
+        duration: rotationDurationMs, // Exakt die Timer-Duration
         easing: Easing.linear,
         useNativeDriver: false, // Wichtig: false für SVG Transformationen
       })
