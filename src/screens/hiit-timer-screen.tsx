@@ -440,7 +440,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
               onPress={timerState.status === 'running' ? pauseTimer : startTimer}
             >
               <Ionicons
-                name={timerState.status === 'running' ? 'pause' : 'play'}
+                name={timerState.status === 'running' ? 'pause-outline' : 'play-outline'}
                 size={24}
                 color={theme.colors.text}
               />
@@ -451,14 +451,14 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
               onPress={skipToNextPhase}
               disabled={timerState.phase === 'completed'}
             >
-              <Ionicons name="play-skip-forward" size={24} color={theme.colors.text} />
+              <Ionicons name="play-skip-forward-outline" size={24} color={theme.colors.text} />
             </TouchableOpacity>
             
             <TouchableOpacity
               style={[styles.controlButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               onPress={resetTimer}
             >
-              <Ionicons name="refresh" size={24} color={theme.colors.text} />
+              <Ionicons name="refresh-outline" size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
         )}
