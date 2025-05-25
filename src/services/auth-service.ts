@@ -96,6 +96,17 @@ export async function isAuthenticated(): Promise<boolean> {
   }
 }
 
+// Check if email already exists
+export async function checkEmailExists(email: string): Promise<boolean> {
+  try {
+    const response = await authApi.get(`/check-email?email=${encodeURIComponent(email)}`);
+    return response.data.exists;
+  } catch (error) {
+    console.error('Email check error:', error);
+    return false;
+  }
+}
+
 // Get current user ID
 export async function getCurrentUserId(): Promise<string | null> {
   try {

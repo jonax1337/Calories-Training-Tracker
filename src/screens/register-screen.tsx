@@ -1,14 +1,42 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { register } from '../services/auth-service';
+import { register, checkEmailExists } from '../services/auth-service';
 import { useTheme } from '../theme/theme-context';
 import { RootStackParamList } from '../navigation';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { createAuthStyles } from '../styles/screens/auth-styles';
+import { debounce } from 'lodash';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
+
+// Funktion zur Bewertung der Passwortstärke (0-100)
+const calculatePasswordStrength = (password: string): number => {
+  if (!password) return 0;
+  
+  let score = 0;
+  
+  // Länge: Bis zu 40 Punkte für die Länge (max bei 12 Zeichen)
+  score += Math.min(40, password.length * 3.33);
+  
+  // Zeichenvielfalt: Bis zu 60 Punkte
+  if (/[a-z]/.test(password)) score += 10; // Kleinbuchstaben
+  if (/[A-Z]/.test(password)) score += 15; // Großbuchstaben
+  if (/[0-9]/.test(password)) score += 15; // Zahlen
+  if (/[^a-zA-Z0-9]/.test(password)) score += 20; // Sonderzeichen
+  
+  return Math.min(100, Math.round(score));
+};
+
+// Funktion zur Bestimmung der Passwortstärke-Kategorie
+const getStrengthCategory = (strength: number): { label: string; color: string } => {
+  if (strength < 30) return { label: 'Sehr schwach', color: '#FF3B30' };
+  if (strength < 50) return { label: 'Schwach', color: '#FF9500' };
+  if (strength < 70) return { label: 'Mittel', color: '#FFCC00' };
+  if (strength < 90) return { label: 'Stark', color: '#34C759' };
+  return { label: 'Sehr stark', color: '#00C7BE' };
+};
 
 const RegisterScreen = () => {
   const { theme } = useTheme();
@@ -23,32 +51,99 @@ const RegisterScreen = () => {
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Feldspezifische Fehler
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  
+  // Neue Zustände für die Passwortstärke und E-Mail-Validierung
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [emailExists, setEmailExists] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  
+  // Funktion zum Zurücksetzen aller Fehler
+  const resetErrors = () => {
+    setNameError(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setConfirmPasswordError(null);
+    setGeneralError(null);
+  };
 
+  // Prüft E-Mail mit Debounce, um die API nicht zu überlasten
+  const checkEmailExistsDebounced = useCallback(
+    debounce(async (email: string) => {
+      if (!email || !email.includes('@')) return;
+      
+      setIsCheckingEmail(true);
+      try {
+        const exists = await checkEmailExists(email);
+        setEmailExists(exists);
+      } catch (error) {
+        console.error('Failed to check email:', error);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }, 500),
+    []
+  );
+  
+  // Aktualisiere Passwortstärke, wenn sich das Passwort ändert
+  useEffect(() => {
+    setPasswordStrength(calculatePasswordStrength(password));
+  }, [password]);
+  
+  // Prüfe E-Mail, wenn sie sich ändert
+  useEffect(() => {
+    if (email) {
+      checkEmailExistsDebounced(email);
+    } else {
+      setEmailExists(false);
+    }
+  }, [email, checkEmailExistsDebounced]);
+  
   const handleRegister = async () => {
+    // Zurücksetzen aller Fehler
+    resetErrors();
+    
+    let hasErrors = false;
+    
     // Validate inputs
+    if (!name.trim()) {
+      setNameError('Name ist erforderlich');
+      hasErrors = true;
+    }
+    
     if (!email.trim()) {
-      setError('E-Mail-Adresse ist erforderlich');
-      return;
+      setEmailError('E-Mail-Adresse ist erforderlich');
+      hasErrors = true;
+    } else if (emailExists) {
+      setEmailError('Diese E-Mail-Adresse wird bereits verwendet');
+      hasErrors = true;
     }
     
     if (!password.trim()) {
-      setError('Passwort ist erforderlich');
-      return;
+      setPasswordError('Passwort ist erforderlich');
+      hasErrors = true;
+    } else if (passwordStrength < 50) {
+      setPasswordError('Das Passwort ist zu schwach. Bitte wählen Sie ein stärkeres Passwort.');
+      hasErrors = true;
     }
     
     if (password !== confirmPassword) {
-      setError('Passwörter stimmen nicht überein');
-      return;
+      setConfirmPasswordError('Passwörter stimmen nicht überein');
+      hasErrors = true;
     }
     
-    if (!name.trim()) {
-      setError('Name ist erforderlich');
+    if (hasErrors) {
       return;
     }
     
     setIsLoading(true);
-    setError(null);
+    resetErrors();
     
     try {
       const response = await register({
@@ -62,19 +157,19 @@ const RegisterScreen = () => {
         // Instead of navigating, just set a message that registration was successful
         // The NavigationContent component will detect the auth change and switch to AppStack
         setIsLoading(false);
-        setError(null);
+        resetErrors();
         // Force app reload to refresh navigation state
         setTimeout(() => {
           // This timeout is just to give the user visual feedback that registration succeeded
           // The navigation will happen automatically when the app detects the auth token
           alert('Registrierung erfolgreich!');
         }, 500);
-        return; // Exit early to prevent further setError calls
+        return; // Exit early to prevent further error calls
       } else {
-        setError('Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+        setGeneralError('Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
       }
     } catch (error) {
-      setError('Registrierung fehlgeschlagen. Bitte versuchen Sie es später erneut.');
+      setGeneralError('Registrierung fehlgeschlagen. Bitte versuchen Sie es später erneut.');
       console.error('Registration error:', error);
     } finally {
       setIsLoading(false);
@@ -101,22 +196,7 @@ const RegisterScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
 
-        {error && (
-          <View style={{
-            backgroundColor: `${theme.colors.errorLight}`,
-            padding: theme.spacing.m,
-            borderRadius: theme.borderRadius.medium,
-            marginHorizontal: theme.spacing.m,
-            marginBottom: theme.spacing.m
-          }}>
-            <Text style={{
-              color: theme.colors.error,
-              fontFamily: theme.typography.fontFamily.medium
-            }}>
-              {error}
-            </Text>
-          </View>
-        )}
+        {/* Entferne den globalen Fehler oben */}
 
         <View style={{ paddingHorizontal: theme.spacing.m }}>
           <View style={{ marginBottom: theme.spacing.l }}>
@@ -133,7 +213,7 @@ const RegisterScreen = () => {
               style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border,
+                borderColor: nameError ? theme.colors.error : theme.colors.border,
                 borderWidth: 1,
                 borderRadius: theme.borderRadius.medium,
                 padding: theme.spacing.m,
@@ -141,11 +221,24 @@ const RegisterScreen = () => {
                 fontFamily: theme.typography.fontFamily.regular
               }}
               value={name}
-              onChangeText={setName}
+              onChangeText={(value) => {
+                setName(value);
+                if (value.trim()) setNameError(null);
+              }}
               placeholder="Ihr vollständiger Name"
               placeholderTextColor={theme.colors.disabled}
               autoCapitalize="words"
             />
+            {nameError && (
+              <Text style={{
+                color: theme.colors.error,
+                fontSize: theme.typography.fontSize.s,
+                marginTop: 5,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
+                {nameError}
+              </Text>
+            )}
           </View>
 
           <View style={{ marginBottom: theme.spacing.l }}>
@@ -157,25 +250,57 @@ const RegisterScreen = () => {
             }}>
               E-Mail
             </Text>
-            <TextInput
-              style={{
-                backgroundColor: theme.colors.card,
-                color: theme.colors.text,
-                borderColor: theme.colors.border,
-                borderWidth: 1,
-                borderRadius: theme.borderRadius.medium,
-                padding: theme.spacing.m,
-                fontSize: theme.typography.fontSize.m,
-                fontFamily: theme.typography.fontFamily.regular
-              }}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Ihre E-Mail-Adresse"
-              placeholderTextColor={theme.colors.disabled}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                style={{
+                  backgroundColor: theme.colors.card,
+                  color: theme.colors.text,
+                  borderColor: (emailExists || emailError) ? theme.colors.error : theme.colors.border,
+                  borderWidth: 1,
+                  borderRadius: theme.borderRadius.medium,
+                  padding: theme.spacing.m,
+                  fontSize: theme.typography.fontSize.m,
+                  fontFamily: theme.typography.fontFamily.regular
+                }}
+                value={email}
+                onChangeText={(value) => {
+                  setEmail(value);
+                  if (value.trim()) setEmailError(null);
+                }}
+                placeholder="Ihre E-Mail-Adresse"
+                placeholderTextColor={theme.colors.disabled}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+              />
+              {isCheckingEmail && (
+                <ActivityIndicator 
+                  style={{ position: 'absolute', right: 15, top: 15 }}
+                  size="small" 
+                  color={theme.colors.primary} 
+                />
+              )}
+            </View>
+            {emailError && (
+              <Text style={{
+                color: theme.colors.error,
+                fontSize: theme.typography.fontSize.s,
+                marginTop: 5,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
+                {emailError}
+              </Text>
+            )}
+            {emailExists && !emailError && (
+              <Text style={{
+                color: theme.colors.error,
+                fontSize: theme.typography.fontSize.s,
+                marginTop: 5,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
+                Diese E-Mail-Adresse wird bereits verwendet
+              </Text>
+            )}
           </View>
 
           <View style={{ marginBottom: theme.spacing.l }}>
@@ -191,7 +316,7 @@ const RegisterScreen = () => {
               style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border,
+                borderColor: passwordError ? theme.colors.error : theme.colors.border,
                 borderWidth: 1,
                 borderRadius: theme.borderRadius.medium,
                 padding: theme.spacing.m,
@@ -199,11 +324,66 @@ const RegisterScreen = () => {
                 fontFamily: theme.typography.fontFamily.regular
               }}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(value) => {
+                setPassword(value);
+                if (value.trim()) setPasswordError(null);
+              }}
               placeholder="Ihr Passwort"
               placeholderTextColor={theme.colors.disabled}
               secureTextEntry
             />
+            
+            {/* Passwortstärke-Anzeige */}
+            {password.length > 0 && (
+              <>
+                <View style={{ marginTop: 10, marginBottom: 5 }}>
+                  <View style={{
+                    height: 6,
+                    backgroundColor: theme.colors.disabled + '40',
+                    borderRadius: 3,
+                    overflow: 'hidden'
+                  }}>
+                    <View style={{
+                      width: `${passwordStrength}%`,
+                      height: '100%',
+                      backgroundColor: getStrengthCategory(passwordStrength).color,
+                      borderRadius: 3,
+                    }} />
+                  </View>
+                </View>
+                <Text style={{
+                  fontSize: theme.typography.fontSize.s,
+                  color: getStrengthCategory(passwordStrength).color,
+                  fontFamily: theme.typography.fontFamily.medium
+                }}>
+                  {getStrengthCategory(passwordStrength).label}
+                </Text>
+                
+                {/* Passwort-Tipps */}
+                {passwordStrength < 70 && (
+                  <Text style={{
+                    fontSize: theme.typography.fontSize.xs,
+                    color: theme.colors.textLight,
+                    marginTop: 5,
+                    fontFamily: theme.typography.fontFamily.regular
+                  }}>
+                    Tipp: Verwenden Sie Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen für ein starkes Passwort.
+                  </Text>
+                )}
+              </>
+            )}
+            
+            {/* Fehleranzeige */}
+            {passwordError && (
+              <Text style={{
+                color: theme.colors.error,
+                fontSize: theme.typography.fontSize.s,
+                marginTop: 5,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
+                {passwordError}
+              </Text>
+            )}
           </View>
 
           <View style={{ marginBottom: theme.spacing.l }}>
@@ -219,7 +399,7 @@ const RegisterScreen = () => {
               style={{
                 backgroundColor: theme.colors.card,
                 color: theme.colors.text,
-                borderColor: theme.colors.border,
+                borderColor: confirmPasswordError ? theme.colors.error : theme.colors.border,
                 borderWidth: 1,
                 borderRadius: theme.borderRadius.medium,
                 padding: theme.spacing.m,
@@ -227,11 +407,24 @@ const RegisterScreen = () => {
                 fontFamily: theme.typography.fontFamily.regular
               }}
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(value) => {
+                setConfirmPassword(value);
+                if (value === password) setConfirmPasswordError(null);
+              }}
               placeholder="Passwort wiederholen"
               placeholderTextColor={theme.colors.disabled}
               secureTextEntry
             />
+            {confirmPasswordError && (
+              <Text style={{
+                color: theme.colors.error,
+                fontSize: theme.typography.fontSize.s,
+                marginTop: 5,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
+                {confirmPasswordError}
+              </Text>
+            )}
           </View>
 
           <View style={{ marginBottom: theme.spacing.xl }}>
@@ -263,6 +456,22 @@ const RegisterScreen = () => {
             </View>
           </View>
 
+          {generalError && (
+            <View style={{
+              backgroundColor: `${theme.colors.errorLight}`,
+              padding: theme.spacing.m,
+              borderRadius: theme.borderRadius.medium,
+              marginBottom: theme.spacing.m
+            }}>
+              <Text style={{
+                color: theme.colors.error,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
+                {generalError}
+              </Text>
+            </View>
+          )}
+          
           <TouchableOpacity
             style={{
               backgroundColor: theme.colors.primary,

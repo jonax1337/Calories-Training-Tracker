@@ -5,8 +5,29 @@ const { v4: uuidv4 } = require('uuid');
 
 // Environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
-const TOKEN_EXPIRE = process.env.TOKEN_EXPIRE || '7d';
+const TOKEN_EXPIRE = process.env.TOKEN_EXPIRE || '365d'; // Token ist jetzt 1 Jahr gu00fcltig statt 7 Tage
 const SALT_ROUNDS = 10;
+
+// Check if an email already exists
+exports.checkEmailExists = async (req, res) => {
+  const { email } = req.query;
+  
+  if (!email) {
+    return res.status(400).json({ message: 'Email parameter is required' });
+  }
+  
+  try {
+    const [existingUsers] = await pool.query(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+    
+    return res.status(200).json({ exists: existingUsers.length > 0 });
+  } catch (error) {
+    console.error('Error checking email:', error);
+    return res.status(500).json({ message: 'Server error when checking email' });
+  }
+};
 
 // Register a new user
 exports.register = async (req, res) => {

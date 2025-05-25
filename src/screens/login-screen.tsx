@@ -73,27 +73,11 @@ const LoginScreen = () => {
       >
         <View style={{ alignItems: 'center', marginBottom: theme.spacing.xl }}>
           <Flame
-          strokeWidth={1.5}
+            strokeWidth={1.5}
             size={150} 
             color={theme.colors.primary} 
           />
         </View>
-        
-        {error && (
-          <View style={{
-            backgroundColor: `${theme.colors.errorLight}`,
-            padding: theme.spacing.m,
-            borderRadius: theme.borderRadius.medium,
-            marginBottom: theme.spacing.m
-          }}>
-            <Text style={{
-              color: theme.colors.error,
-              fontFamily: theme.typography.fontFamily.medium
-            }}>
-              {error}
-            </Text>
-          </View>
-        )}
 
         <View style={{ paddingHorizontal: theme.spacing.m }}>
           <View style={{ marginBottom: theme.spacing.l }}>
@@ -153,6 +137,23 @@ const LoginScreen = () => {
               secureTextEntry
             />
           </View>
+          
+          {/* Fehleranzeige direkt u00fcber dem Login-Button */}
+          {error && (
+            <View style={{
+              backgroundColor: theme.colors.errorLight,
+              padding: theme.spacing.m,
+              borderRadius: theme.borderRadius.medium,
+              marginBottom: theme.spacing.l
+            }}>
+              <Text style={{
+                color: theme.colors.error,
+                fontFamily: theme.typography.fontFamily.medium
+              }}>
+                {error}
+              </Text>
+            </View>
+          )}
 
           <TouchableOpacity
             style={{
