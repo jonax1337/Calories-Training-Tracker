@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import AppNavigation from './src/navigation';
 import { useEffect } from 'react';
-import { configureHealthKitForIOS, configureGoogleFitForAndroid } from './src/services/health-service';
+import { configureGoogleFitForAndroid, configureHealthKitForIOS } from './src/services/health-service';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SoundWebView from './src/components/webview/sound-webview';

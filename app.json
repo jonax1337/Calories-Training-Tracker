@@ -18,7 +18,8 @@
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan food barcodes."
         }
-      ]
+      ],
+      "expo-health-kit"
     ],
     "ios": {
       "supportsTablet": true,

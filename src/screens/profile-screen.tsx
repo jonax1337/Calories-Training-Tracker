@@ -231,13 +231,9 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       // Berechne basierend auf dem ausgewählten Ziel, NICHT basierend auf BMI
       if (selectedGoalId && goalTypes.length > 0) {
         const currentGoalType = goalTypes.find(gt => gt.id === selectedGoalId);
-        console.log('DEBUG: selectedGoalId:', selectedGoalId);
-        console.log('DEBUG: currentGoalType:', currentGoalType);
-        console.log('DEBUG: availableGoalTypes:', goalTypes.map(gt => ({ id: gt.id, name: gt.name, isCustom: gt.isCustom })));
         
         if (currentGoalType && !currentGoalType.isCustom) {
           // Ziel-basierte Berechnung für vordefinierte Ziele
-          console.log('DEBUG: Using goal-based calculation for:', selectedGoalId);
           switch (selectedGoalId) {
             case 'lose_weight':
             case 'weight_loss':
@@ -286,14 +282,11 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
               break;
           }
-          console.log('DEBUG: Calculated goal-based values:', { dailyCalories, protein, carbs, fat });
         } else if (currentGoalType && currentGoalType.isCustom) {
           // Custom Goal: Verwende gespeicherte Werte, keine Neuberechnung
-          console.log('DEBUG: Custom goal detected, skipping recalculation');
           return;
         }
       } else {
-        console.log('DEBUG: No goal selected, using BMI-based calculation');
         // Kein Ziel ausgewählt: BMI-basierte Empfehlung als Fallback
         const bmi = profile.weight / Math.pow(profile.height / 100, 2);
         
