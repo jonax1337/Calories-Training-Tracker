@@ -101,8 +101,6 @@ const lightColors: Colors = {
     carbsLight: '#E8F5E8',      // Heller Hintergrund
     fat: '#FFC107',             // Fette - Gelb
     fatLight: '#FFF8E1',        // Heller Hintergrund
-    water: '#2196F3',           // Wasser - Blau
-    waterLight: '#E3F2FD',      // Heller Hintergrund
   },
 };
 
@@ -150,8 +148,6 @@ const darkColors: Colors = {
     carbsLight: '#1B5E20',      // Dunkler Hintergrund
     fat: '#FFCA28',             // Fette - Helleres Gelb
     fatLight: '#4E3C00',        // Dunkler Hintergrund
-    water: '#2196F3',           // Wasser - Blau
-    waterLight: '#E3F2FD',      // Heller Hintergrund
   },
 };
 
@@ -199,8 +195,6 @@ const pinkColors: Colors = {
     carbsLight: '#F1F8E9',      // Grüner Hintergrund
     fat: '#FFB74D',             // Fette - Warmes Orange
     fatLight: '#FFF3E0',        // Orange Hintergrund
-    water: '#2196F3',           // Wasser - Blau
-    waterLight: '#E3F2FD',      // Heller Hintergrund
   },
 };
 

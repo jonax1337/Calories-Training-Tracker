@@ -8,6 +8,7 @@ interface HomeStyles {
   modalContent: ViewStyle;
   modalTitle: TextStyle;
   inputContainer: ViewStyle;
+  inputWithUnit: ViewStyle;
   input: TextStyle;
   modalButtons: ViewStyle;
   modalButton: ViewStyle;
@@ -56,6 +57,12 @@ export const createHomeStyles = (theme: Theme): HomeStyles => StyleSheet.create(
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.m,
+  },
+  inputWithUnit: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
   },
   input: {
     flex: 1,

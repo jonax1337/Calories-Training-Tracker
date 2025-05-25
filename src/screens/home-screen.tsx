@@ -809,20 +809,37 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             </Text>
             
             <View style={styles.inputContainer}>
-              <TextInput
-                style={[styles.input, { 
-                  backgroundColor: theme.theme.colors.background,
-                  color: theme.theme.colors.text,
-                  borderRadius: theme.theme.borderRadius.small,
-                  fontFamily: theme.theme.typography.fontFamily.medium
-                }]}
-                value={manualWaterAmount}
-                onChangeText={setManualWaterAmount}
-                keyboardType="number-pad"
-                placeholder="Wassermenge in ml"
-                placeholderTextColor={theme.theme.colors.textLight}
-              />
-              <Text style={{ fontFamily: theme.theme.typography.fontFamily.medium, color: theme.theme.colors.textLight, marginLeft: 8 }}>ml</Text>
+              <View style={styles.inputWithUnit}>
+                <TextInput
+                  style={[styles.input, { 
+                    backgroundColor: theme.theme.colors.background,
+                    color: theme.theme.colors.text,
+                    borderRadius: theme.theme.borderRadius.small,
+                    fontFamily: theme.theme.typography.fontFamily.medium,
+                    paddingRight: 40 // Platz für die Einheit
+                  }]}
+                  value={manualWaterAmount}
+                  onChangeText={(text) => {
+                    // Entferne alle Nicht-Ziffern
+                    const numericValue = text.replace(/[^0-9]/g, '');
+                    setManualWaterAmount(numericValue);
+                  }}
+                  keyboardType="number-pad"
+                  placeholder="Wassermenge"
+                  placeholderTextColor={theme.theme.colors.textLight}
+                />
+                <Text style={{
+                  position: 'absolute',
+                  right: 12,
+                  alignSelf: 'center',
+                  color: theme.theme.colors.textLight,
+                  fontFamily: theme.theme.typography.fontFamily.medium,
+                  fontSize: 16,
+                  opacity: 0.7
+                }}>
+                  ml
+                </Text>
+              </View>
             </View>
             
             <View style={styles.modalButtons}>

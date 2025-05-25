@@ -46,8 +46,6 @@ export interface Colors {
     carbsLight: string;
     fat: string;
     fatLight: string;
-    water: string;
-    waterLight: string;
   };
 }
 
