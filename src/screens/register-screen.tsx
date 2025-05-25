@@ -21,8 +21,7 @@ const RegisterScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [birthDate, setBirthDate] = useState<Date | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [birthDate, setBirthDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +55,7 @@ const RegisterScreen = () => {
         email,
         password,
         name,
-        birthDate: birthDate ? birthDate.toISOString().split('T')[0] : undefined,
+        birthDate: birthDate.toISOString().split('T')[0],
       });
       
       if (response) {
@@ -83,14 +82,9 @@ const RegisterScreen = () => {
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
     if (selectedDate) {
       setBirthDate(selectedDate);
     }
-  };
-
-  const showDatePickerModal = () => {
-    setShowDatePicker(true);
   };
 
   const navigateToLogin = () => {
@@ -249,35 +243,24 @@ const RegisterScreen = () => {
             }}>
               Geburtsdatum
             </Text>
-            <TouchableOpacity
-              style={{
-                backgroundColor: theme.colors.card,
-                borderColor: theme.colors.border,
-                borderWidth: 1,
-                borderRadius: theme.borderRadius.medium,
-                padding: theme.spacing.m,
-                justifyContent: 'center'
-              }}
-              onPress={showDatePickerModal}
-            >
-              <Text style={{
-                color: birthDate ? theme.colors.text : theme.colors.disabled,
-                fontSize: theme.typography.fontSize.m,
-                fontFamily: theme.typography.fontFamily.regular
-              }}>
-                {birthDate ? birthDate.toLocaleDateString() : 'Geburtsdatum auswählen'}
-              </Text>
-            </TouchableOpacity>
-            
-            {showDatePicker && (
+            <View style={{
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+              borderRadius: theme.borderRadius.medium,
+              paddingVertical: theme.spacing.s,
+              alignItems: 'center'
+            }}>
               <DateTimePicker
-                value={birthDate || new Date()}
+                value={birthDate}
                 mode="date"
-                display="default"
+                display="spinner"
                 onChange={handleDateChange}
                 maximumDate={new Date()}
+                textColor={theme.colors.text}
+                style={{ height: 120 }}
               />
-            )}
+            </View>
           </View>
 
           <TouchableOpacity
@@ -333,7 +316,5 @@ const RegisterScreen = () => {
     </KeyboardAvoidingView>
   );
 };
-
-// Styles wurden in eine separate Datei ausgelagert
 
 export default RegisterScreen;

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal, Animated } from 'react-native';
+import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-native-gesture-handler';
 import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight } from 'lucide-react-native';
