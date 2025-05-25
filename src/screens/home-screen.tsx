@@ -218,12 +218,6 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     
     // Implement debouncing - prevent updates too close together
     const now = Date.now();
-    const minTimeBetweenUpdates = 500; // 500ms minimum between updates
-    
-    if (isUpdatingWater || (now - lastWaterUpdateTime < minTimeBetweenUpdates)) {
-      console.log('Skipping water update - too soon after previous update');
-      return;
-    }
     
     setLastWaterUpdateTime(now);
     setIsUpdatingWater(true);

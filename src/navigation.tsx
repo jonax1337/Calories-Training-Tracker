@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screen imports
 import HomeScreen from './screens/home-screen';
@@ -32,20 +32,9 @@ export interface HIITSettings {
 import { isAuthenticated } from './services/auth-service';
 import { resetAuthState } from './services/reset-auth';
 
-// Importiere Navigationstypen
-import { 
-  HomeTabScreenProps, 
-  ProfileTabScreenProps, 
-  JournalTabScreenProps,
-  AddTabScreenProps,
-  SettingsTabScreenProps,
-  TrainingTabScreenProps
-} from './types/navigation-types';
-
 // Theme provider
 import { ThemeProvider, useTheme } from './theme/theme-context';
 import LoadingScreen from './components/ui/loading-screen';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Define the combined navigator param list types
 export type RootStackParamList = {
@@ -71,150 +60,130 @@ export type RootStackParamList = {
 export type TabParamList = {
   Home: undefined;
   Profile: undefined;
-  Add: { mealType?: string };
   Food: undefined;
-  Settings: undefined;
   Training: undefined;
+  Settings: undefined;
 };
 
 // Create navigators
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<TabParamList>();
 const SwipeTab = createMaterialTopTabNavigator<TabParamList>();
 
-// Swipeable Content Navigator
-function SwipeableContentNavigator() {
+// Custom Tab Bar Component
+function CustomTabBar({ state, navigation }: any) {
   const { theme } = useTheme();
-
+  const insets = useSafeAreaInsets();
+  const [localIndex, setLocalIndex] = useState(state.index);
+  
+  // Sync local state with navigator state
+  useEffect(() => {
+    setLocalIndex(state.index);
+  }, [state.index]);
+  
+  const tabIcons = {
+    Home: { focused: 'home', unfocused: 'home-outline' },
+    Food: { focused: 'fast-food', unfocused: 'fast-food-outline' },
+    Training: { focused: 'barbell', unfocused: 'barbell-outline' },
+    Profile: { focused: 'person', unfocused: 'person-outline' },
+    Settings: { focused: 'settings', unfocused: 'settings-outline' },
+  };
+  
+  const tabLabels = {
+    Home: 'Home',
+    Food: 'Ernährung',
+    Training: 'Training',
+    Profile: 'Profil',
+    Settings: 'Einstellungen',
+  };
+  
   return (
-    <SwipeTab.Navigator
-      screenOptions={{
-        tabBarStyle: { height: 0 }, // Hide the tab bar
-        tabBarShowLabel: false,     // Hide labels
-        tabBarIndicatorStyle: { opacity: 0 }, // Hide the indicator
-        swipeEnabled: true,         // Enable swipe gestures
-        animationEnabled: true,     // Enable animation between tabs
-      }}
-    >
-      <SwipeTab.Screen name="Home" component={HomeScreen} />
-      <SwipeTab.Screen name="Food" component={DailyLogScreen as React.ComponentType<any>} />
-      <SwipeTab.Screen name="Training" component={TrainingScreen} />
-      <SwipeTab.Screen name="Profile" component={ProfileScreen} />
-      <SwipeTab.Screen name="Settings" component={SettingsScreen} />
-    </SwipeTab.Navigator>
+    <View style={[
+      styles.tabBar,
+      {
+        backgroundColor: theme.colors.card,
+        borderTopColor: theme.colors.border,
+        height: 70 + insets.bottom,
+        paddingBottom: insets.bottom,
+      }
+    ]}>
+      {state.routes.map((route: any, index: number) => {
+        const isFocused = localIndex === index;
+        const iconName = isFocused 
+          ? tabIcons[route.name as keyof typeof tabIcons].focused 
+          : tabIcons[route.name as keyof typeof tabIcons].unfocused;
+        const label = tabLabels[route.name as keyof typeof tabLabels];
+        
+        const onPress = () => {
+          // Update local state immediately for instant feedback
+          setLocalIndex(index);
+          
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            // Use jumpTo for instant navigation without animation
+            navigation.jumpTo(route.name);
+          }
+        };
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={route.name}
+            testID={`${route.name}-tab`}
+            onPress={onPress}
+            style={styles.tabButton}
+            activeOpacity={0.6}
+          >
+            <Ionicons 
+              name={iconName as any} 
+              size={24} 
+              color={isFocused ? theme.colors.primary : theme.colors.disabled} 
+            />
+            <Text style={[
+              styles.tabLabel,
+              {
+                color: isFocused ? theme.colors.primary : theme.colors.disabled,
+                fontFamily: theme.typography.fontFamily.medium,
+                fontSize: theme.typography.fontSize.xs,
+              }
+            ]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
 
-// Bottom Tab Navigator with Swipe Support
+// Tab Navigator with Swipe Support
 function TabNavigator() {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets(); // Get safe area insets
-
+  
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.disabled,
-        tabBarStyle: {
-          backgroundColor: theme.colors.card,
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.border,
-          paddingTop: theme.spacing.s,
-          height: 60 + insets.bottom, // Add safe area insets to the height
-          paddingBottom: insets.bottom, // Add padding to bottom to fill safe area
-        },
-        tabBarLabelStyle: {
-          fontFamily: theme.typography.fontFamily.medium,
-          fontSize: theme.typography.fontSize.xs,
-          display: 'flex',
-        },
-        tabBarIcon: ({ focused, color }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'help-circle-outline';
-
-          switch (route.name) {
-            case 'Home':
-              iconName = focused ? 'home' : 'home-outline';
-              break;
-            case 'Food':
-              iconName = focused ? 'fast-food' : 'fast-food-outline';
-              break;
-            case 'Training':
-              iconName = focused ? 'barbell' : 'barbell-outline';
-              break;
-            case 'Profile':
-              iconName = focused ? 'person' : 'person-outline';
-              break;
-            case 'Settings':
-              iconName = focused ? 'settings' : 'settings-outline';
-              break;
-          }
-
-          return <Ionicons name={iconName} size={24} color={color} />;
-        },
-      })}
+    <SwipeTab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
+        swipeEnabled: true,
+        animationEnabled: true,
+        tabBarShowLabel: false,
+        tabBarIndicatorStyle: { opacity: 0 },
+        lazy: false, // Load all screens immediately
+      }}
+      tabBarPosition="bottom"
     >
-      <Tab.Screen 
-        name="Home" 
-        component={SwipeableContentNavigator}
-        listeners={({ navigation, route }) => ({
-          tabPress: (e) => {
-            // Prevent default behavior
-            e.preventDefault();
-            // Navigate to the tab
-            navigation.navigate('Home');
-          },
-        })}
-      />
-      <Tab.Screen 
-        name="Food" 
-        component={SwipeableContentNavigator}
-        listeners={({ navigation, route }) => ({
-          tabPress: (e) => {
-            // Prevent default behavior
-            e.preventDefault();
-            // Navigate to the tab
-            navigation.navigate('Food');
-          },
-        })}
-      />
-      <Tab.Screen 
-        name="Training" 
-        component={SwipeableContentNavigator}
-        listeners={({ navigation, route }) => ({
-          tabPress: (e) => {
-            // Prevent default behavior
-            e.preventDefault();
-            // Navigate to the tab
-            navigation.navigate('Training');
-          },
-        })}
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={SwipeableContentNavigator}
-        listeners={({ navigation, route }) => ({
-          tabPress: (e) => {
-            // Prevent default behavior
-            e.preventDefault();
-            // Navigate to the tab
-            navigation.navigate('Profile');
-          },
-        })}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={SwipeableContentNavigator}
-        listeners={({ navigation, route }) => ({
-          tabPress: (e) => {
-            // Prevent default behavior
-            e.preventDefault();
-            // Navigate to the tab
-            navigation.navigate('Settings');
-          },
-        })}
-      />
-    </Tab.Navigator>
+      <SwipeTab.Screen name="Home" component={HomeScreen as any} options={{ lazy: false }} />
+      <SwipeTab.Screen name="Food" component={DailyLogScreen as any} options={{ lazy: false }} />
+      <SwipeTab.Screen name="Training" component={TrainingScreen as any} options={{ lazy: false }} />
+      <SwipeTab.Screen name="Profile" component={ProfileScreen as any} options={{ lazy: false }} />
+      <SwipeTab.Screen name="Settings" component={SettingsScreen as any} options={{ lazy: false }} />
+    </SwipeTab.Navigator>
   );
 }
 
@@ -388,3 +357,20 @@ export default function AppNavigation() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    paddingTop: 8,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  tabLabel: {
+    marginTop: 2,
+  },
+});
