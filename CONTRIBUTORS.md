@@ -16,6 +16,7 @@ Diese Datei würdigt alle Personen, die zum Calories Training Tracker beigetrage
   </tr>
 </table>
 
+
 ## 🚀 Mitwirkende
 
 <table>
@@ -33,6 +34,7 @@ Diese Datei würdigt alle Personen, die zum Calories Training Tracker beigetrage
   </tr>
 </table>
 
+
 ## 💡 Besondere Beiträge
 
 Hier werden besondere Beiträge oder spezifische Verbesserungen hervorgehoben:
@@ -42,13 +44,14 @@ Hier werden besondere Beiträge oder spezifische Verbesserungen hervorgehoben:
 **[@benutzername](https://github.com/benutzername)** - Implementierung der WebView-basierten Wellenanimation mit optimierter Performance
 -->
 
----
+
 
 ## ❓ Wie werde ich ein Mitwirkender?
 
 Jeder, der einen Pull Request einreicht, der in den Hauptbranch aufgenommen wird, wird automatisch in diese Liste aufgenommen. Weitere Informationen zum Beitragen findest du in der [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+
+
 
 **Hinweis**: Wenn du einen Beitrag geleistet hast und nicht in dieser Liste erscheinst, öffne bitte einen Issue oder füge dich selbst mit einem Pull Request hinzu.
 
