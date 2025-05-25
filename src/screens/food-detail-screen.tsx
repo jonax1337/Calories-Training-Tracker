@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, Image, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { Text, View, Vibration, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -12,6 +12,7 @@ import { formatToLocalISODate, getTodayFormatted, dateToMySQLDateTime } from '..
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createFoodDetailStyles } from '../styles/screens/food-detail-styles';
+import * as Haptics from 'expo-haptics';
 
 type FoodDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'FoodDetail'>;
 
@@ -168,6 +169,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       } catch (saveError) {
         console.error('Failed to save food item:', saveError);
         Alert.alert('Fehler beim Speichern', 'Das Lebensmittel konnte nicht in der Datenbank gespeichert werden.');
+        // Haptics
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         return;
       }
 
@@ -219,24 +223,26 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       } catch (saveLogError) {
         console.error('Error saving daily log:', saveLogError);
         Alert.alert('Fehler beim Speichern', 'Der Tageseintrag konnte nicht gespeichert werden');
+        // Haptics
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         return;
       }
-      
-      // Show success message
-      Alert.alert(
-        'Erfolg',
-        `${updatedFoodItem.name} wurde zu deiner ${getMealTypeLabel(selectedMeal.toString())} Liste hinzugefügt`,
-        [{ 
-          text: 'OK', 
-          onPress: () => {
-            // Zurück zum vorherigen Screen
-            navigation.goBack();
-          }
-        }]
-      );
+
+      // Success Haptics
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+      Vibration.vibrate([0, 100, 0, 100]);
+      // Zurück zum vorherigen Screen
+      navigation.goBack()
     } catch (err) {
       console.error('Error in handleAddToLog:', err);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten beim Hinzufügen des Lebensmittels');
+      // Error Haptics
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      Vibration.vibrate([0, 500, 0, 500]);
     }
   };
 

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 // Screen imports
@@ -79,8 +80,32 @@ export type TabParamList = {
 // Create navigators
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
+const SwipeTab = createMaterialTopTabNavigator<TabParamList>();
 
-// Bottom Tab Navigator
+// Swipeable Content Navigator
+function SwipeableContentNavigator() {
+  const { theme } = useTheme();
+
+  return (
+    <SwipeTab.Navigator
+      screenOptions={{
+        tabBarStyle: { height: 0 }, // Hide the tab bar
+        tabBarShowLabel: false,     // Hide labels
+        tabBarIndicatorStyle: { opacity: 0 }, // Hide the indicator
+        swipeEnabled: true,         // Enable swipe gestures
+        animationEnabled: true,     // Enable animation between tabs
+      }}
+    >
+      <SwipeTab.Screen name="Home" component={HomeScreen} />
+      <SwipeTab.Screen name="Food" component={DailyLogScreen as React.ComponentType<any>} />
+      <SwipeTab.Screen name="Training" component={TrainingScreen} />
+      <SwipeTab.Screen name="Profile" component={ProfileScreen} />
+      <SwipeTab.Screen name="Settings" component={SettingsScreen} />
+    </SwipeTab.Navigator>
+  );
+}
+
+// Bottom Tab Navigator with Swipe Support
 function TabNavigator() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets(); // Get safe area insets
@@ -131,23 +156,63 @@ function TabNavigator() {
     >
       <Tab.Screen 
         name="Home" 
-        component={HomeScreen}
+        component={SwipeableContentNavigator}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // Prevent default behavior
+            e.preventDefault();
+            // Navigate to the tab
+            navigation.navigate('Home');
+          },
+        })}
       />
       <Tab.Screen 
         name="Food" 
-        component={DailyLogScreen as React.ComponentType<any>} 
+        component={SwipeableContentNavigator}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // Prevent default behavior
+            e.preventDefault();
+            // Navigate to the tab
+            navigation.navigate('Food');
+          },
+        })}
       />
       <Tab.Screen 
         name="Training" 
-        component={TrainingScreen} 
+        component={SwipeableContentNavigator}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // Prevent default behavior
+            e.preventDefault();
+            // Navigate to the tab
+            navigation.navigate('Training');
+          },
+        })}
       />
       <Tab.Screen 
         name="Profile" 
-        component={ProfileScreen} 
+        component={SwipeableContentNavigator}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // Prevent default behavior
+            e.preventDefault();
+            // Navigate to the tab
+            navigation.navigate('Profile');
+          },
+        })}
       />
       <Tab.Screen 
         name="Settings" 
-        component={SettingsScreen} 
+        component={SwipeableContentNavigator}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // Prevent default behavior
+            e.preventDefault();
+            // Navigate to the tab
+            navigation.navigate('Settings');
+          },
+        })}
       />
     </Tab.Navigator>
   );
