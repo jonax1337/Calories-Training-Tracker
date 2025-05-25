@@ -812,7 +812,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               >
                 <View>
                   <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                    🍲 Mittagessen
+                    🌮 Mittagessen
                   </Text>
                   {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length > 0 ? (
                     <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
@@ -1066,7 +1066,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               >
                 <View>
                   <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                    🍪 Snacks
+                  🍪 Snacks
                   </Text>
                   {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length > 0 ? (
                     <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>

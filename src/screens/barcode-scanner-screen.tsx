@@ -13,7 +13,7 @@ import {
   Alert, 
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
-import { AddTabScreenProps } from "../types/navigation-types";
+import { BarcodeScreenProps } from "../types/navigation-types";
 import { FoodItem } from "../types";
 import { getFoodDataByBarcode, searchFoodByName } from "../services/barcode-service";
 import { useTheme } from "../theme/theme-context";
@@ -24,7 +24,7 @@ import { createBarcodeScannerStyles } from "../styles/screens/barcode-scanner-st
 
 // Dimensions werden jetzt in der Style-Datei importiert
 
-export default function BarcodeScannerScreen({ navigation, route }: AddTabScreenProps) {
+export default function BarcodeScannerScreen({ navigation, route }: BarcodeScreenProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   

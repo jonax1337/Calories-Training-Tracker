@@ -232,6 +232,12 @@ function AppStack() {
         headerTitleStyle: {
           fontFamily: theme.typography.fontFamily.bold,
         },
+        // Standard-Zurück-Button anpassen
+        headerBackTitle: 'Zurück',
+        headerBackTitleStyle: {
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: 15
+        },
       }}
     >
       <Stack.Screen 
@@ -249,8 +255,8 @@ function AppStack() {
           if (mealType) {
             const mealEmojis = {
               breakfast: '🥞',
-              lunch: '🍝',
-              dinner: '🍲',
+              lunch: '🌮',
+              dinner: '🍽️',
               snack: '🍪'
             };
             
@@ -258,50 +264,77 @@ function AppStack() {
               breakfast: 'Frühstück',
               lunch: 'Mittagessen',
               dinner: 'Abendessen',
-              snack: 'Snack'
+              snack: 'Snacks'
             };
             
             const emoji = mealEmojis[mealType as keyof typeof mealEmojis] || '';
             const label = mealLabels[mealType as keyof typeof mealLabels] || '';
             
-            title = `${emoji} ${label} hinzufügen`;
+            title = `${emoji} ${label}`;
           }
           
           return { 
             title,
-            animation: 'slide_from_bottom'
+            animation: 'slide_from_bottom',
           };
         }} 
       />
       <Stack.Screen 
         name="FoodDetail" 
         component={FoodDetailScreen} 
-        options={{ title: 'Lebensmittel-Details' }} 
+        options={({ route }) => {
+          let backTitle = 'Zurück';
+          
+          return {
+            title: 'Lebensmittel-Details',
+          };
+        }}
       />
       <Stack.Screen 
         name="DailyLog" 
         component={DailyLogScreen as React.ComponentType<any>} 
-        options={{ title: 'Tagesbericht', animation: 'slide_from_right' }} 
+        options={{
+          title: 'Tagesbericht', 
+          animation: 'slide_from_right',
+          headerBackTitle: 'Übersicht'
+        }} 
       />
       <Stack.Screen 
         name="Settings" 
         component={SettingsScreen} 
-        options={{ title: 'Einstellungen' }} 
+        options={{
+          title: 'Einstellungen',
+          headerBackTitle: 'Zurück'
+        }} 
       />
       <Stack.Screen 
         name="HIITTimerSettings" 
         component={HIITTimerSettingsScreen} 
-        options={{ title: 'HIIT Timer Einstellungen', animation: 'slide_from_bottom' }} 
+        options={{
+          title: 'Einstellungen',
+          animation: 'slide_from_bottom',
+          headerBackTitle: 'Zurück'
+        }} 
       />
       <Stack.Screen 
         name="HIITTimer" 
         component={HIITTimerScreen} 
-        options={{ title: 'Timer', animation: 'slide_from_right' }}
+        options={{
+          title: 'Timer',
+          animation: 'slide_from_right',
+          headerBackTitle: 'Einstellungen'
+        }}
       />
       <Stack.Screen 
         name="ManualFoodEntry" 
         component={ManualFoodEntryScreen} 
-        options={{ title: 'Lebensmittel hinzufügen', animation: 'slide_from_right' }} 
+        options={({ route }) => {
+
+          return {
+            title: 'Lebensmittel hinzufügen',
+            animation: 'slide_from_right',
+          };
+        }}
       />
     </Stack.Navigator>
   );

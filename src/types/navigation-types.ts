@@ -46,19 +46,23 @@ export type ProfileTabScreenProps = {
 };
 
 export type AddTabScreenProps = {
-  navigation: BottomTabNavigationProp<TabParamList, 'Add'>;
-  route: RouteProp<TabParamList, 'Add'>;
+  navigation: BottomTabNavigationProp<TabParamList, 'Food'>;
+  route: RouteProp<TabParamList, 'Food'> & {
+    params?: {
+      mealType?: string;
+    };
+  };
 };
 
 // Spezielle Navigation Props für DailyLog/Journal
 export type JournalTabScreenProps = {
-  navigation: BottomTabNavigationProp<TabParamList, 'Journal'> & {
+  navigation: BottomTabNavigationProp<TabParamList, 'Food'> & {
     navigate: (
       screen: 'DailyLog' | 'FoodDetail' | keyof TabParamList,
       params?: any
     ) => void;
   };
-  route: RouteProp<TabParamList, 'Journal'>;
+  route: RouteProp<TabParamList, 'Food'>;
 };
 
 export type SettingsTabScreenProps = {
