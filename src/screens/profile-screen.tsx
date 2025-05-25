@@ -13,6 +13,7 @@ import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, formatDateForDisplay, getLocalDateComponents } from '../utils/date-utils';
 import { createProfileStyles } from '../styles/screens/profile-styles';
+import * as Haptics from 'expo-haptics';
 
 function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // Get theme from context
@@ -41,8 +42,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // State für Slider-Werte
   const [weightSliderValue, setWeightSliderValue] = useState(70);
   const [heightSliderValue, setHeightSliderValue] = useState(170);
-  
-  // State für Geburtsdatum
+  const [waterSliderValue, setWaterSliderValue] = useState<number>(2500);
+  const [weightInputText, setWeightInputText] = useState<string>('');
   const [birthDate, setBirthDate] = useState<Date>(new Date(new Date().getFullYear() - 25, 0, 1)); // Default 25 Jahre alt
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
   const [tempBirthDate, setTempBirthDate] = useState<Date | null>(null);
@@ -55,6 +56,15 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // State für verfügbare Zieltypen und aktuelle Benutzerziele
   const [goalTypes, setGoalTypes] = useState<GoalType[]>([]);
   const [userGoals, setUserGoals] = useState<UserGoal[]>([]);
+  
+  // State für live berechnete empfohlene Werte (nur für Anzeige)
+  const [calculatedRecommendations, setCalculatedRecommendations] = useState({
+    dailyCalories: 2000,
+    dailyProtein: 50,
+    dailyCarbs: 250,
+    dailyFat: 70,
+    dailyWater: 2500
+  });
   
   // Funktion zum Berechnen des Alters aus dem Geburtsdatum
   const calculateAge = (birthdate: Date): number => {
@@ -116,8 +126,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         setProfile(savedProfile);
         
         // Initialisiere auch die Slider-Werte und das Geburtsdatum, wenn das Profil geladen wird
-        if (savedProfile.weight) setWeightSliderValue(savedProfile.weight);
+        if (savedProfile.weight) {
+          setWeightSliderValue(savedProfile.weight);
+          // Initialisiere auch den Text-Input für das Gewicht
+          setWeightInputText(savedProfile.weight.toString());
+        }
         if (savedProfile.height) setHeightSliderValue(savedProfile.height);
+        if (savedProfile.goals && savedProfile.goals.dailyWater) setWaterSliderValue(savedProfile.goals.dailyWater);
         
         // Wenn ein Geburtsdatum existiert, setze es; andernfalls berechne es aus dem Alter (wenn vorhanden)
         if (savedProfile.birthDate) {
@@ -183,19 +198,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   
   // Berechne und setze Ernährungsempfehlungen wenn alle benötigten Daten vorhanden sind
   useEffect(() => {
-    // Nur berechnen wenn alle nötigen Daten vorhanden sind
-    // First, check if the current goal is custom. If so, do not recalculate.
-    if (selectedGoalId && goalTypes.length > 0) {
-      const currentGoalType = goalTypes.find(gt => gt.id === selectedGoalId);
-      if (currentGoalType && currentGoalType.isCustom) {
-        return; // Skip recalculation for custom goals
-      }
-    }
-
+    // Berechne empfohlene Werte für die Anzeige
     if (profile.weight && profile.height && profile.gender && profile.activityLevel) {
-      // BMI berechnen
-      const bmi = profile.weight / Math.pow(profile.height / 100, 2);
-      
       // Basis-Kalorienverbrauch mit Harris-Benedict-Formel berechnen
       let bmr = 0;
       if (profile.gender === 'male') {
@@ -216,64 +220,183 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         case ActivityLevel.ExtremelyActive: activityMultiplier = 1.9; break;
       }
       
-      // Täglicher Kalorienbedarf zum Gewicht halten
+      // Täglicher Kalorienbedarf zum Gewicht halten (TDEE)
       const maintenanceCalories = Math.round(bmr * activityMultiplier);
       
-      // Empfehlung basierend auf BMI und Aktivitätsstufe
       let dailyCalories = 0;
       let protein = 0;
       let carbs = 0;
       let fat = 0;
       
-      if (bmi < 18.5) {
-        // Untergewicht - Zunehmen
-        dailyCalories = maintenanceCalories + 300;
-        protein = Math.round(profile.weight * 1.6); // Mehr Protein für Muskelaufbau
-        carbs = Math.round((dailyCalories * 0.50) / 4); // 50% Kohlenhydrate
-        fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
-      } else if (bmi < 25) {
-        // Normalgewicht - Halten
-        dailyCalories = maintenanceCalories;
-        protein = Math.round(profile.weight * 1.4);
-        carbs = Math.round((dailyCalories * 0.45) / 4); // 45% Kohlenhydrate
-        fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
-      } else if (bmi < 30) {
-        // Übergewicht - Leicht reduzieren
-        dailyCalories = maintenanceCalories - 300;
-        protein = Math.round(profile.weight * 1.8); // Mehr Protein zur Sättigung
-        carbs = Math.round((dailyCalories * 0.35) / 4); // 35% Kohlenhydrate
-        fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
+      // Berechne basierend auf dem ausgewählten Ziel, NICHT basierend auf BMI
+      if (selectedGoalId && goalTypes.length > 0) {
+        const currentGoalType = goalTypes.find(gt => gt.id === selectedGoalId);
+        console.log('DEBUG: selectedGoalId:', selectedGoalId);
+        console.log('DEBUG: currentGoalType:', currentGoalType);
+        console.log('DEBUG: availableGoalTypes:', goalTypes.map(gt => ({ id: gt.id, name: gt.name, isCustom: gt.isCustom })));
+        
+        if (currentGoalType && !currentGoalType.isCustom) {
+          // Ziel-basierte Berechnung für vordefinierte Ziele
+          console.log('DEBUG: Using goal-based calculation for:', selectedGoalId);
+          switch (selectedGoalId) {
+            case 'lose_weight':
+            case 'weight_loss':
+            case 'abnehmen':
+              // Aggressives Abnehmen: TDEE - 500 Kalorien
+              dailyCalories = maintenanceCalories - 500;
+              protein = Math.round((profile.weight || 70) * 1.8); // Mehr Protein zur Sättigung
+              carbs = Math.round((dailyCalories * 0.35) / 4); // 35% Kohlenhydrate
+              fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
+              break;
+            case 'lose_moderate':
+              // Moderates Abnehmen: TDEE - 300 Kalorien
+              dailyCalories = maintenanceCalories - 300;
+              protein = Math.round((profile.weight || 70) * 1.6); // Moderater Protein-Bedarf
+              carbs = Math.round((dailyCalories * 0.40) / 4); // 40% Kohlenhydrate
+              fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
+              break;
+            case 'lose_fast':
+              // Schnelles Abnehmen: TDEE - 500 Kalorien
+              dailyCalories = maintenanceCalories - 500;
+              protein = Math.round((profile.weight || 70) * 2.0); // Mehr Protein zur Sättigung
+              carbs = Math.round((dailyCalories * 0.30) / 4); // 30% Kohlenhydrate
+              fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
+              break;
+            case 'gain_weight':
+            case 'weight_gain':
+            case 'zunehmen':
+            case 'muscle_gain':
+            case 'muskelaufbau':
+            case 'gain':           // Gesunde Gewichtszunahme
+              // Zunehmen/Muskelaufbau: TDEE + 400 Kalorien
+              dailyCalories = maintenanceCalories + 400;
+              protein = Math.round((profile.weight || 70) * 1.6); // Mehr Protein für Muskelaufbau
+              carbs = Math.round((dailyCalories * 0.50) / 4); // 50% Kohlenhydrate
+              fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
+              break;
+            case 'maintain_weight':
+            case 'halten':
+            case 'maintenance':
+            case 'maintain':       // Gewicht halten & Fitness verbessern
+            default:
+              // Halten: TDEE (Maintenance)
+              dailyCalories = maintenanceCalories;
+              protein = Math.round((profile.weight || 70) * 1.4);
+              carbs = Math.round((dailyCalories * 0.45) / 4); // 45% Kohlenhydrate
+              fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
+              break;
+          }
+          console.log('DEBUG: Calculated goal-based values:', { dailyCalories, protein, carbs, fat });
+        } else if (currentGoalType && currentGoalType.isCustom) {
+          // Custom Goal: Verwende gespeicherte Werte, keine Neuberechnung
+          console.log('DEBUG: Custom goal detected, skipping recalculation');
+          return;
+        }
       } else {
-        // Adipositas - Stärker reduzieren
-        dailyCalories = maintenanceCalories - 500;
-        protein = Math.round(profile.weight * 2.0); // Deutlich mehr Protein
-        carbs = Math.round((dailyCalories * 0.30) / 4); // 30% Kohlenhydrate
-        fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
+        console.log('DEBUG: No goal selected, using BMI-based calculation');
+        // Kein Ziel ausgewählt: BMI-basierte Empfehlung als Fallback
+        const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+        
+        if (bmi < 18.5) {
+          // Untergewicht - Zunehmen empfehlen
+          dailyCalories = maintenanceCalories + 300;
+          protein = Math.round(profile.weight * 1.6);
+          carbs = Math.round((dailyCalories * 0.50) / 4);
+          fat = Math.round((dailyCalories * 0.25) / 9);
+        } else if (bmi < 25) {
+          // Normalgewicht - Halten empfehlen
+          dailyCalories = maintenanceCalories;
+          protein = Math.round(profile.weight * 1.4);
+          carbs = Math.round((dailyCalories * 0.45) / 4);
+          fat = Math.round((dailyCalories * 0.30) / 9);
+        } else if (bmi < 30) {
+          // Übergewicht - Leicht reduzieren empfehlen
+          dailyCalories = maintenanceCalories - 300;
+          protein = Math.round(profile.weight * 1.8);
+          carbs = Math.round((dailyCalories * 0.35) / 4);
+          fat = Math.round((dailyCalories * 0.30) / 9);
+        } else {
+          // Adipositas - Stärker reduzieren empfehlen
+          dailyCalories = maintenanceCalories - 500;
+          protein = Math.round(profile.weight * 2.0);
+          carbs = Math.round((dailyCalories * 0.30) / 4);
+          fat = Math.round((dailyCalories * 0.25) / 9);
+        }
       }
       
-      // Aktualisiere das Profil (mache eine Kopie um sicherzustellen, dass wir kein direktes setState im Rendering haben)
-      const updatedGoals = {
-        ...profile.goals,
+      // Setze die berechneten Empfehlungen für die Anzeige
+      // Behalte den benutzerdefinierten Wasserwert bei, wenn er bereits gesetzt wurde
+      const calculatedValues = {
         dailyCalories: dailyCalories,
         dailyProtein: protein,
         dailyCarbs: carbs,
         dailyFat: fat,
-        dailyWater: 2500 // Standardempfehlung
+        // Behalte den benutzerdefinierten Wasserwert bei oder setze den Standardwert
+        dailyWater: profile.goals?.dailyWater || 2500
       };
       
-      // Wir setzen das gesamte Profil auf einmal, um Rendering-Schleifen zu vermeiden
-      setProfile(prevProfile => ({
-        ...prevProfile,
-        goals: updatedGoals
-      }));
+      setCalculatedRecommendations(calculatedValues);
+      
+      // Überschreibe die gespeicherten Ziele NUR wenn:
+      // 1. Kein Ziel ausgewählt ist (selectedGoalId === null) ODER
+      // 2. Das ausgewählte Ziel custom ist UND wir keine gespeicherten Werte haben
+      const shouldUpdateStoredGoals = !selectedGoalId || 
+        (selectedGoalId && goalTypes.length > 0 && 
+         goalTypes.find(gt => gt.id === selectedGoalId)?.isCustom);
+      
+      if (shouldUpdateStoredGoals) {
+        setProfile(prevProfile => ({
+          ...prevProfile,
+          goals: calculatedValues
+        }));
+      }
     }
-  }, [profile.weight, profile.height, profile.gender, profile.activityLevel, profile.age]);
+  }, [profile.weight, profile.height, profile.gender, profile.activityLevel, profile.age, selectedGoalId, goalTypes]);
+  
+  // Hilfsfunktion: Hole die anzuzeigenden Zielwerte
+  const getDisplayGoals = () => {
+    // Wenn ein non-custom Ziel ausgewählt ist, zeige live berechnete Werte
+    if (selectedGoalId && goalTypes.length > 0) {
+      const currentGoalType = goalTypes.find(gt => gt.id === selectedGoalId);
+      if (currentGoalType && !currentGoalType.isCustom) {
+        // Für non-custom Ziele: live berechnete Werte anzeigen
+        return calculatedRecommendations;
+      }
+    }
+    
+    // Für custom Ziele oder kein ausgewähltes Ziel: gespeicherte Werte anzeigen
+    return profile.goals;
+  };
 
   // Handle text input changes
   const handleTextChange = (field: string, value: string) => {
     // Handle nested fields for goals
     if (field.startsWith('goals.')) {
       const goalField = field.split('.')[1];
+      
+      // Für Wasserkonsum immer Bearbeitung erlauben, unabhängig vom Zieltyp
+      if (goalField === 'dailyWater') {
+        // Stelle sicher, dass der Wert immer eine Zahl ist (oder undefined)
+        const numericValue = value === '' ? undefined : Number(value);
+        setProfile(prev => ({
+          ...prev,
+          goals: {
+            ...prev.goals,
+            [goalField]: numericValue,
+          },
+        }));
+        return;
+      }
+
+      // Bei anderen Zielnährwerten nur bei Custom-Zielen Bearbeitung erlauben
+      if (selectedGoalId && goalTypes.length > 0) {
+        const currentGoalType = goalTypes.find(gt => gt.id === selectedGoalId);
+        if (currentGoalType && !currentGoalType.isCustom) {
+          // Non-custom Goal: Keine Bearbeitung erlaubt, return early
+          return;
+        }
+      }
+      
       setProfile(prev => ({
         ...prev,
         goals: {
@@ -289,6 +412,24 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           ...prev,
           [field]: value
         }));
+      } else if (field === 'weight') {
+        // Gewicht immer als Zahl speichern, aber Komma-Eingabe vorher ermöglichen
+        // Parse-Fehler bei der Umwandlung abfangen und Standardwert bei leerem Feld
+        let numericValue = 0;
+        
+        if (value !== '') {
+          // Replace all commas with dots to handle German number format
+          const sanitizedValue = value.replace(/,/g, '.');
+          numericValue = Number(sanitizedValue);
+        }
+        
+        // Nur gültige Zahlen akzeptieren
+        if (!isNaN(numericValue)) {
+          setProfile(prev => ({
+            ...prev,
+            [field]: numericValue,
+          }));
+        }
       } else {
         // Alle anderen Felder als Zahlen behandeln
         setProfile(prev => ({
@@ -346,7 +487,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             dailyProtein: profile.goals.dailyProtein,
             dailyCarbs: profile.goals.dailyCarbs,
             dailyFat: profile.goals.dailyFat,
-            dailyWater: profile.goals.dailyWater,
+            // Direkt den aktuellen Slider-Wert verwenden für das Wasserziel
+            dailyWater: waterSliderValue,
         }
       };
 
@@ -374,11 +516,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         const userGoalPayload: UserGoal = {
           goalTypeId,
           isCustom: isCustomGoal,
-          dailyCalories: profile.goals.dailyCalories, // Assuming these are the latest values from UI
-          dailyProtein: profile.goals.dailyProtein || 0,
-          dailyCarbs: profile.goals.dailyCarbs || 0,
-          dailyFat: profile.goals.dailyFat || 0,
-          dailyWater: profile.goals.dailyWater || 0
+          // Verwende die korrekten Werte basierend auf dem Zieltyp
+          dailyCalories: getDisplayGoals().dailyCalories,
+          dailyProtein: getDisplayGoals().dailyProtein || 0,
+          dailyCarbs: getDisplayGoals().dailyCarbs || 0,
+          dailyFat: getDisplayGoals().dailyFat || 0,
+          // Direkt den Slider-Wert für das Wasserziel verwenden, unabhängig von getDisplayGoals()
+          dailyWater: waterSliderValue
         };
         
         const savedGoalResponse = await createOrUpdateUserGoal(userGoalPayload);
@@ -392,12 +536,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       // Reload profile data to ensure everything is in sync
       await loadProfile();
       
-      Alert.alert('Success', 'Profile saved successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      Alert.alert('Success', 'Profile saved successfully');
     } catch (error) {
       console.error('Error saving profile:', error);
       Alert.alert('Error', 'Failed to save profile');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsLoading(false);
     }
@@ -729,30 +874,37 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               shadowOpacity: 0.2,
               shadowRadius: 1
             }}
-            value={profile.weight?.toString() || ''}
+            value={weightInputText}
             placeholder="70.00"
             onChangeText={(text) => {
-              // Erlaube grundsätzlich alle Eingaben und bereinige später
-              // Ersetze Komma durch Punkt für konsistente Dezimalzahlen
-              let processedText = text.replace(',', '.');
+              // Konvertiere zu Punkt für die interne Verarbeitung
+              let processedText = text.replace(/,/g, '.');
               
-              // Wir aktualisieren erst das Textfeld direkt, um keine Blockierung zu haben
-              handleTextChange('weight', processedText);
+              // Stelle sicher, dass nur ein Dezimalpunkt verwendet wird
+              const parts = processedText.split('.');
+              if (parts.length > 2) {
+                processedText = parts[0] + '.' + parts.slice(1).join('');
+              }
               
-              // Dann versuchen wir, den Wert als Zahl zu interpretieren
+              // Sofort das Komma durch einen Punkt im Anzeige-Text ersetzen
+              setWeightInputText(processedText);
+              
+              // Wert für die Profilaktualisierung verwenden
               const numValue = parseFloat(processedText);
               
-              // Wenn es eine gültige Zahl ist, aktualisiere den Slider
-              // Auch wenn es außerhalb des Bereichs ist
+              // Aktualisiere das Profil nur, wenn eine gültige Zahl eingegeben wurde
               if (!isNaN(numValue)) {
+                setProfile(prev => ({
+                  ...prev,
+                  weight: numValue
+                }));
+                
+                // Aktualisiere auch den Slider innerhalb der gültigen Grenzen
                 if (numValue > 200) {
-                  // Bei höheren Werten, setze Slider auf Maximum
                   setWeightSliderValue(200);
                 } else if (numValue < 30) {
-                  // Bei niedrigeren Werten, setze Slider auf Minimum
                   setWeightSliderValue(30);
                 } else {
-                  // Bei Werten im gültigen Bereich, setze exakten Wert
                   setWeightSliderValue(numValue);
                 }
               }
@@ -781,8 +933,15 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               const roundedValue = Math.round(value * 100) / 100;
               setWeightSliderValue(roundedValue);
               
-              // Wir formatieren mit 2 Nachkommastellen für bessere Lesbarkeit
-              handleTextChange('weight', roundedValue.toFixed(2));
+              // Aktualisiere den Texteingabe-State mit dem formatierten Wert (mit Punkt als Dezimaltrennzeichen)
+              const formattedValue = roundedValue.toFixed(2);
+              setWeightInputText(formattedValue);
+              
+              // Aktualisiere auch das Profil
+              setProfile(prev => ({
+                ...prev,
+                weight: roundedValue
+              }));
             }}
           />
         </View>
@@ -1531,14 +1690,35 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                       borderLeftColor: theme.colors.primary,
                       marginBottom: theme.spacing.m
                     }}>
-                      <Text style={{
-                        fontFamily: theme.typography.fontFamily.bold,
-                        fontSize: theme.typography.fontSize.m,
-                        color: theme.colors.text,
-                        marginBottom: theme.spacing.xs
-                      }}>
-                        {activeGoal.title} {activeGoal.id === recommendedGoal ? <Text style={{ fontSize: theme.typography.fontSize.s, color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}> (Empfohlen)</Text> : ''}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: theme.spacing.xs }}>
+                        <Text style={{
+                          fontFamily: theme.typography.fontFamily.bold,
+                          fontSize: theme.typography.fontSize.m,
+                          color: theme.colors.text
+                        }}>
+                          {activeGoal.title}
+                        </Text>
+                        {activeGoal.id === recommendedGoal && (
+                          <View style={{
+                            backgroundColor: theme.colors.primary + '30',
+                            paddingHorizontal: theme.spacing.s,
+                            paddingVertical: 2,
+                            borderRadius: theme.borderRadius.small,
+                            marginLeft: theme.spacing.xs,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                          }}>
+                            <Ionicons name="star" size={12} color={theme.colors.primary} style={{ marginRight: 3 }} />
+                            <Text style={{
+                              fontSize: theme.typography.fontSize.xs,
+                              color: theme.colors.primary,
+                              fontFamily: theme.typography.fontFamily.medium
+                            }}>
+                              Empfohlen
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={{
                         fontFamily: theme.typography.fontFamily.regular,
                         fontSize: theme.typography.fontSize.s,
@@ -1561,28 +1741,28 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Kalorien</Text>
                           <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
-                            {profile.goals.dailyCalories}
+                            {getDisplayGoals().dailyCalories}
                           </Text>
                         </View>
                         
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Protein</Text>
                           <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
-                            {profile.goals.dailyProtein}g
+                            {getDisplayGoals().dailyProtein}g
                           </Text>
                         </View>
                         
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Kohlenhydrate</Text>
                           <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
-                            {profile.goals.dailyCarbs}g
+                            {getDisplayGoals().dailyCarbs}g
                           </Text>
                         </View>
                         
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Fett</Text>
                           <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
-                            {profile.goals.dailyFat}g
+                            {getDisplayGoals().dailyFat}g
                           </Text>
                         </View>
                       </View>
@@ -1606,14 +1786,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                               color: theme.colors.text,
                               marginBottom: theme.spacing.xs
                             }}>
-                              Kalorien: {profile.goals.dailyCalories}
+                              Kalorien: {getDisplayGoals().dailyCalories}
                             </Text>
                             <Slider
                               style={{ width: '100%', height: 40 }}
                               minimumValue={1200}
                               maximumValue={4000}
                               step={50}
-                              value={profile.goals.dailyCalories}
+                              value={getDisplayGoals().dailyCalories}
                               minimumTrackTintColor={theme.colors.primary}
                               maximumTrackTintColor="#DCDCDC"
                               thumbTintColor={theme.colors.primary}
@@ -1636,14 +1816,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                               color: theme.colors.text,
                               marginBottom: theme.spacing.xs
                             }}>
-                              Protein: {profile.goals.dailyProtein}g
+                              Protein: {getDisplayGoals().dailyProtein}g
                             </Text>
                             <Slider
                               style={{ width: '100%', height: 40 }}
                               minimumValue={30}
                               maximumValue={250}
                               step={5}
-                              value={profile.goals.dailyProtein}
+                              value={getDisplayGoals().dailyProtein}
                               minimumTrackTintColor={theme.colors.primary}
                               maximumTrackTintColor="#DCDCDC"
                               thumbTintColor={theme.colors.primary}
@@ -1666,14 +1846,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                               color: theme.colors.text,
                               marginBottom: theme.spacing.xs
                             }}>
-                              Kohlenhydrate: {profile.goals.dailyCarbs}g
+                              Kohlenhydrate: {getDisplayGoals().dailyCarbs}g
                             </Text>
                             <Slider
                               style={{ width: '100%', height: 40 }}
                               minimumValue={50}
                               maximumValue={500}
                               step={10}
-                              value={profile.goals.dailyCarbs}
+                              value={getDisplayGoals().dailyCarbs}
                               minimumTrackTintColor={theme.colors.primary}
                               maximumTrackTintColor="#DCDCDC"
                               thumbTintColor={theme.colors.primary}
@@ -1696,14 +1876,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                               color: theme.colors.text,
                               marginBottom: theme.spacing.xs
                             }}>
-                              Fett: {profile.goals.dailyFat}g
+                              Fett: {getDisplayGoals().dailyFat}g
                             </Text>
                             <Slider
                               style={{ width: '100%', height: 40 }}
                               minimumValue={20}
                               maximumValue={200}
                               step={5}
-                              value={profile.goals.dailyFat}
+                              value={getDisplayGoals().dailyFat}
                               minimumTrackTintColor={theme.colors.primary}
                               maximumTrackTintColor="#DCDCDC"
                               thumbTintColor={theme.colors.primary}
@@ -1812,35 +1992,55 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                               let fat = 0;
                               
                               switch(goal.id) {
-                                case 'gain': // Zunehmen
-                                  dailyCalories = maintenanceCalories + 300;
-                                  protein = Math.round(weight * 1.6);
-                                  carbs = Math.round((dailyCalories * 0.50) / 4);
-                                  fat = Math.round((dailyCalories * 0.25) / 9);
-                                  break;
-                                case 'maintain': // Halten
-                                  dailyCalories = maintenanceCalories;
-                                  protein = Math.round(weight * 1.4);
-                                  carbs = Math.round((dailyCalories * 0.45) / 4);
-                                  fat = Math.round((dailyCalories * 0.30) / 9);
-                                  break;
-                                case 'lose_moderate': // Moderat reduzieren
-                                  dailyCalories = maintenanceCalories - 300;
-                                  protein = Math.round(weight * 1.8);
-                                  carbs = Math.round((dailyCalories * 0.35) / 4);
-                                  fat = Math.round((dailyCalories * 0.30) / 9);
-                                  break;
-                                case 'lose_fast': // Stärker reduzieren
+                                case 'lose_weight':
+                                case 'weight_loss':
+                                case 'abnehmen':
+                                  // Aggressives Abnehmen: TDEE - 500 Kalorien
                                   dailyCalories = maintenanceCalories - 500;
-                                  protein = Math.round(weight * 2.0);
-                                  carbs = Math.round((dailyCalories * 0.30) / 4);
-                                  fat = Math.round((dailyCalories * 0.25) / 9);
+                                  protein = Math.round((profile.weight || 70) * 1.8); // Mehr Protein zur Sättigung
+                                  carbs = Math.round((dailyCalories * 0.35) / 4); // 35% Kohlenhydrate
+                                  fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
                                   break;
-                                default: // Default to maintain weight if no specific case matches
+                                  
+                                case 'lose_moderate':
+                                  // Moderates Abnehmen: TDEE - 300 Kalorien
+                                  dailyCalories = maintenanceCalories - 300;
+                                  protein = Math.round((profile.weight || 70) * 1.6); // Moderater Protein-Bedarf
+                                  carbs = Math.round((dailyCalories * 0.40) / 4); // 40% Kohlenhydrate
+                                  fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
+                                  break;
+                                  
+                                case 'lose_fast':
+                                  // Schnelles Abnehmen: TDEE - 500 Kalorien
+                                  dailyCalories = maintenanceCalories - 500;
+                                  protein = Math.round((profile.weight || 70) * 2.0); // Mehr Protein zur Sättigung
+                                  carbs = Math.round((dailyCalories * 0.30) / 4); // 30% Kohlenhydrate
+                                  fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
+                                  break;
+                                  
+                                case 'gain_weight':
+                                case 'weight_gain':
+                                case 'zunehmen':
+                                case 'muscle_gain':
+                                case 'muskelaufbau':
+                                case 'gain':           // Gesunde Gewichtszunahme
+                                  // Zunehmen/Muskelaufbau: TDEE + 400 Kalorien
+                                  dailyCalories = maintenanceCalories + 400;
+                                  protein = Math.round((profile.weight || 70) * 1.6); // Mehr Protein für Muskelaufbau
+                                  carbs = Math.round((dailyCalories * 0.50) / 4); // 50% Kohlenhydrate
+                                  fat = Math.round((dailyCalories * 0.25) / 9); // 25% Fett
+                                  break;
+                                  
+                                case 'maintain_weight':
+                                case 'halten':
+                                case 'maintenance':
+                                case 'maintain':       // Gewicht halten & Fitness verbessern
+                                default:
+                                  // Halten: TDEE (Maintenance)
                                   dailyCalories = maintenanceCalories;
-                                  protein = Math.round(weight * 1.4);
-                                  carbs = Math.round((dailyCalories * 0.45) / 4);
-                                  fat = Math.round((dailyCalories * 0.30) / 9);
+                                  protein = Math.round((profile.weight || 70) * 1.4);
+                                  carbs = Math.round((dailyCalories * 0.45) / 4); // 45% Kohlenhydrate
+                                  fat = Math.round((dailyCalories * 0.30) / 9); // 30% Fett
                                   break;
                               }
                               
@@ -1875,14 +2075,24 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                                 {goal.name} 
                               </Text>
                               {goal.id === recommendedGoal ? (
-                                <Text style={{ 
-                                  fontSize: theme.typography.fontSize.xs, 
-                                  color: theme.colors.textLight, 
-                                  fontFamily: theme.typography.fontFamily.regular,
-                                  marginLeft: 4, 
+                                <View style={{
+                                  backgroundColor: theme.colors.primary + '30',
+                                  paddingHorizontal: theme.spacing.s,
+                                  paddingVertical: 2,
+                                  borderRadius: theme.borderRadius.small,
+                                  marginLeft: theme.spacing.xs,
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
                                 }}>
-                                   (Empfohlen)
-                                </Text>
+                                  <Ionicons name="star" size={12} color={theme.colors.primary} style={{ marginRight: 3 }} />
+                                  <Text style={{
+                                    fontSize: theme.typography.fontSize.xs,
+                                    color: theme.colors.primary,
+                                    fontFamily: theme.typography.fontFamily.medium
+                                  }}>
+                                    Empfohlen
+                                  </Text>
+                                </View>
                               ) : null}
                             </View>
                             <Text style={{
@@ -1904,33 +2114,137 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           <Text style={{
             fontFamily: theme.typography.fontFamily.regular,
             fontSize: theme.typography.fontSize.s,
-            color: theme.colors.textLight,
-            fontStyle: 'italic'
+            color: theme.colors.error,
+            fontStyle: 'italic',
+            textAlign: 'center',
+            borderColor: theme.colors.error,
+            borderWidth: 1,
+            borderRadius: theme.borderRadius.medium,
+            padding: theme.spacing.m,
+          marginBottom: theme.spacing.l,
           }}>
             Fülle alle notwendigen Daten (Gewicht, Größe, Geschlecht, Aktivitätsniveau) aus, 
             um eine auf dich zugeschnittene Empfehlung zu erhalten.
           </Text>
         )}
 
-      {/* Water */}
-      <View style={styles.inputContainer}>
-        <Text style={[styles.inputLabel, { fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }]}>
-          Wasser (ml)
-        </Text>
-        <TextInput
-          style={[styles.textInput, { 
-            fontFamily: theme.typography.fontFamily.regular, 
+      {/* Water Goal */}
+      <View style={[styles.inputContainer, {
+        flexDirection: 'column', 
+        width: '100%',          
+        padding: theme.spacing.m,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.s,
+        borderRadius: theme.borderRadius.medium,
+        backgroundColor: theme.colors.card,
+        borderWidth: 1,
+        borderColor: theme.colors.border
+      }]}>
+        <View style={{
+          width: '100%',
+          marginBottom: theme.spacing.s
+        }}>
+          <Text style={[styles.inputLabel, { 
+            fontFamily: theme.typography.fontFamily.medium, 
             color: theme.colors.text,
-            backgroundColor: theme.colors.card,
-            borderColor: theme.colors.border,
-            borderRadius: theme.borderRadius.medium
-          }]}
-          value={profile.goals.dailyWater?.toString() || ''}
-          onChangeText={(value) => handleTextChange('goals.dailyWater', value)}
-          placeholder="Daily water intake"
-          placeholderTextColor={theme.colors.placeholder}
-          keyboardType="numeric"
-        />
+            fontSize: theme.typography.fontSize.m
+          }]}>
+            Wasserziel
+          </Text>
+        </View>
+        
+        {/* Water value display */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          marginBottom: theme.spacing.s
+        }}>
+          <Text style={{
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textLight
+          }}>
+            Milliliter
+          </Text>
+          <TextInput
+            style={{
+              color: theme.colors.primary,
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.l,
+              textAlign: 'center',
+              minWidth: 80,
+              padding: theme.spacing.xs,
+              backgroundColor: theme.colors.card,
+              borderRadius: theme.borderRadius.small,
+              borderWidth: 1,
+              borderColor: theme.colors.primary,
+              elevation: 2,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1
+            }}
+            value={profile.goals.dailyWater?.toString() || ''}
+            placeholder="2000"
+            onChangeText={(text) => {
+              // Direkt an das Profil übergeben, wie in der Original-Version
+              handleTextChange('goals.dailyWater', text);
+              
+              // Slider-Wert nur aktualisieren, wenn eine gültige Zahl eingegeben wurde
+              const numValue = parseInt(text);
+              if (!isNaN(numValue)) {
+                setWaterSliderValue(numValue);
+              }
+            }}
+            keyboardType="numeric"
+            selectTextOnFocus={true}
+          />
+        </View>
+        
+        {/* Water slider */}
+        <View style={{
+          width: '100%',        
+          marginBottom: theme.spacing.s
+        }}>
+          <Slider
+            style={{ width: '100%', height: 40 }}
+            minimumValue={500}
+            maximumValue={4000}
+            step={100}
+            value={Math.min(Math.max(waterSliderValue, 500), 4000)}
+            minimumTrackTintColor={theme.colors.primary}
+            maximumTrackTintColor={theme.colors.border}
+            thumbTintColor={theme.colors.primary}
+            onValueChange={(value: number) => {
+              const intValue = Math.round(value);
+              setWaterSliderValue(intValue);
+              handleTextChange('goals.dailyWater', intValue.toString());
+            }}
+          />
+        </View>
+        
+        {/* Slider labels */}
+        <View style={{
+          width: '100%',         
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginBottom: theme.spacing.s
+        }}>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>500</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>2000</Text>
+          <Text style={{
+            color: theme.colors.textLight,
+            fontSize: theme.typography.fontSize.xs
+          }}>4000</Text>
+        </View>
       </View>
       
       {/* Health Integration Section */}
