@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { House, Utensils, Dumbbell, User, Settings, Apple, UserRound, BicepsFlexed } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screen imports
@@ -80,20 +81,34 @@ function CustomTabBar({ state, navigation }: any) {
     setLocalIndex(state.index);
   }, [state.index]);
   
-  const tabIcons = {
-    Home: { focused: 'home', unfocused: 'home-outline' },
-    Food: { focused: 'fast-food', unfocused: 'fast-food-outline' },
-    Training: { focused: 'barbell', unfocused: 'barbell-outline' },
-    Profile: { focused: 'person', unfocused: 'person-outline' },
-    Settings: { focused: 'settings', unfocused: 'settings-outline' },
+  // Mit Lucide arbeiten wir mit Komponenten statt Namen
+  const getTabIcon = (routeName: string, isFocused: boolean) => {
+    const color = isFocused ? theme.colors.primary : theme.colors.disabled;
+    const strokeWidth = 1.5;
+    const size = theme.typography.fontSize.xxl;
+    
+    switch (routeName) {
+      case 'Home':
+        return <House size={size} color={color} strokeWidth={strokeWidth} />;
+      case 'Food':
+        return <Apple size={size} color={color} strokeWidth={strokeWidth} />;
+      case 'Training':
+        return <BicepsFlexed size={size} color={color} strokeWidth={strokeWidth} />;
+      case 'Profile':
+        return <UserRound size={size} color={color} strokeWidth={strokeWidth} />;
+      case 'Settings':
+        return <Settings size={size} color={color} strokeWidth={strokeWidth} />;
+      default:
+        return <House size={size} color={color} strokeWidth={strokeWidth} />;
+    }
   };
   
   const tabLabels = {
     Home: 'Home',
-    Food: 'Ernährung',
+    Food: 'Food',
     Training: 'Training',
-    Profile: 'Profil',
-    Settings: 'Einstellungen',
+    Profile: 'Profile',
+    Settings: 'Settings',
   };
   
   return (
@@ -108,9 +123,6 @@ function CustomTabBar({ state, navigation }: any) {
     ]}>
       {state.routes.map((route: any, index: number) => {
         const isFocused = localIndex === index;
-        const iconName = isFocused 
-          ? tabIcons[route.name as keyof typeof tabIcons].focused 
-          : tabIcons[route.name as keyof typeof tabIcons].unfocused;
         const label = tabLabels[route.name as keyof typeof tabLabels];
         
         const onPress = () => {
@@ -140,11 +152,7 @@ function CustomTabBar({ state, navigation }: any) {
             style={styles.tabButton}
             activeOpacity={0.6}
           >
-            <Ionicons 
-              name={iconName as any} 
-              size={24} 
-              color={isFocused ? theme.colors.primary : theme.colors.disabled} 
-            />
+            {getTabIcon(route.name, isFocused)}
             <Text style={[
               styles.tabLabel,
               {
@@ -201,6 +209,12 @@ function AuthStack() {
         headerTitleStyle: {
           fontFamily: theme.typography.fontFamily.bold,
         },
+        // Standard-Zurück-Button anpassen
+        headerBackTitle: 'Zurück',
+        headerBackTitleStyle: {
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m,
+        },
       }}
     >
       <Stack.Screen
@@ -211,7 +225,7 @@ function AuthStack() {
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
-        options={{ title: 'Registrieren' }}
+        options={{ title: 'Registrieren', headerBackTitle: 'Login' }}
       />
     </Stack.Navigator>
   );
@@ -236,7 +250,7 @@ function AppStack() {
         headerBackTitle: 'Zurück',
         headerBackTitleStyle: {
           fontFamily: theme.typography.fontFamily.medium,
-          fontSize: 15
+          fontSize: theme.typography.fontSize.m,
         },
       }}
     >
@@ -282,13 +296,9 @@ function AppStack() {
       <Stack.Screen 
         name="FoodDetail" 
         component={FoodDetailScreen} 
-        options={({ route }) => {
-          let backTitle = 'Zurück';
-          
-          return {
+        options={{
             title: 'Lebensmittel-Details',
-          };
-        }}
+          }}
       />
       <Stack.Screen 
         name="DailyLog" 

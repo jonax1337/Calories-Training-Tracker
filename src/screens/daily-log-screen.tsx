@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronsUp, ChevronsDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
@@ -400,11 +400,11 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               style={styles.accordionButton}
               accessibilityLabel={"Mahlzeit " + mealType + (isExpanded ? " einklappen" : " ausklappen")}
             >
-              <Ionicons 
-                name={isExpanded ? 'chevron-up' : 'chevron-down'} 
-                size={24} 
-                color={theme.colors.primary} 
-              />
+              {isExpanded ? (
+                <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+              ) : (
+                <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -463,7 +463,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               setSelectedDate(formatToLocalISODate(prevDate));
             }}
           >
-            <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
+            <ChevronLeft size={24} color={theme.colors.primary} strokeWidth={1.5} />
           </TouchableOpacity>
           
           <TouchableOpacity onPress={() => setShowCalendarModal(true)}>
@@ -490,7 +490,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               setSelectedDate(formatToLocalISODate(nextDate));
             }}
           >
-            <Ionicons name="chevron-forward" size={24} color={theme.colors.primary} />
+            <ChevronRight size={24} color={theme.colors.primary} strokeWidth={1.5} />
           </TouchableOpacity>
         </View>
       </View>
@@ -537,7 +537,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                 Datum auswählen
               </Text>
               <TouchableOpacity onPress={() => setShowCalendarModal(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
+                <X strokeWidth={1.5} size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
             
@@ -625,7 +625,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
           
           <View style={styles.summaryContent}>
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary }]}>
+              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.calories }]}>
                 {Math.round(totals.calories)}
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
@@ -634,7 +634,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
             </View>
             
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.accent }]}>
+              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.protein }]}>
                 {Math.round(totals.protein)}g
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
@@ -643,7 +643,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
             </View>
             
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.success }]}>
+              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.carbs }]}>
                 {Math.round(totals.carbs)}g
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
@@ -652,7 +652,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
             </View>
             
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.error }]}>
+              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.fat }]}>
                 {Math.round(totals.fat)}g
               </Text>
               <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
@@ -712,11 +712,11 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   }}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons 
-                    name={expandedMeals['breakfast'] ? "chevron-up" : "chevron-down"} 
-                    size={24} 
-                    color={theme.colors.primary} 
-                  />
+                  {expandedMeals['breakfast'] ? (
+                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  ) : (
+                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -768,14 +768,14 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         style={{ marginRight: 8 }}
                       >
-                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
                       </TouchableOpacity>
                       {/* Löschen-Button */}
                       <TouchableOpacity
                         onPress={() => handleRemoveEntry(entry.id)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -839,11 +839,11 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   }}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons 
-                    name={expandedMeals['lunch'] ? "chevron-up" : "chevron-down"} 
-                    size={24} 
-                    color={theme.colors.primary} 
-                  />
+                  {expandedMeals['lunch'] ? (
+                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  ) : (
+                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -895,14 +895,14 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         style={{ marginRight: 8 }}
                       >
-                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
                       </TouchableOpacity>
                       {/* Löschen-Button */}
                       <TouchableOpacity
                         onPress={() => handleRemoveEntry(entry.id)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -966,11 +966,11 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   }}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons 
-                    name={expandedMeals['dinner'] ? "chevron-up" : "chevron-down"} 
-                    size={24} 
-                    color={theme.colors.primary} 
-                  />
+                  {expandedMeals['dinner'] ? (
+                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  ) : (
+                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1022,14 +1022,14 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         style={{ marginRight: 8 }}
                       >
-                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
                       </TouchableOpacity>
                       {/* Löschen-Button */}
                       <TouchableOpacity
                         onPress={() => handleRemoveEntry(entry.id)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1093,11 +1093,11 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   }}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons 
-                    name={expandedMeals['snack'] ? "chevron-up" : "chevron-down"} 
-                    size={24} 
-                    color={theme.colors.primary} 
-                  />
+                  {expandedMeals['snack'] ? (
+                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  ) : (
+                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1149,14 +1149,14 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         style={{ marginRight: 8 }}
                       >
-                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
+                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
                       </TouchableOpacity>
                       {/* Löschen-Button */}
                       <TouchableOpacity
                         onPress={() => handleRemoveEntry(entry.id)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
                       </TouchableOpacity>
                     </View>
                   </View>

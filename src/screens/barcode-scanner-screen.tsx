@@ -19,7 +19,7 @@ import { getFoodDataByBarcode, searchFoodByName } from "../services/barcode-serv
 import { useTheme } from "../theme/theme-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Camera, CameraView } from "expo-camera";
-import { Ionicons } from "@expo/vector-icons";
+import { Search, Zap, ZapOff } from "lucide-react-native";
 import { createBarcodeScannerStyles } from "../styles/screens/barcode-scanner-styles";
 
 // Dimensions werden jetzt in der Style-Datei importiert
@@ -277,11 +277,11 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
                   style={[styles.torchButton, { backgroundColor: isTorchOn ? theme.colors.primary : 'rgba(0,0,0,0.5)' }]}
                   onPress={() => setIsTorchOn(prev => !prev)}
                 >
-                  <Ionicons 
-                    name={isTorchOn ? "flash-outline" : "flash-off-outline"} 
-                    size={24} 
-                    color="white" 
-                  />
+                  {isTorchOn ? (
+                    <Zap size={24} color="white" strokeWidth={1.5} />
+                  ) : (
+                    <ZapOff size={24} color="white" strokeWidth={1.5} />
+                  )}
                 </TouchableOpacity>
               </View>
             )}
@@ -303,7 +303,7 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
               onPress={handleSearchByName}
               disabled={isLoading}
             >
-              <Ionicons name="search-outline" size={theme.typography.fontSize.m} color="white" />
+              <Search strokeWidth={1.5} size={theme.typography.fontSize.m} color="white" />
             </TouchableOpacity>
           </View>
         )}

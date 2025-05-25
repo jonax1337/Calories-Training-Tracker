@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform, Modal, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Award, Bed, BedDouble, BicepsFlexed, Bike, Dumbbell, Footprints, Star, X } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -611,7 +611,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             </Text>
             {/* Close button for modal */}
             <TouchableOpacity onPress={cancelDatePickerModal} style={styles.modalCloseButton}>
-              <Ionicons name="close-circle" size={24} color={theme.colors.text} />
+              <X size={24} color={theme.colors.text} strokeWidth={1.5} />
             </TouchableOpacity>
             
             <View style={styles.datePickerContainer}>
@@ -1433,7 +1433,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             onPress={() => handleActivityChange(ActivityLevel.Sedentary)}
           >
             <View style={{ alignItems: 'center' }}>
-              <Ionicons name="bed-outline" size={28} color={profile.activityLevel === ActivityLevel.Sedentary ? theme.colors.primary : theme.colors.text} />
+              <BedDouble size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.Sedentary ? theme.colors.primary : theme.colors.text} />
               <Text 
                 style={{
                   marginTop: theme.spacing.xs,
@@ -1471,7 +1471,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             onPress={() => handleActivityChange(ActivityLevel.LightlyActive)}
           >
             <View style={{ alignItems: 'center' }}>
-              <Ionicons name="walk-outline" size={28} color={profile.activityLevel === ActivityLevel.LightlyActive ? theme.colors.primary : theme.colors.text} />
+              <Footprints size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.LightlyActive ? theme.colors.primary : theme.colors.text} />
               <Text 
                 style={{
                   marginTop: theme.spacing.xs,
@@ -1512,7 +1512,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             onPress={() => handleActivityChange(ActivityLevel.ModeratelyActive)}
           >
             <View style={{ alignItems: 'center' }}>
-              <Ionicons name="bicycle-outline" size={28} color={profile.activityLevel === ActivityLevel.ModeratelyActive ? theme.colors.primary : theme.colors.text} />
+              <Bike size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.ModeratelyActive ? theme.colors.primary : theme.colors.text} />
               <Text 
                 style={{
                   marginTop: theme.spacing.xs,
@@ -1550,7 +1550,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             onPress={() => handleActivityChange(ActivityLevel.VeryActive)}
           >
             <View style={{ alignItems: 'center' }}>
-              <Ionicons name="fitness-outline" size={28} color={profile.activityLevel === ActivityLevel.VeryActive ? theme.colors.primary : theme.colors.text} />
+              <Dumbbell size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.VeryActive ? theme.colors.primary : theme.colors.text} />
               <Text 
                 style={{
                   marginTop: theme.spacing.xs,
@@ -1591,7 +1591,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             onPress={() => handleActivityChange(ActivityLevel.ExtremelyActive)}
           >
             <View style={{ alignItems: 'center' }}>
-              <Ionicons name="barbell-outline" size={28} color={profile.activityLevel === ActivityLevel.ExtremelyActive ? theme.colors.primary : theme.colors.text} />
+              <BicepsFlexed size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.ExtremelyActive ? theme.colors.primary : theme.colors.text} />
               <Text 
                 style={{
                   marginTop: theme.spacing.xs,
@@ -1701,7 +1701,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                             flexDirection: 'row',
                             alignItems: 'center',
                           }}>
-                            <Ionicons name="star" size={12} color={theme.colors.primary} style={{ marginRight: 3 }} />
+                            <Star size={12} strokeWidth={1.5} color={theme.colors.primary} style={{ marginRight: 3 }} />
                             <Text style={{
                               fontSize: theme.typography.fontSize.xs,
                               color: theme.colors.primary,
@@ -2077,7 +2077,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                                   flexDirection: 'row',
                                   alignItems: 'center',
                                 }}>
-                                  <Ionicons name="star" size={12} color={theme.colors.primary} style={{ marginRight: 3 }} />
+                                  <Star size={12} strokeWidth={1.5} color={theme.colors.primary} style={{ marginRight: 3 }} />
                                   <Text style={{
                                     fontSize: theme.typography.fontSize.xs,
                                     color: theme.colors.primary,

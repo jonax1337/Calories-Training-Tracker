@@ -48,13 +48,13 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
   const getStatusColor = () => {
     switch (status) {
       case 'work':
-        return theme.colors.primary;
+        return theme.colors.nutrition.protein;
       case 'rest':
-        return theme.colors.success;
+        return theme.colors.nutrition.calories;
       case 'prepare':
-        return theme.colors.accent;
+        return theme.colors.nutrition.fat;
       case 'completed':
-        return theme.colors.success;
+        return theme.colors.nutrition.carbs;
       default:
         return theme.colors.primary;
     }

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import navigation types
 import { TrainingTabScreenProps } from '../types/navigation-types';
+import { AlarmClock, Timer } from 'lucide-react-native';
 
 function TrainingScreen({ navigation }: TrainingTabScreenProps) {
   // Get theme from context
@@ -61,7 +62,7 @@ function TrainingScreen({ navigation }: TrainingTabScreenProps) {
               style={[styles.startTimerButton, { backgroundColor: theme.colors.primary, marginTop: 20 }]}
               onPress={() => navigation.getParent()?.navigate('HIITTimerSettings')}
             >
-              <Ionicons name="stopwatch-outline" size={22} color="white" style={{ marginRight: 8 }} />
+              <AlarmClock strokeWidth={1.5} size={theme.typography.fontSize.m} color="white" style={{ marginRight: 8 }} />
               <Text style={[styles.startTimerButtonText, { color: 'white', fontFamily: theme.typography.fontFamily.bold }]}>
                 HIIT Timer starten
               </Text>

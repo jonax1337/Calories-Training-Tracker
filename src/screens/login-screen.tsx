@@ -7,6 +7,7 @@ import { useTheme } from '../theme/theme-context';
 import { RootStackParamList } from '../navigation';
 import { createAuthStyles } from '../styles/screens/auth-styles';
 import { Ionicons } from '@expo/vector-icons';
+import { Flame } from 'lucide-react-native';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -71,9 +72,9 @@ const LoginScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ alignItems: 'center', marginBottom: theme.spacing.xl }}>
-          <Ionicons 
-            name="flame-outline" 
-            size={100} 
+          <Flame
+          strokeWidth={1.5}
+            size={150} 
             color={theme.colors.primary} 
           />
         </View>

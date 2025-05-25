@@ -10,11 +10,11 @@ import ProgressBar from '../components/ui/progress-bar';
 import WaveAnimation from '../components/ui/wave-animation';
 import { DailyLog, HealthData, UserProfile, UserGoals } from '../types';
 import { useTheme } from '../theme/theme-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, getTodayFormatted } from '../utils/date-utils';
 import { useDateContext } from '../context/date-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
+import { ChevronLeft, ChevronRight, Minus, Plus, UserRound, X } from 'lucide-react-native';
 
 // Helper function to check if user profile is complete with minimum required data
 function isProfileComplete(profile: UserProfile | null): boolean {
@@ -336,10 +336,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           shadowRadius: 8,
           elevation: 4,
         }}>
-          <Ionicons name="person-circle-outline" size={80} color={theme.theme.colors.primary} style={{ marginBottom: 20 }} />
+          <UserRound strokeWidth={1.5} size={theme.theme.typography.fontSize.xl} color={theme.theme.colors.primary} style={{ marginBottom: 20 }} />
           <Text style={{
             fontFamily: theme.theme.typography.fontFamily.bold,
-            fontSize: 22,
+            fontSize: theme.theme.typography.fontSize.xl,
             color: theme.theme.colors.text,
             textAlign: 'center',
             marginBottom: 12
@@ -348,7 +348,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           </Text>
           <Text style={{
             fontFamily: theme.theme.typography.fontFamily.regular,
-            fontSize: 16,
+            fontSize: theme.theme.typography.fontSize.m,
             color: theme.theme.colors.secondary,
             textAlign: 'center',
             marginBottom: 24
@@ -404,7 +404,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               setSelectedDate(formatToLocalISODate(prevDate));
             }}
           >
-            <Ionicons name="chevron-back" size={24} color={theme.theme.colors.primary} />
+            <ChevronLeft strokeWidth={1.5} size={24} color={theme.theme.colors.primary} />
           </TouchableOpacity>
           
           <TouchableOpacity onPress={() => setShowCalendarModal(true)}>
@@ -431,7 +431,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               setSelectedDate(formatToLocalISODate(nextDate));
             }}
           >
-            <Ionicons name="chevron-forward" size={24} color={theme.theme.colors.primary} />
+            <ChevronRight strokeWidth={1.5} size={24} color={theme.theme.colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -478,7 +478,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                 Datum auswählen
               </Text>
               <TouchableOpacity onPress={() => setShowCalendarModal(false)}>
-                <Ionicons name="close" size={24} color={theme.theme.colors.text} />
+                <X strokeWidth={1.5} size={24} color={theme.theme.colors.text} />
               </TouchableOpacity>
             </View>
             
@@ -579,28 +579,28 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           label="🔥 Kalorien"
           current={Math.round(totals.calories)}
           target={goals.dailyCalories}
-          color="#FF5722"
+          color={theme.theme.colors.nutrition.calories}
         />
         
         <ProgressBar 
           label="🍗 Protein"
           current={Math.round(totals.protein)}
           target={goals.dailyProtein || 50}
-          color="#2196F3"
+          color={theme.theme.colors.nutrition.protein}
         />
         
         <ProgressBar 
           label="🍞 Kohlenhydrate"
           current={Math.round(totals.carbs)}
           target={goals.dailyCarbs || 250}
-          color="#4CAF50"
+          color={theme.theme.colors.nutrition.carbs}
         />
         
         <ProgressBar 
           label="🧈 Fette"
           current={Math.round(totals.fat)}
           target={goals.dailyFat || 70}
-          color="#FFC107"
+          color={theme.theme.colors.nutrition.fat}
         />
       </View>
 
@@ -753,7 +753,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             onPress={decrementWeight}
             disabled={isUpdatingWeight || currentWeight === undefined || currentWeight <= 0.1}
           >
-            <Ionicons name="remove" size={24} color="white" />
+            <Minus strokeWidth={1.5} size={24} color="white" />
           </TouchableOpacity>
           
           <View style={{
@@ -790,7 +790,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             onPress={incrementWeight}
             disabled={isUpdatingWeight || currentWeight === undefined}
           >
-            <Ionicons name="add" size={24} color="white" />
+            <Plus strokeWidth={1.5} size={24} color="white" />
           </TouchableOpacity>
         </View>
       </View>

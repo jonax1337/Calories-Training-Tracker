@@ -37,6 +37,18 @@ export interface Colors {
     level2: string;
     level3: string;
   };
+  nutrition: {
+    calories: string;
+    caloriesLight: string;
+    protein: string;
+    proteinLight: string;
+    carbs: string;
+    carbsLight: string;
+    fat: string;
+    fatLight: string;
+    water: string;
+    waterLight: string;
+  };
 }
 
 export interface Spacing {

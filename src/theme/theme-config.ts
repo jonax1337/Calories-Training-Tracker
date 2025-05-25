@@ -91,6 +91,19 @@ const lightColors: Colors = {
     level2: 'rgba(0, 0, 0, 0.08)',
     level3: 'rgba(0, 0, 0, 0.12)',
   },
+  // Nährwert-Farben
+  nutrition: {
+    calories: '#FF5722',        // Kalorien - Orange-Rot
+    caloriesLight: '#FFEBEE',   // Heller Hintergrund
+    protein: '#2196F3',         // Protein - Blau
+    proteinLight: '#E3F2FD',    // Heller Hintergrund
+    carbs: '#4CAF50',           // Kohlenhydrate - Grün
+    carbsLight: '#E8F5E8',      // Heller Hintergrund
+    fat: '#FFC107',             // Fette - Gelb
+    fatLight: '#FFF8E1',        // Heller Hintergrund
+    water: '#2196F3',           // Wasser - Blau
+    waterLight: '#E3F2FD',      // Heller Hintergrund
+  },
 };
 
 // Dark theme colors
@@ -127,6 +140,19 @@ const darkColors: Colors = {
     level2: 'rgba(0, 0, 0, 0.25)',
     level3: 'rgba(0, 0, 0, 0.3)',
   },
+  // Nährwert-Farben für Dark Theme (hellere/sättigere Versionen)
+  nutrition: {
+    calories: '#FF7043',        // Kalorien - Helleres Orange-Rot
+    caloriesLight: '#5D1F1F',   // Dunkler Hintergrund
+    protein: '#42A5F5',         // Protein - Helleres Blau
+    proteinLight: '#0D47A1',    // Dunkler Hintergrund
+    carbs: '#66BB6A',           // Kohlenhydrate - Helleres Grün
+    carbsLight: '#1B5E20',      // Dunkler Hintergrund
+    fat: '#FFCA28',             // Fette - Helleres Gelb
+    fatLight: '#4E3C00',        // Dunkler Hintergrund
+    water: '#2196F3',           // Wasser - Blau
+    waterLight: '#E3F2FD',      // Heller Hintergrund
+  },
 };
 
 // Pink (girly) theme colors
@@ -162,6 +188,19 @@ const pinkColors: Colors = {
     level1: 'rgba(236, 64, 122, 0.05)',
     level2: 'rgba(236, 64, 122, 0.08)',
     level3: 'rgba(236, 64, 122, 0.12)',
+  },
+  // Nährwert-Farben für Pink Theme (an rosa Palette angepasst)
+  nutrition: {
+    calories: '#F48FB1',        // Kalorien - Rosa-Orange
+    caloriesLight: '#FCE4EC',   // Rosa Hintergrund
+    protein: '#BA68C8',         // Protein - Lila-Rosa
+    proteinLight: '#F3E5F5',    // Lila Hintergrund
+    carbs: '#81C784',           // Kohlenhydrate - Sanftes Grün
+    carbsLight: '#F1F8E9',      // Grüner Hintergrund
+    fat: '#FFB74D',             // Fette - Warmes Orange
+    fatLight: '#FFF3E0',        // Orange Hintergrund
+    water: '#2196F3',           // Wasser - Blau
+    waterLight: '#E3F2FD',      // Heller Hintergrund
   },
 };
 

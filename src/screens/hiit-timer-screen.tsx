@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Status
 import * as Haptics from 'expo-haptics';
 // Sound-Funktionen importieren
 import { playWorkSound, playRestSound, playCompleteSound, playCountdownBeep } from '../utils/sound-utils'
-import { Ionicons } from '@expo/vector-icons';
+import { Pause, Play, SkipForward, RefreshCcw } from 'lucide-react-native';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CircularTimer from '../components/ui/circular-timer';
@@ -435,11 +435,11 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
               style={[styles.controlButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               onPress={timerState.status === 'running' ? pauseTimer : startTimer}
             >
-              <Ionicons
-                name={timerState.status === 'running' ? 'pause-outline' : 'play-outline'}
-                size={24}
-                color={theme.colors.text}
-              />
+              {timerState.status === 'running' ? (
+                <Pause size={24} color={theme.colors.text} strokeWidth={1.5} />
+              ) : (
+                <Play size={24} color={theme.colors.text} strokeWidth={1.5} />
+              )}
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -447,14 +447,14 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
               onPress={skipToNextPhase}
               disabled={timerState.phase === 'completed'}
             >
-              <Ionicons name="play-skip-forward-outline" size={24} color={theme.colors.text} />
+              <SkipForward size={24} color={theme.colors.text} strokeWidth={1.5} />
             </TouchableOpacity>
             
             <TouchableOpacity
               style={[styles.controlButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               onPress={resetTimer}
             >
-              <Ionicons name="refresh-outline" size={24} color={theme.colors.text} />
+              <RefreshCcw size={24} color={theme.colors.text} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
         )}
