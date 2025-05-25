@@ -1,7 +1,3 @@
-
-Und wenn Sie auch die LICENSE.md aktualisieren möchten, hier ist ein verbesserter Inhalt:
-
-```markdown
 # Proprietary License Agreement
 
 **© 2025 Jonas Laux. All Rights Reserved.**

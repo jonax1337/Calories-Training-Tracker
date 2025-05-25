@@ -7,7 +7,7 @@
 
 Eine moderne, reaktionsschnelle mobile Anwendung zur präzisen Verfolgung deiner Ernährung, Fitness und Gesundheitsziele mit intuitivem Design und umfangreichen Funktionen.
 
----
+
 
 ## 📚 Inhaltsverzeichnis
 
@@ -23,7 +23,7 @@ Eine moderne, reaktionsschnelle mobile Anwendung zur präzisen Verfolgung deiner
 * [📄 Lizenz](#-lizenz)
 * [✉️ Kontakt](#️-kontakt)
 
----
+
 
 ## ✨ Übersicht
 
@@ -38,7 +38,7 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
 * **Sichere Datensynchronisation**: JWT-basierte Authentifizierung mit Server-Backend
 * **Personalisierbare Ziele**: Individuelle Anpassung an persönliche Ernährungs- und Fitnessbedürfnisse
 
----
+
 
 ## 🚀 Hauptfunktionen
 
@@ -62,7 +62,7 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
 * **Fortschrittsvisualisierung**: Animierte Wellendiagramme und Statistiken
 * **Trendanalysen**: Langfristige Fortschritte und Muster erkennen
 
----
+
 
 ## 🎯 Zielgruppe
 
@@ -72,7 +72,7 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
 * Gesundheitsbewusste Personen, die ihre Ernährung verbessern wollen
 * Trainer und Coaches, die ihre Klienten unterstützen
 
----
+
 
 ## 💾 Installation & Setup
 
@@ -111,7 +111,7 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
 
 5. QR-Code mit Expo Go scannen oder App im Simulator öffnen
 
----
+
 
 ## ▶️ Erste Schritte
 
@@ -121,7 +121,7 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
 4. **Mahlzeit hinzufügen**: Manuell oder per Barcode-Scan
 5. **Training aufzeichnen**: Aktivitäten erfassen und Fortschritte verfolgen
 
----
+
 
 ## ⚙️ Technologie-Stack
 
@@ -147,7 +147,7 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
 * **API-Integration**: Axios für HTTP-Requests
 * **Externe APIs**: Open Food Facts für Produktdaten
 
----
+
 
 ## 📱 App-Architektur
 
@@ -159,7 +159,7 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
   * Bildschirm-spezifische Komponenten
 * **Styling**: Theming mit styled-components und dynamischem Dark/Light-Mode
 
----
+
 
 ## 🔄 Updates & Roadmap
 
@@ -172,19 +172,19 @@ Calories Training Tracker ist eine umfassende Lösung für alle, die ihre Ernäh
 * Offline-Modus mit vollständiger Funktionalität
 * Erweiterte Exportfunktionen für Daten
 
----
+
 
 ## 🤝 Mitwirken
 
 Beiträge sind herzlich willkommen! Detaillierte Informationen findest du in unserer [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+
 
 ## 📄 Lizenz
 
 Dieses Projekt ist proprietär und unterliegt den Bedingungen in der [LICENSE.md](LICENSE.md).
 
----
+
 
 ## ✉️ Kontakt
 
