@@ -7,7 +7,7 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge\&logo=javascript\&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge\&logo=mysql\&logoColor=white)](https://www.mysql.com/)
 [![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge\&logo=json-web-tokens\&logoColor=white)](blhttps://jwt.io/)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-darkred?style=for-the-badge)](LICENSE.md)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-ff0000?style=for-the-badge)](LICENSE.md)
 
 Eine moderne, reaktionsschnelle mobile Anwendung zur präzisen Verfolgung deiner Ernährung, Fitness und Gesundheitsziele mit intuitivem Design und umfangreichen Funktionen.
 
