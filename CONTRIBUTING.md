@@ -111,7 +111,7 @@ Bevor du einen PR einreichst, stelle sicher, dass du Folgendes überprüft hast:
 
 ## 🌟 Anerkennung
 
-Alle Mitwirkenden werden in der CONTRIBUTORS.md-Datei (falls vorhanden) anerkannt und im GitHub-Repository hervorgehoben.
+Alle Mitwirkenden werden in der [CONTRIBUTORS.md](CONTRIBUTORS.md) anerkannt und im GitHub-Repository hervorgehoben.
 
 Bei Fragen zu diesen Richtlinien oder zum Beitragsprozess kontaktiere bitte:
 
