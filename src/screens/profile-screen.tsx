@@ -112,7 +112,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       
       // Lade Benutzerprofil
       const savedProfile = await fetchUserProfile();
-      console.log('[DEBUG] loadProfile - raw savedProfile:', JSON.stringify(savedProfile, null, 2));
       if (savedProfile) {
         setProfile(savedProfile);
         
@@ -139,34 +138,25 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           const approximateBirthYear = new Date().getFullYear() - savedProfile.age;
           setBirthDate(new Date(approximateBirthYear, 0, 1)); // 1. Januar des Geburtsjahres
         }
-
-        console.log('Basic profile data (name, weight, height, birthDate) processed.');
       }
       
       // Lade verfügbare Zieltypen
       const availableGoalTypes = await fetchGoalTypes();
       setGoalTypes(availableGoalTypes);
-      console.log('[DEBUG] loadProfile - availableGoalTypes:', JSON.stringify(availableGoalTypes, null, 2));
-      console.log('Goal types loaded:', availableGoalTypes.length);
       
       // Lade aktuelle Benutzerziele
       const currentUserGoals = await fetchUserGoals();
       setUserGoals(currentUserGoals);
-      console.log('[DEBUG] loadProfile - currentUserGoals:', JSON.stringify(currentUserGoals, null, 2));
-      console.log('User goals loaded:', currentUserGoals.length);
 
       // Determine and set the activeGoalId AFTER fetching currentUserGoals
       let activeGoalIdToSet: string | null = null;
       if (currentUserGoals && currentUserGoals.length > 0 && currentUserGoals[0].goalTypeId) {
         // Assuming user has at most one goal, take its goalTypeId
         activeGoalIdToSet = currentUserGoals[0].goalTypeId;
-        console.log('[DEBUG] loadProfile - Active goal ID from currentUserGoals[0].goalTypeId:', activeGoalIdToSet);
       } else {
-        console.log('[DEBUG] loadProfile - No active goal found in currentUserGoals or goalTypeId missing. Defaulting to null.');
       }
       
       setSelectedGoalId(activeGoalIdToSet);
-      console.log('Profile, goal types, and user goals loaded. Active Goal ID set to (from user_goals):', activeGoalIdToSet);
       
       // Check health permissions
       const hasPermission = await requestHealthPermissions();
@@ -198,7 +188,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     if (selectedGoalId && goalTypes.length > 0) {
       const currentGoalType = goalTypes.find(gt => gt.id === selectedGoalId);
       if (currentGoalType && currentGoalType.isCustom) {
-        console.log('[DEBUG] Goal recalculation skipped: Current goal is custom.');
         return; // Skip recalculation for custom goals
       }
     }
@@ -320,8 +309,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
 
   // Handle saving profile with improved error handling and data reload
   const handleSave = async () => {
-    console.log('[DEBUG] handleSave - current profile state:', JSON.stringify(profile, null, 2));
-    console.log('[DEBUG] handleSave - current selectedGoalId state:', selectedGoalId);
     setIsLoading(true);
     try {
       // Basic validation
@@ -363,13 +350,10 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         }
       };
 
-      console.log('[DEBUG] handleSave - updatedProfileData object to be sent for main profile:', JSON.stringify(updatedProfileData, null, 2));
       const response = await updateUserProfile(updatedProfileData);
-      console.log('[DEBUG] handleSave - main profile update response:', JSON.stringify(response, null, 2));
 
       // Separate logic for saving/updating user goals via createOrUpdateUserGoal
       try {
-        console.log('[DEBUG] handleSave - Preparing to save user goals via createOrUpdateUserGoal...');
         let goalTypeId: string | undefined = undefined;
         let isCustomGoal = false;
 
@@ -397,12 +381,9 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           dailyWater: profile.goals.dailyWater || 0
         };
         
-        console.log('[DEBUG] handleSave - userGoalPayload for createOrUpdateUserGoal:', JSON.stringify(userGoalPayload, null, 2));
         const savedGoalResponse = await createOrUpdateUserGoal(userGoalPayload);
         if (savedGoalResponse && savedGoalResponse.id) {
-          console.log('[DEBUG] handleSave - User goals saved successfully via createOrUpdateUserGoal. Response:', JSON.stringify(savedGoalResponse, null, 2));
         } else {
-          console.warn('[DEBUG] handleSave - Failed to save user goals via createOrUpdateUserGoal. Response:', JSON.stringify(savedGoalResponse, null, 2));
         }
       } catch (goalError) {
         console.error('Error saving user goals to new API (createOrUpdateUserGoal):', goalError);
@@ -410,9 +391,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       
       // Reload profile data to ensure everything is in sync
       await loadProfile();
-      
-      console.log('Profile saved and reloaded successfully');
-        console.log('[DEBUG] handleSave - server response:', JSON.stringify(response, null, 2));
       
       Alert.alert('Success', 'Profile saved successfully', [
         { text: 'OK', onPress: () => navigation.goBack() },

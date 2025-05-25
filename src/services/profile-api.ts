@@ -31,16 +31,13 @@ export const fetchUserProfile = async (): Promise<UserProfile | null> => {
     throw new Error(errorData.message || 'Failed to fetch user profile');
   }
   const responseText = await response.text(); // Get raw text first
-  console.log('[DEBUG] fetchUserProfile - raw response status:', response.status);
-  console.log('[DEBUG] fetchUserProfile - raw response text:', responseText);
   let data;
   try {
     data = JSON.parse(responseText); // Parse the raw text
   } catch (e) {
-    console.error('[DEBUG] fetchUserProfile - Failed to parse JSON response:', e);
+    console.error('Failed to parse user profile data from server.');
     throw new Error('Failed to parse user profile data from server.');
   }
-  console.log('[DEBUG] fetchUserProfile - parsed data BEFORE mapping:', JSON.stringify(data, null, 2));
 
   // Map and normalize fields
   if (data) {
@@ -73,7 +70,6 @@ export const fetchUserProfile = async (): Promise<UserProfile | null> => {
       }
     }
   }
-  console.log('[DEBUG] fetchUserProfile - data AFTER mapping:', JSON.stringify(data, null, 2));
   return data;
 };
 
@@ -121,8 +117,6 @@ export const updateUserProfile = async (profileData: UserProfile): Promise<UserP
   if (profileData.weight !== undefined) profileToSend.weight = Number(profileData.weight);
   // age is already calculated and should be a number
 
-  console.log('[DEBUG] updateUserProfile - profileToSend (with goals):', JSON.stringify(profileToSend, null, 2));
-
   const headers = await getAuthHeaders();
   // The user_id is often part of the URL for PUT requests, or part of token for POST acting as UPSERT
   // If your backend /api/users POST is for creating and /api/users/:userId PUT is for updating, adjust accordingly.
@@ -139,7 +133,6 @@ export const updateUserProfile = async (profileData: UserProfile): Promise<UserP
     throw new Error(errorData.message || 'Failed to update user profile');
   }
   const updatedProfile = await response.json();
-  console.log('[DEBUG] updateUserProfile - response from server:', JSON.stringify(updatedProfile, null, 2));
   return updatedProfile;
 };
 

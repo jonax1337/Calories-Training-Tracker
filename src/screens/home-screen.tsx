@@ -76,20 +76,14 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           dailyWater: activeGoal.dailyWater,
           // weightGoal is not directly on UserGoal, might be part of UserProfile or not used here
         });
-        console.log('[DEBUG] HomeScreen - Active goal targets set from fetchUserGoals:', activeGoal);
-        console.log('[DEBUG] HomeScreen - activeGoalTargets.dailyCalories:', activeGoalTargets?.dailyCalories, 'Type:', typeof activeGoalTargets?.dailyCalories);
       } else if (profile?.goals) {
         // Fallback to goals possibly stored in the main user profile if no specific active goal found
         setActiveGoalTargets(profile.goals);
-        console.log('[DEBUG] HomeScreen - Active goal targets set from profile.goals (fallback).');
-        console.log('[DEBUG] HomeScreen - Fallback activeGoalTargets.dailyCalories:', activeGoalTargets?.dailyCalories, 'Type:', typeof activeGoalTargets?.dailyCalories);
       } else {
         setActiveGoalTargets(null); // Or set to default goals
-        console.log('[DEBUG] HomeScreen - No active goal targets found, set to null.');
       }
 
       // Load the selected date's log
-      console.log(`Loading data for date: ${selectedDate}`);
       const log = await getDailyLogByDate(selectedDate);
       setTodayLog(log);
 
@@ -143,22 +137,16 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
 
   // Get default goals or from user profile
   const getGoals = (): UserGoals => {
-    console.log('[DEBUG] HomeScreen - getGoals called. Current activeGoalTargets:', JSON.stringify(activeGoalTargets));
-    console.log('[DEBUG] HomeScreen - getGoals: userProfile.goals:', JSON.stringify(userProfile?.goals));
     if (activeGoalTargets && typeof activeGoalTargets.dailyCalories === 'number') {
-      console.log('[DEBUG] HomeScreen - getGoals returning activeGoalTargets:', JSON.stringify(activeGoalTargets));
       return activeGoalTargets;
     } else if (activeGoalTargets) {
       console.warn('[DEBUG] HomeScreen - getGoals: activeGoalTargets found but dailyCalories is not a number. Value:', activeGoalTargets.dailyCalories);
     }
     // Fallback to userProfile.goals if activeGoalTargets isn't set (e.g. during initial load or error)
     if (userProfile?.goals) {
-      console.warn('[DEBUG] HomeScreen - getGoals falling back to userProfile.goals');
       return userProfile.goals;
     }
     
-    // Default goals if no user profile or active goal targets exist
-    console.warn('[DEBUG] HomeScreen - getGoals falling back to default hardcoded goals');
     const defaultGoals = {
       dailyCalories: 2000,
       dailyProtein: 50,
@@ -166,7 +154,6 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       dailyFat: 70,
       dailyWater: 2000, // ml
     };
-    console.log('[DEBUG] HomeScreen - getGoals returning default goals:', JSON.stringify(defaultGoals));
     return defaultGoals;
   };
 
