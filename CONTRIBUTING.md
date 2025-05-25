@@ -1,65 +1,122 @@
-# 🤝 Contributing to Calories Training Tracker
+# 🤝 Beitragsrichtlinien für Calories Training Tracker
 
-Vielen Dank für dein Interesse, zum Projekt beizutragen! Egal ob Bugfix, neue Funktion oder Verbesserung der Dokumentation – jede Hilfe ist willkommen.
+Vielen Dank für dein Interesse, zum Calories Training Tracker beizutragen! Diese App lebt von engagierten Mitwirkenden wie dir.
 
-## ✅ Erste Schritte
+## 📋 Wie du helfen kannst
 
-1. **Fork** das Repository und klone deine Kopie:
+Es gibt viele Wege, zum Projekt beizutragen:
 
+- **Code-Beiträge**: Neue Features, Bugfixes oder Performance-Optimierungen
+- **Dokumentation**: Verbesserungen der Code-Kommentare, README oder Wiki-Seiten
+- **Design**: UI/UX-Verbesserungen, Grafiken oder Animationen
+- **Tests**: Erstellung oder Verbesserung von Testfällen
+- **Feedback**: Bug-Reports oder Feature-Vorschläge
+
+## 🚀 Entwicklungs-Workflow
+
+### 1. Vorbereitung
+
+1. **Fork das Repository** und klone deinen Fork:
    ```bash
    git clone https://github.com/dein-benutzername/calories_training_tracker.git
+   cd calories_training_tracker
    ```
-2. **Erstelle** einen neuen Branch für deine Änderungen:
-
+2. **Upstream hinzufügen**:
    ```bash
-   git checkout -b feature/mein-feature
+   git remote add upstream https://github.com/jonax1337/calories_training_tracker.git
    ```
-3. **Implementiere** und teste deine Änderungen lokal.
-4. **Committe** deine Änderungen mit aussagekräftigen Messages:
+3. **Abhängigkeiten installieren**:
+   ```bash
+   npm install
+   ```
 
+### 2. Feature-Entwicklung
+
+1. **Neuen Branch erstellen** mit beschreibendem Namen:
+   ```bash
+   git checkout -b feature/beschreibender-name
+   ```
+2. **Änderungen vornehmen** und regelmäßig committen:
    ```bash
    git add .
-   git commit -m "feat: Beschreibung deiner Änderung"
+   git commit -m "feat: Beschreibung der Änderung"
    ```
-5. **Push** deinen Branch zu deinem Fork:
-
+3. **Upstream-Änderungen regelmäßig integrieren**:
    ```bash
-   git push origin feature/mein-feature
+   git pull upstream main
    ```
-6. **Öffne** eine Pull Request (PR) gegen den `main`-Branch des Originals.
+4. **Änderungen pushen**:
+   ```bash
+   git push origin feature/beschreibender-name
+   ```
 
-## 📋 Richtlinien
+### 3. Pull Request einreichen
 
-* **Branch-Naming**: nutze das Schema `type/kurzbeschreibung`, z.B. `fix/login-bug` oder `feat/barcode-scanner`
-* **Commits**: im [Conventional Commits](https://www.conventionalcommits.org/) Stil (z.B. `fix:`, `feat:`, `docs:`, `refactor:`)
-* **Code Style**:
+1. Auf GitHub zu deinem Fork navigieren
+2. "Pull Request" erstellen
+3. Änderungen ausführlich beschreiben
+4. Warte auf Feedback und reagiere auf Code-Reviews
 
-  * TypeScript & JavaScript: ESLint-Regeln befolgen
-  * CSS/Styles: Prettier-Formatierung
-  * Schreibe lesbare und gut kommentierte Funktionen
-* **Dokumentation**: Aktualisiere relevante README-Dateien oder erstelle neue Dokumente, wenn du APIs, Konfigurationen oder wichtige Workflows änderst.
-* **Tests**:
+## 📏 Code-Richtlinien
 
-  * Füge Unit- und Integrationstests mit Jest hinzu (bei Backend-Änderungen).
-  * Stelle sicher, dass alle Tests erfolgreich laufen (`npm run test`).
+### Allgemeine Prinzipien
 
-## 🛠️ Workflow & Review
+- **Funktional und deklarativ**: Bevorzuge funktionale Programmiermuster statt Klassen
+- **DRY (Don't Repeat Yourself)**: Vermeide Code-Duplizierung
+- **KISS (Keep It Simple, Stupid)**: Halte den Code einfach und lesbar
+- **Modularität**: Erstelle wiederverwendbare Komponenten und Funktionen
 
-1. **Review**: Wir prüfen PRs zeitnah und geben Feedback.
-2. **Diskussion**: Nutze die PR-Kommentare für Rückfragen oder Diskussionen.
-3. **Merge**: Nach Genehmigung wird dein Branch via `squash and merge` eingepflegt.
-4. **Close**: Geschlossene Issues und PRs bleiben dokumentiert.
+### TypeScript & React Native
 
-## 🎯 Feature Requests & Bugs
+- **TypeScript**: Verwende strikte Typisierung und vermeide any wo möglich
+- **React Hooks**: Nutze funktionale Komponenten mit Hooks statt Klassenkomponenten
+- **Immutabilität**: Behandle State als unveränderlich, nutze entsprechende Patterns
+- **Performance**: Beachte React-Native-Performance-Praktiken (Memoization, usw.)
 
-* **Issues**: Erstelle Issues für neue Features oder Bug-Reports.
-* **Labels**: Geige bitte passende Labels an (z.B. `bug`, `enhancement`, `documentation`).
+### Naming Conventions
 
-## 📞 Kontakt
+- **Dateien**: Kebab-Case für Verzeichnisnamen (z.B. components/wave-animation)
+- **Komponenten**: PascalCase für Komponentennamen (z.B. WaveAnimation.tsx)
+- **Funktionen**: camelCase für Funktionen und Variablen
+- **Konstanten**: SCREAMING_SNAKE_CASE für globale Konstanten
 
-Bei Fragen oder Problemen kannst du dich gerne melden:
+### Code-Stil
 
-* **GitHub Discussions** oder **Issues**
-* **E-Mail**: [jonas.laux@hotmail.com](mailto:jonas.laux@hotmail.com)
+- **ESLint & Prettier**: Befolge die konfigurierten Linting-Regeln
+- **Kommentare**: Dokumentiere komplexe Logik oder ungewöhnliche Entscheidungen
+- **Commit-Messages**: Folge den Conventional Commits-Richtlinien
 
-Danke für deinen Beitrag! Gemeinsam machen wir dieses Projekt besser. 🚀
+## 🧪 Tests und Qualitätssicherung
+
+- **Manuelle Tests**: Teste deine Änderungen gründlich auf iOS und Android
+- **Edge Cases**: Berücksichtige verschiedene Bildschirmgrößen und Zustände
+- **Performance**: Achte auf Performance-Implikationen, besonders bei Animationen und Listen
+
+## 📃 Pull-Request-Checkliste
+
+Bevor du einen PR einreichst, stelle sicher, dass du Folgendes überprüft hast:
+
+- [ ] Der Code folgt den Projektrichtlinien
+- [ ] Alle Tests laufen erfolgreich
+- [ ] Die Dokumentation wurde bei Bedarf aktualisiert
+- [ ] Der Code wurde auf iOS und Android getestet
+- [ ] Es gibt keine Console.log-Statements oder unbenutzte Imports
+- [ ] Die PR hat einen beschreibenden Titel und aussagekräftige Beschreibung
+
+## 🔍 Code-Review-Prozess
+
+- Mindestens ein Maintainer wird deinen PR überprüfen
+- Feedback kann Änderungsvorschläge, Fragen oder Genehmigung enthalten
+- Nach Genehmigung wird dein PR in den Hauptbranch gemergt
+
+## 🌟 Anerkennung
+
+Alle Mitwirkenden werden in der CONTRIBUTORS.md-Datei (falls vorhanden) anerkannt und im GitHub-Repository hervorgehoben.
+
+Bei Fragen zu diesen Richtlinien oder zum Beitragsprozess kontaktiere bitte:
+
+- **Jonas Laux**
+- **E-Mail**: jonas.laux@hotmail.com
+- **GitHub**: jonax1337
+
+Vielen Dank für deinen Beitrag zum Calories Training Tracker! 🚀

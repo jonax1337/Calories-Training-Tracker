@@ -1,25 +1,60 @@
+
+Und wenn Sie auch die LICENSE.md aktualisieren möchten, hier ist ein verbesserter Inhalt:
+
+```markdown
 # Proprietary License Agreement
 
-© 2025 Jonas Laux. All Rights Reserved.
+**© 2025 Jonas Laux. All Rights Reserved.**
 
-This software and associated documentation files (the “Software”) are proprietary and confidential. Unauthorized copying, distribution, modification, or commercial use of the Software, in whole or in part, without prior written permission from Jonas Laux is strictly prohibited.
+## 1. Definitionen
 
-**Permissions:**
+- **"Software"** bezieht sich auf die "Calories Training Tracker"-Anwendung und alle zugehörigen Quellcode-Dateien, Dokumentation, Grafiken, Benutzeroberflächen, APIs und Datenbankschemata.
+- **"Lizenzgeber"** bezieht sich auf Jonas Laux als den Eigentümer und Inhaber der Rechte an der Software.
+- **"Endbenutzer"** oder **"Sie"** bezieht sich auf die Person oder Organisation, die die Software nutzt.
 
-* You may clone or fork this repository for personal, non-commercial use only.
-* You may view and study the source code for educational or developmental purposes.
+## 2. Lizenzgewährung
 
-**Restrictions:**
+Diese proprietäre Software und alle zugehörigen Dateien (die "Software") sind urheberrechtlich geschützt und vertraulich. Der Lizenzgeber gewährt Ihnen eine begrenzte, nicht-exklusive, nicht-übertragbare Lizenz zur Nutzung der Software unter folgenden Bedingungen:
 
-* You may not distribute, sublicense, sell, or otherwise transfer copies of the Software.
-* You may not modify, adapt, translate, or create derivative works based on the Software for commercial or public distribution.
-* Any use of the Software beyond personal, non-commercial purposes requires explicit written consent from the copyright holder.
+### 2.1 Erlaubte Nutzungen
 
-**Liability:**
-The Software is provided “as is,” without warranty of any kind. In no event shall the author be liable for any claim, damages, or other liability arising from the use or inability to use the Software.
+- **Persönliche Nutzung**: Sie dürfen dieses Repository für persönliche, nicht-kommerzielle Zwecke klonen oder forken.
+- **Bildungszwecke**: Sie dürfen den Quellcode zu Bildungs- oder Lernzwecken einsehen und studieren.
+- **Lokale Entwicklung**: Sie dürfen die Software auf Ihrem lokalen Gerät für nicht-kommerzielle Entwicklungs- und Testzwecke ausführen.
 
-**Contact:**
-For permission requests or inquiries, please contact:
+### 2.2 Einschränkungen
 
-Jonas Laux
-Email: [jonas.laux@hotmail.com](mailto:jonas.laux@hotmail.com)
+- **Verbreitung**: Sie dürfen die Software oder Teile davon nicht verbreiten, unterlizenzieren, verkaufen, vermieten oder anderweitig an Dritte weitergeben.
+- **Änderungen**: Sie dürfen die Software nicht modifizieren, anpassen, übersetzen oder abgeleitete Werke für kommerzielle oder öffentliche Zwecke erstellen.
+- **Reverse Engineering**: Sie dürfen die Software nicht zurückentwickeln, dekompilieren oder disassemblieren.
+- **Kommerzielle Nutzung**: Jede kommerzielle Nutzung der Software erfordert eine separate schriftliche Vereinbarung mit dem Lizenzgeber.
+
+## 3. Geistiges Eigentum
+
+Alle Eigentumsrechte und geistigen Eigentumsrechte an der Software, einschließlich aller Grafiken, Benutzeroberflächen und Dokumentation, bleiben im alleinigen Besitz des Lizenzgebers. Diese Vereinbarung gewährt Ihnen keine Rechte am geistigen Eigentum der Software, mit Ausnahme der ausdrücklich in Abschnitt 2.1 gewährten begrenzten Nutzungsrechte.
+
+## 4. Haftungsausschluss
+
+DIE SOFTWARE WIRD "WIE BESEHEN" UND OHNE JEGLICHE GARANTIE BEREITGESTELLT, WEDER AUSDRÜCKLICH NOCH STILLSCHWEIGEND, EINSCHLIESSLICH, ABER NICHT BESCHRÄNKT AUF GARANTIEN DER MARKTGÄNGIGKEIT, EIGNUNG FÜR EINEN BESTIMMTEN ZWECK UND NICHTVERLETZUNG VON RECHTEN DRITTER.
+
+IN KEINEM FALL IST DER LIZENZGEBER HAFTBAR FÜR ANSPRÜCHE, SCHÄDEN ODER ANDERE VERBINDLICHKEITEN, SEI ES AUS VERTRAG, UNERLAUBTER HANDLUNG ODER ANDERWEITIG, DIE SICH AUS, IN VERBINDUNG MIT ODER INFOLGE DER NUTZUNG ODER ANDEREN HANDLUNGEN MIT DER SOFTWARE ERGEBEN.
+
+## 5. Kündigung
+
+Diese Lizenzvereinbarung bleibt in Kraft, bis sie gekündigt wird. Ihre Rechte unter dieser Lizenz werden automatisch beendet, wenn Sie gegen eine der Bedingungen verstoßen. Bei Kündigung müssen Sie die Nutzung der Software einstellen und alle Kopien in Ihrem Besitz löschen.
+
+## 6. Geltendes Recht
+
+Diese Vereinbarung unterliegt den Gesetzen der Bundesrepublik Deutschland, ohne Berücksichtigung von Kollisionsnormen.
+
+## 7. Kontakt und Genehmigungen
+
+Für Lizenzanfragen, Genehmigungen oder sonstige Anfragen kontaktieren Sie bitte:
+
+**Jonas Laux**  
+E-Mail: [jonas.laux@hotmail.com](mailto:jonas.laux@hotmail.com)  
+GitHub: [jonax1337](https://github.com/jonax1337)
+
+---
+
+*Letzte Aktualisierung: Mai 2025*
