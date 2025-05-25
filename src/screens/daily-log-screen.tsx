@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronsUp, ChevronsDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
@@ -401,9 +401,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               accessibilityLabel={"Mahlzeit " + mealType + (isExpanded ? " einklappen" : " ausklappen")}
             >
               {isExpanded ? (
-                <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
               ) : (
-                <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
               )}
             </TouchableOpacity>
           </View>
@@ -713,9 +713,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   {expandedMeals['breakfast'] ? (
-                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   ) : (
-                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -840,9 +840,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   {expandedMeals['lunch'] ? (
-                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   ) : (
-                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -967,9 +967,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   {expandedMeals['dinner'] ? (
-                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   ) : (
-                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -1094,9 +1094,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   {expandedMeals['snack'] ? (
-                    <ChevronsUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   ) : (
-                    <ChevronsDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
                   )}
                 </TouchableOpacity>
               </View>
