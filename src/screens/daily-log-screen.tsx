@@ -15,6 +15,102 @@ import { useDateContext } from '../context/date-context';
 import { createDailyLogStyles } from '../styles/screens/daily-log-styles';
 
 export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
+  // Wiederverwendbare Komponente für den Kalorien-Anzeige und Akkordeon-Button Bereich
+  const MealAccordionButton = ({ mealType, calories }: { mealType: string, calories: number }) => (
+    <TouchableOpacity
+      style={{ flexDirection: 'row', alignItems: 'center' }}
+      onPress={(e) => {
+        e.stopPropagation();
+        toggleMealAccordion(mealType);
+      }}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+    >
+      <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
+        {Math.round(calories)} kcal
+      </Text>
+      {/* Akkordeon-Icon */}
+      {expandedMeals[mealType] ? (
+        <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+      ) : (
+        <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+      )}
+    </TouchableOpacity>
+  );
+  
+  // Wiederverwendbare Komponente für den ausklappbaren Bereich mit Einträgen
+  const MealAccordionContent = ({ mealType, isLast = false }: { mealType: string, isLast?: boolean }) => {
+    const entries = dailyLog?.foodEntries.filter(entry => entry.mealType === mealType) || [];
+    
+    return expandedMeals[mealType] ? (
+      <View style={{
+        backgroundColor: theme.colors.card,
+        borderBottomLeftRadius: theme.borderRadius.medium,
+        borderBottomRightRadius: theme.borderRadius.medium,
+        borderTopWidth: 1,     // Subtile Trennlinie
+        borderTopColor: theme.colors.border + '40', // Transparentes Grau
+        paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
+        paddingTop: 8,        // 1 Grid Punkt (8px)
+        paddingBottom: 0,     // Kein zusätzlicher Abstand unten
+        marginBottom: isLast ? 0 : 12,  // Abstand zum nächsten Element, außer bei letztem Element
+      }}>
+        {entries.length > 0 ? (
+          entries.map((entry, index, array) => (
+            <View key={entry.id} style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingVertical: 8, // 1 Grid Punkt (8px)
+              // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
+              ...index < array.length - 1 ? {
+                borderBottomWidth: 1,
+                borderBottomColor: theme.colors.border + '40',
+              } : {
+                marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
+              }
+            }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
+                  {entry.foodItem.name}
+                </Text>
+                <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
+                  {entry.servingAmount}g
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
+                  {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
+                </Text>
+                {/* Details-Button */}
+                <TouchableOpacity
+                  onPress={() => handleOpenFoodDetails(entry)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ marginRight: 8 }}
+                >
+                  <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
+                </TouchableOpacity>
+                {/* Löschen-Button */}
+                <TouchableOpacity
+                  onPress={() => handleRemoveEntry(entry.id)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        ) : (
+          <Text style={{ 
+            fontFamily: theme.typography.fontFamily.regular, 
+            color: theme.colors.textLight, 
+            textAlign: 'center', 
+            paddingVertical: 16, // 2 Grid Punkte (8px * 2)
+          }}>
+            Keine Einträge vorhanden
+          </Text>
+        )}
+      </View>
+    ) : null;
+  };
   // Get theme from context
   const { theme } = useTheme();
   // Get safe area insets
@@ -701,98 +797,12 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               </TouchableOpacity>
               
               {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
-                  {Math.round(totals.mealTotals.breakfast?.calories || 0)} kcal
-                </Text>
-                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    toggleMealAccordion('breakfast');
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  {expandedMeals['breakfast'] ? (
-                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  ) : (
-                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  )}
-                </TouchableOpacity>
-              </View>
+              <MealAccordionButton mealType='breakfast' calories={totals.mealTotals.breakfast?.calories || 0} />
             </View>
           </TouchableOpacity>
           
           {/* Ausklappbarer Bereich für die Einträge */}
-          {expandedMeals['breakfast'] && (
-            <View style={{
-              backgroundColor: theme.colors.card,
-              borderBottomLeftRadius: theme.borderRadius.medium,
-              borderBottomRightRadius: theme.borderRadius.medium,
-              borderTopWidth: 1,     // Subtile Trennlinie
-              borderTopColor: theme.colors.border + '40', // Transparentes Grau
-              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
-              paddingTop: 8,        // 1 Grid Punkt (8px)
-              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
-              marginBottom: 12,      // Abstand zum nächsten Element
-            }}>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length > 0 ? (
-                dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').map((entry, index, array) => (
-                  <View key={entry.id} style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: 8, // 1 Grid Punkt (8px)
-                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
-                    ...index < array.length - 1 ? {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.colors.border + '40',
-                    } : {
-                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
-                    }
-                  }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
-                        {entry.foodItem.name}
-                      </Text>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
-                        {entry.servingAmount}g
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
-                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
-                      </Text>
-                      {/* Details-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleOpenFoodDetails(entry)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        style={{ marginRight: 8 }}
-                      >
-                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
-                      </TouchableOpacity>
-                      {/* Löschen-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleRemoveEntry(entry.id)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={{ 
-                  fontFamily: theme.typography.fontFamily.regular, 
-                  color: theme.colors.textLight, 
-                  textAlign: 'center', 
-                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
-                }}>
-                  Keine Einträge vorhanden
-                </Text>
-              )}
-            </View>
-          )}
+          <MealAccordionContent mealType='breakfast' />
         </View>
         
         {/* Mittagessen */}
@@ -828,98 +838,12 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               </TouchableOpacity>
               
               {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
-                  {Math.round(totals.mealTotals.lunch?.calories || 0)} kcal
-                </Text>
-                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    toggleMealAccordion('lunch');
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  {expandedMeals['lunch'] ? (
-                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  ) : (
-                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  )}
-                </TouchableOpacity>
-              </View>
+              <MealAccordionButton mealType='lunch' calories={totals.mealTotals.lunch?.calories || 0} />
             </View>
           </TouchableOpacity>
           
           {/* Ausklappbarer Bereich für die Einträge */}
-          {expandedMeals['lunch'] && (
-            <View style={{
-              backgroundColor: theme.colors.card,
-              borderBottomLeftRadius: theme.borderRadius.medium,
-              borderBottomRightRadius: theme.borderRadius.medium,
-              borderTopWidth: 1,     // Subtile Trennlinie
-              borderTopColor: theme.colors.border + '40', // Transparentes Grau
-              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
-              paddingTop: 8,        // 1 Grid Punkt (8px)
-              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
-              marginBottom: 12,      // Abstand zum nächsten Element
-            }}>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length > 0 ? (
-                dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').map((entry, index, array) => (
-                  <View key={entry.id} style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: 8, // 1 Grid Punkt (8px)
-                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
-                    ...index < array.length - 1 ? {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.colors.border + '40',
-                    } : {
-                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
-                    }
-                  }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
-                        {entry.foodItem.name}
-                      </Text>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
-                        {entry.servingAmount}g
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
-                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
-                      </Text>
-                      {/* Details-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleOpenFoodDetails(entry)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        style={{ marginRight: 8 }}
-                      >
-                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
-                      </TouchableOpacity>
-                      {/* Löschen-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleRemoveEntry(entry.id)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={{ 
-                  fontFamily: theme.typography.fontFamily.regular, 
-                  color: theme.colors.textLight, 
-                  textAlign: 'center', 
-                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
-                }}>
-                  Keine Einträge vorhanden
-                </Text>
-              )}
-            </View>
-          )}
+          <MealAccordionContent mealType='lunch' />
         </View>
         
         {/* Abendessen */}
@@ -955,98 +879,12 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               </TouchableOpacity>
               
               {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
-                  {Math.round(totals.mealTotals.dinner?.calories || 0)} kcal
-                </Text>
-                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    toggleMealAccordion('dinner');
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  {expandedMeals['dinner'] ? (
-                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  ) : (
-                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  )}
-                </TouchableOpacity>
-              </View>
+              <MealAccordionButton mealType='dinner' calories={totals.mealTotals.dinner?.calories || 0} />
             </View>
           </TouchableOpacity>
           
           {/* Ausklappbarer Bereich für die Einträge */}
-          {expandedMeals['dinner'] && (
-            <View style={{
-              backgroundColor: theme.colors.card,
-              borderBottomLeftRadius: theme.borderRadius.medium,
-              borderBottomRightRadius: theme.borderRadius.medium,
-              borderTopWidth: 1,     // Subtile Trennlinie
-              borderTopColor: theme.colors.border + '40', // Transparentes Grau
-              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
-              paddingTop: 8,        // 1 Grid Punkt (8px)
-              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
-              marginBottom: 12,      // Abstand zum nächsten Element
-            }}>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length > 0 ? (
-                dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').map((entry, index, array) => (
-                  <View key={entry.id} style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: 8, // 1 Grid Punkt (8px)
-                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
-                    ...index < array.length - 1 ? {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.colors.border + '40',
-                    } : {
-                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
-                    }
-                  }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
-                        {entry.foodItem.name}
-                      </Text>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
-                        {entry.servingAmount}g
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
-                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
-                      </Text>
-                      {/* Details-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleOpenFoodDetails(entry)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        style={{ marginRight: 8 }}
-                      >
-                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
-                      </TouchableOpacity>
-                      {/* Löschen-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleRemoveEntry(entry.id)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={{ 
-                  fontFamily: theme.typography.fontFamily.regular, 
-                  color: theme.colors.textLight, 
-                  textAlign: 'center', 
-                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
-                }}>
-                  Keine Einträge vorhanden
-                </Text>
-              )}
-            </View>
-          )}
+          <MealAccordionContent mealType='dinner' />
         </View>
         
         {/* Snacks */}
@@ -1082,98 +920,12 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               </TouchableOpacity>
               
               {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
-                  {Math.round(totals.mealTotals.snack?.calories || 0)} kcal
-                </Text>
-                {/* Akkordeon-Button - öffnet/schließt die Liste der Einträge */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    toggleMealAccordion('snack');
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  {expandedMeals['snack'] ? (
-                    <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  ) : (
-                    <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
-                  )}
-                </TouchableOpacity>
-              </View>
+              <MealAccordionButton mealType='snack' calories={totals.mealTotals.snack?.calories || 0} />
             </View>
           </TouchableOpacity>
           
           {/* Ausklappbarer Bereich für die Einträge */}
-          {expandedMeals['snack'] && (
-            <View style={{
-              backgroundColor: theme.colors.card,
-              borderBottomLeftRadius: theme.borderRadius.medium,
-              borderBottomRightRadius: theme.borderRadius.medium,
-              borderTopWidth: 1,     // Subtile Trennlinie
-              borderTopColor: theme.colors.border + '40', // Transparentes Grau
-              paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
-              paddingTop: 8,        // 1 Grid Punkt (8px)
-              paddingBottom: 0,     // Kein zusätzlicher Abstand unten
-              marginBottom: 0,       // Kein Abstand zum Seitenende
-            }}>
-              {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length > 0 ? (
-                dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').map((entry, index, array) => (
-                  <View key={entry.id} style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: 8, // 1 Grid Punkt (8px)
-                    // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
-                    ...index < array.length - 1 ? {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.colors.border + '40',
-                    } : {
-                      marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
-                    }
-                  }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
-                        {entry.foodItem.name}
-                      </Text>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
-                        {entry.servingAmount}g
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
-                        {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
-                      </Text>
-                      {/* Details-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleOpenFoodDetails(entry)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        style={{ marginRight: 8 }}
-                      >
-                        <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
-                      </TouchableOpacity>
-                      {/* Löschen-Button */}
-                      <TouchableOpacity
-                        onPress={() => handleRemoveEntry(entry.id)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={{ 
-                  fontFamily: theme.typography.fontFamily.regular, 
-                  color: theme.colors.textLight, 
-                  textAlign: 'center', 
-                  paddingVertical: 16, // 2 Grid Punkte (8px * 2)
-                }}>
-                  Keine Einträge vorhanden
-                </Text>
-              )}
-            </View>
-          )}
+          <MealAccordionContent mealType='snack' isLast={true} />
         </View>
       </ScrollView>
     </View>

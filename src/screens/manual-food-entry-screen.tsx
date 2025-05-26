@@ -27,7 +27,7 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
   const { selectedDate: contextDate } = useDateContext();
   
   // Get parameters from navigation
-  const { mealType } = route.params || {};
+  const { mealType, selectedDate: routeDate } = route.params || {};
 
   // States for the form
   const [productName, setProductName] = useState('');
