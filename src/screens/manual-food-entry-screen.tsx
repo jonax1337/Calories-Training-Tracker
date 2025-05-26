@@ -44,8 +44,8 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
     mealType ? MealType[mealType.charAt(0).toUpperCase() + mealType.slice(1) as keyof typeof MealType] : MealType.Lunch
   );
   
-  // Use the date from context or today as default
-  const [selectedDate] = useState<string>(contextDate || getTodayFormatted());
+  // Use the date from route params, then context, or today as default
+  const [selectedDate] = useState<string>(routeDate || contextDate || getTodayFormatted());
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
