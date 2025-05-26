@@ -42,7 +42,7 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
     marginBottom: theme.spacing.l 
   },
   previewWrapper: {
-    marginTop: theme.spacing.l,
+    marginTop: theme.spacing.xs,
     width: SCREEN_WIDTH - theme.spacing.m * 2,
     height: SCREEN_HEIGHT * 0.5,
     overflow: "hidden",
@@ -99,7 +99,6 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
     height: theme.spacing.xxl,
     borderRadius: theme.borderRadius.medium,
     paddingHorizontal: theme.spacing.m,
-    marginRight: theme.spacing.s,
     borderColor: theme.colors.border,
     borderWidth: 1,
     fontFamily: theme.typography.fontFamily.regular,

@@ -250,7 +250,6 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
                 <CameraView
                   style={styles.preview}
                   facing="back"
-                  selectedLens="Back Camera"
                   enableTorch={isTorchOn}
                   autofocus={autofocus}
                   onCameraReady={() => setTimeout(() => setIsTorchOn(false), 500)}
@@ -297,14 +296,9 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
               placeholderTextColor={theme.colors.textLight}
               value={nameInput}
               onChangeText={setNameInput}
+              enterKeyHint="search"
+              onSubmitEditing={handleSearchByName}
             />
-            <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: theme.colors.primary }]}
-              onPress={handleSearchByName}
-              disabled={isLoading}
-            >
-              <Search strokeWidth={1.5} size={theme.typography.fontSize.m} color="white" />
-            </TouchableOpacity>
           </View>
         )}
 

@@ -108,45 +108,18 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               setSliderValue(productSize);
             }
           } else {
-            setError('Produkt nicht gefunden. Bitte Details manuell eingeben.');
-            // Leeres Food Item erstellen
-            createEmptyFoodItem();
+            setError('Produkt nicht gefunden.');
           }
         } catch (err) {
           setError('Fehler beim Abrufen der Produktdaten');
           console.error(err);
-          // Leeres Food Item erstellen bei Fehler
-          createEmptyFoodItem();
         } finally {
           setIsLoading(false);
         }
       } else {
-        // Wenn kein Barcode oder FoodItem übergeben wurde (manuelles Eingeben), erstelle ein leeres Food Item
-        createEmptyFoodItem();
         setIsLoading(false);
       }
     };
-
-    // Funktion zum Erstellen eines leeren Food Items
-    const createEmptyFoodItem = () => {
-      const emptyFood: FoodItem = {
-        id: generateSimpleId(),
-        name: '',
-        brand: '',
-        barcode: '',
-        nutrition: {
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-          servingSize: '100g',
-          servingSizeGrams: 100
-        }
-      };
-      setFoodItem(emptyFood);
-      setCustomName('');
-    };
-
     loadFoodData();
   }, [barcode, foodId, passedFoodItem]);
 
@@ -292,11 +265,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             }]}>Lade Produktdaten...</Text>
           </View>
         ) : error ? (
-          <View style={[styles.errorContainer, { marginTop: theme.spacing.xl }]}>
-            <Text style={[styles.errorText, { 
-              color: theme.colors.error,
-              fontFamily: theme.typography.fontFamily.medium 
-            }]}>{error}</Text>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : (
           <>
