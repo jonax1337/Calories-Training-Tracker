@@ -266,7 +266,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
       mealType: entry.mealType,
       // Bearbeitung eines existierenden Eintrags
       existingEntryId: entry.id,
-      servingAmount: entry.servingAmount
+      servingAmount: entry.servingAmount,
+      // Wichtig: Gib das Datum des Eintrags mit, nicht das aktuell ausgewählte Datum
+      selectedDate: dailyLog?.date || selectedDate
     });
   };
 

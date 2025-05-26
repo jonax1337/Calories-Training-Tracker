@@ -1,12 +1,12 @@
-const { pool } = require('../config/db');
+const { pool, executeQuery } = require('../config/db');
 
 // Get user profile by ID
 exports.getUserProfile = async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const [rows] = await executeQuery(() => pool.query(
       'SELECT * FROM users WHERE id = ?',
       [req.params.id]
-    );
+    ));
 
     if (rows.length === 0) {
       return res.status(404).json({ message: 'User not found' });

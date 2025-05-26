@@ -25,12 +25,12 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const styles = createFoodDetailStyles(theme);
 
   // Get parameters from navigation
-  const { barcode, foodId, mealType, foodItem: passedFoodItem, selectedDate: passedDate } = route.params || {};
+  const { barcode, foodId, mealType, foodItem: passedFoodItem, selectedDate: passedDate, existingEntryId, servingAmount: passedServingAmount } = route.params || {};
   
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
-  const [servings, setServings] = useState('100.00'); // Default to 100g mit 2 Nachkommastellen
-  const [sliderValue, setSliderValue] = useState(100); // Slider-Wert (identisch mit servings, aber als number)
+  const [servings, setServings] = useState(passedServingAmount ? passedServingAmount.toFixed(2) : '100.00'); // Übernimm Portionsgröße oder Default
+  const [sliderValue, setSliderValue] = useState(passedServingAmount || 100); // Slider-Wert (identisch mit servings, aber als number)
   
   // Set selected meal based on navigation parameter or default to Lunch
   const [selectedMeal, setSelectedMeal] = useState<MealType>(
@@ -42,6 +42,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   
   // Add state for the selected date (use passed date or default to today)
   const [selectedDate, setSelectedDate] = useState<string>(passedDate || getTodayFormatted());
+  
+  // Flag to indicate if we're editing an existing entry
+  const isEditing = Boolean(existingEntryId);
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
@@ -148,27 +151,15 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         return;
       }
 
-      // STEP 2: Create a food entry for the daily log
-      const entry: FoodEntry = {
-        id: generateSimpleId(),
-        foodItem: updatedFoodItem,
-        servingAmount: parseFloat(servings) || 1,
-        mealType: selectedMeal,
-        timeConsumed: new Date().toISOString(),
-      };
-      
       // Use the selected date instead of today for the daily log
       console.log(`Using selected date for daily log: ${selectedDate}`);
       
       // Format the entry time for MySQL compatibility
       const now = new Date();
       const mysqlCompatibleTime = dateToMySQLDateTime(now);
-      console.log(`Created food entry at: ${mysqlCompatibleTime} (local time)`);
+      console.log(`Operation time: ${mysqlCompatibleTime} (local time)`);
       
-      // Update the entry's time to use MySQL compatible format
-      entry.timeConsumed = now.toISOString();
-      
-      // STEP 3: Get the daily log for the selected date
+      // STEP 2: Get the daily log for the selected date
       let dailyLog;
       try {
         dailyLog = await getDailyLogByDate(selectedDate);
@@ -185,11 +176,47 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         console.log('Created default daily log');
       }
       
-      // STEP 4: Add the entry to the daily log
-      dailyLog.foodEntries.push(entry);
-      console.log(`Added food entry ${entry.id} to daily log, now has ${dailyLog.foodEntries.length} entries`);
+      if (isEditing && existingEntryId) {
+        // EDITING MODE: Update existing entry
+        console.log(`Updating existing entry with ID: ${existingEntryId}`);
+        
+        // Find index of entry to update
+        const entryIndex = dailyLog.foodEntries.findIndex(entry => entry.id === existingEntryId);
+        
+        if (entryIndex !== -1) {
+          // Update the existing entry
+          const updatedEntry = {
+            ...dailyLog.foodEntries[entryIndex],
+            foodItem: updatedFoodItem,
+            servingAmount: parseFloat(servings) || 1,
+            mealType: selectedMeal
+            // Don't update timeConsumed to preserve original consumption time
+          };
+          
+          // Replace the entry in the array
+          dailyLog.foodEntries[entryIndex] = updatedEntry;
+          console.log(`Updated food entry at index ${entryIndex}`);
+        } else {
+          console.error(`Entry with ID ${existingEntryId} not found in daily log`);
+          Alert.alert('Fehler', 'Der zu aktualisierende Eintrag wurde nicht gefunden');
+          return;
+        }
+      } else {
+        // ADD MODE: Create a new entry
+        const entry: FoodEntry = {
+          id: generateSimpleId(),
+          foodItem: updatedFoodItem,
+          servingAmount: parseFloat(servings) || 1,
+          mealType: selectedMeal,
+          timeConsumed: now.toISOString(),
+        };
+        
+        // Add the new entry to the daily log
+        dailyLog.foodEntries.push(entry);
+        console.log(`Added new food entry ${entry.id} to daily log, now has ${dailyLog.foodEntries.length} entries`);
+      }
       
-      // STEP 5: Save the updated log
+      // STEP 3: Save the updated log
       try {
         await saveDailyLog(dailyLog);
         console.log('Daily log saved successfully');
@@ -449,7 +476,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               }]}
               onPress={handleAddToLog}
             >
-              <Text style={styles.addButtonText}>Hinzufügen</Text>
+              <Text style={styles.addButtonText}>{isEditing ? 'Aktualisieren' : 'Hinzufügen'}</Text>
             </TouchableOpacity>
           </>
         )}
