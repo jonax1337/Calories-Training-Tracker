@@ -50,7 +50,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         borderTopWidth: 1,     // Subtile Trennlinie
         borderTopColor: theme.colors.border + '40', // Transparentes Grau
         paddingHorizontal: theme.spacing.s, // Horizontaler Innenabstand
-        paddingTop: 8,        // Oberer Innenabstand
+        paddingTop: theme.spacing.s,        // Oberer Innenabstand
         paddingBottom: theme.spacing.m, // Unterer Innenabstand für bessere Optik
         marginBottom: isLast ? 0 : theme.spacing.m,  // Abstand zum nächsten Element, außer bei letztem Element
       }}>
@@ -339,17 +339,13 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
           onPress: () => {
             try {
               // Verzögerung für zuverlässigeres Zurücksetzen
-              setTimeout(() => {
-                // Swipe zurücksetzen, wenn der Benutzer abbricht
-                const swipeable = swipeableRefs.current.get(entryId);
+              const swipeable = swipeableRefs.current.get(entryId);
                 if (swipeable) {
                   // Haptisches Feedback für Abbruch
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   // Versuche den Swipe zu schließen
                   swipeable.close();
-                  console.log('Swipe für Element ' + entryId + ' zurückgesetzt');
                 }
-              }, 10); // Kleine Verzögerung für bessere Zuverlässigkeit
             } catch (error) {
               console.error('Fehler beim Zurücksetzen des Swipe:', error);
             }
