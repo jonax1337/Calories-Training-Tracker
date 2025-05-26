@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -391,13 +392,15 @@ import { DateProvider } from './context/date-context';
 // App Navigation Component
 export default function AppNavigation() {
   return (
-    <NavigationContainer>
-      <ThemeProvider>
-        <DateProvider>
-          <NavigationContent />
-        </DateProvider>
-      </ThemeProvider>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <ThemeProvider>
+          <DateProvider>
+            <NavigationContent />
+          </DateProvider>
+        </ThemeProvider>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }
 

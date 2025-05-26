@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal, Animated } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-native-gesture-handler';
 import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react-native';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
@@ -48,55 +49,189 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
         borderBottomRightRadius: theme.borderRadius.medium,
         borderTopWidth: 1,     // Subtile Trennlinie
         borderTopColor: theme.colors.border + '40', // Transparentes Grau
-        paddingHorizontal: 16, // 2 Grid Punkte (8px * 2)
-        paddingTop: 8,        // 1 Grid Punkt (8px)
-        paddingBottom: 0,     // Kein zusätzlicher Abstand unten
-        marginBottom: isLast ? 0 : 12,  // Abstand zum nächsten Element, außer bei letztem Element
+        paddingHorizontal: theme.spacing.s, // Horizontaler Innenabstand
+        paddingTop: 8,        // Oberer Innenabstand
+        paddingBottom: theme.spacing.m, // Unterer Innenabstand für bessere Optik
+        marginBottom: isLast ? 0 : theme.spacing.m,  // Abstand zum nächsten Element, außer bei letztem Element
       }}>
         {entries.length > 0 ? (
           entries.map((entry, index, array) => (
-            <View key={entry.id} style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingVertical: 8, // 1 Grid Punkt (8px)
-              // Nur Trennlinie anzeigen, wenn es nicht das letzte Element ist
-              ...index < array.length - 1 ? {
-                borderBottomWidth: 1,
-                borderBottomColor: theme.colors.border + '40',
-              } : {
-                marginBottom: 8, // 1 Grid Punkt Abstand zum Container-Ende
-              }
-            }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
-                  {entry.foodItem.name}
-                </Text>
-                <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
-                  {entry.servingAmount}g
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary, marginRight: 8 }}>
-                  {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
-                </Text>
-                {/* Details-Button */}
-                <TouchableOpacity
-                  onPress={() => handleOpenFoodDetails(entry)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{ marginRight: 8 }}
-                >
-                  <Info strokeWidth={1.5} size={20} color={theme.colors.accent} />
-                </TouchableOpacity>
-                {/* Löschen-Button */}
-                <TouchableOpacity
-                  onPress={() => handleRemoveEntry(entry.id)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Trash2 strokeWidth={1.5} size={20} color={theme.colors.error} />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Swipeable
+              key={entry.id}
+              ref={ref => {
+                // Ref zum Zurücksetzen des Swipe-Zustands speichern
+                if (ref && !swipeableRefs.current.has(entry.id)) {
+                  swipeableRefs.current.set(entry.id, ref);
+                }
+              }}
+              friction={2}      // Höherer Wert = langsameres Schwingen
+              leftThreshold={80} // Schwellenwert für automatische Aktion (Bearbeiten)
+              rightThreshold={80} // Schwellenwert für automatische Aktion (Löschen)
+              overshootLeft={false}  // Keine Überschwingung nach links
+              overshootRight={false} // Keine Überschwingung nach rechts
+              onSwipeableOpen={(direction) => {
+                if (direction === 'left') {
+                  // Haptisches Feedback - Bearbeiten
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  handleOpenFoodDetails(entry);
+                } else if (direction === 'right') {
+                  // Haptisches Feedback - Löschen
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                  handleRemoveEntry(entry.id);
+                }
+              }}
+              // Nach rechts wischen zeigt den Löschen-Button
+              renderRightActions={(progress, dragX) => {
+                // Animation für Löschen (nach rechts wischen)
+                const trans = dragX.interpolate({
+                  inputRange: [-80, 0],
+                  outputRange: [0, 80],
+                  extrapolate: 'clamp',
+                });
+                
+                // Farbübergang: Je weiter gewischt, desto intensiver
+                const opacity = progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                });
+                
+                return (
+                  <Animated.View 
+                    style={{
+                      width: 80,
+                      backgroundColor: theme.colors.error,
+                      opacity,
+                      borderTopRightRadius: index === 0 ? theme.borderRadius.small : 0,
+                      borderBottomRightRadius: index === array.length - 1 ? theme.borderRadius.small : 0,
+                      height: '100%',
+                      overflow: 'hidden',
+                      // Verbesserte Ausrichtung ohne absolute Positionierung
+                      justifyContent: 'center',
+                      alignSelf: 'stretch'
+                      
+                    }}
+                  >
+                    <RectButton
+                      style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: 'transparent',
+                      }}
+                      onPress={() => handleRemoveEntry(entry.id)}
+                    >
+                      <Animated.View
+                        style={{
+                          transform: [{ translateX: trans }],
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Trash2 size={24} color="white" strokeWidth={1.5} />
+                        <Text style={{ color: 'white', fontSize: 12, fontFamily: theme.typography.fontFamily.medium, marginTop: 4 }}>
+                          Löschen
+                        </Text>
+                      </Animated.View>
+                    </RectButton>
+                  </Animated.View>
+                );
+              }}
+              // Nach links wischen zeigt den Bearbeiten-Button
+              renderLeftActions={(progress, dragX) => {
+                // Animation für Bearbeiten (nach links wischen)
+                const trans = dragX.interpolate({
+                  inputRange: [0, 80],
+                  outputRange: [-80, 0],
+                  extrapolate: 'clamp',
+                });
+                
+                // Farbübergang: Je weiter gewischt, desto intensiver
+                const opacity = progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                });
+                
+                return (
+                  <Animated.View 
+                    style={{
+                      width: 80,
+                      backgroundColor: theme.colors.accent,
+                      opacity,
+                      borderTopLeftRadius: index === 0 ? theme.borderRadius.small : 0,
+                      borderBottomLeftRadius: index === array.length - 1 ? theme.borderRadius.small : 0,
+                      height: '100%',
+                      overflow: 'hidden',
+                      // Verbesserte Ausrichtung ohne absolute Positionierung
+                      justifyContent: 'center',
+                      alignSelf: 'stretch'
+                      
+                    }}
+                  >
+                    <RectButton
+                      style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: 'transparent',
+                      }}
+                      onPress={() => handleOpenFoodDetails(entry)}
+                    >
+                      <Animated.View
+                        style={{
+                          transform: [{ translateX: trans }],
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Edit2 size={24} color="white" strokeWidth={1.5} />
+                        <Text style={{ color: 'white', fontSize: 12, fontFamily: theme.typography.fontFamily.medium, marginTop: 4 }}>
+                          Bearbeiten
+                        </Text>
+                      </Animated.View>
+                    </RectButton>
+                  </Animated.View>
+                );
+              }}
+            >
+              <LongPressGestureHandler
+                onHandlerStateChange={({ nativeEvent }) => {
+                  if (nativeEvent.state === State.ACTIVE) {
+                    // Haptisches Feedback beim Long Press
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    handleOpenFoodDetails(entry);
+                  }
+                }}
+                minDurationMs={600}
+              >
+                <View style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingVertical: 12, // Größere Touchfläche für bessere Benutzererfahrung
+                  paddingHorizontal: theme.spacing.m,
+                  backgroundColor: theme.colors.card,
+                  // Konstante Höhe für bessere Ausrichtung
+                  minHeight: 56,
+                  ...index < array.length - 1 ? {
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.colors.border + '40',
+                  } : {
+                    // Kein margin beim letzten Element, da wir padding im Container haben
+                    marginBottom: 0
+                  }
+                }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
+                      {entry.foodItem.name}
+                    </Text>
+                    <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
+                      {entry.servingAmount}g
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }}>
+                    {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
+                  </Text>
+                </View>
+              </LongPressGestureHandler>
+            </Swipeable>
           ))
         ) : (
           <Text style={{ 
@@ -115,6 +250,9 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   const { theme } = useTheme();
   // Get safe area insets
   const insets = useSafeAreaInsets();
+  
+  // Ref für Swipeable-Komponenten, um sie zurücksetzen zu können
+  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
   
   // Styles mit aktuellem Theme initialisieren
   const styles = createDailyLogStyles(theme);
@@ -194,7 +332,28 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
       'Eintrag entfernen',
       'Möchtest du diesen Eintrag wirklich entfernen?',
       [
-        { text: 'Abbrechen', style: 'cancel' },
+        { 
+          text: 'Abbrechen', 
+          style: 'cancel',
+          onPress: () => {
+            try {
+              // Verzögerung für zuverlässigeres Zurücksetzen
+              setTimeout(() => {
+                // Swipe zurücksetzen, wenn der Benutzer abbricht
+                const swipeable = swipeableRefs.current.get(entryId);
+                if (swipeable) {
+                  // Haptisches Feedback für Abbruch
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  // Versuche den Swipe zu schließen
+                  swipeable.close();
+                  console.log('Swipe für Element ' + entryId + ' zurückgesetzt');
+                }
+              }, 100); // Kleine Verzögerung für bessere Zuverlässigkeit
+            } catch (error) {
+              console.error('Fehler beim Zurücksetzen des Swipe:', error);
+            }
+          }
+        },
         {
           text: 'Entfernen',
           style: 'destructive',

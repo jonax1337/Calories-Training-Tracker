@@ -464,6 +464,57 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 }}>500</Text>
               </View>
             </View>
+            
+            {/* Mahlzeitenauswahl - nur im Bearbeitungsmodus anzeigen */}
+            {isEditing && (
+              <View style={[styles.card, { marginTop: theme.spacing.m }]}>
+                <Text style={styles.sectionTitle}>
+                  Mahlzeit auswählen
+                </Text>
+                <View style={styles.mealTypeContainer}>
+                  {Object.values(MealType).map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        {
+                          minWidth: '47%',
+                          alignItems: 'center',
+                          padding: theme.spacing.m,
+                          borderRadius: theme.borderRadius.medium,
+                          borderWidth: 1,
+                          marginBottom: theme.spacing.s,
+                        },
+                        selectedMeal === type 
+                          ? { 
+                              borderColor: theme.colors.primary,
+                              backgroundColor: theme.colors.primary + '15',
+                            }
+                          : {
+                              borderColor: theme.colors.border,
+                              backgroundColor: theme.colors.background,
+                            }
+                      ]}
+                      onPress={() => {
+                        setSelectedMeal(type);
+                        // Haptic feedback
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                    >
+                      <Text style={{
+                        textAlign: 'center',
+                        fontSize: theme.typography.fontSize.m,
+                        fontFamily: selectedMeal === type 
+                          ? theme.typography.fontFamily.bold 
+                          : theme.typography.fontFamily.regular,
+                        color: selectedMeal === type ? theme.colors.primary : theme.colors.text,
+                      }}>
+                        {getMealTypeLabel(type)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
 
             {/* Add to log button */}
             <TouchableOpacity
