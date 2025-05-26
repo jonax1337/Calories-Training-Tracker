@@ -60,7 +60,8 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               key={entry.id}
               ref={ref => {
                 // Ref zum Zurücksetzen des Swipe-Zustands speichern
-                if (ref && !swipeableRefs.current.has(entry.id)) {
+                // WICHTIG: Immer aktualisieren, auch wenn bereits vorhanden
+                if (ref) {
                   swipeableRefs.current.set(entry.id, ref);
                 }
               }}
@@ -348,7 +349,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
                   swipeable.close();
                   console.log('Swipe für Element ' + entryId + ' zurückgesetzt');
                 }
-              }, 100); // Kleine Verzögerung für bessere Zuverlässigkeit
+              }, 10); // Kleine Verzögerung für bessere Zuverlässigkeit
             } catch (error) {
               console.error('Fehler beim Zurücksetzen des Swipe:', error);
             }
