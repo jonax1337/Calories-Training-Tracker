@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Text, View, ScrollView, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { HomeTabScreenProps } from '../types/navigation-types';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,7 +14,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, getTodayFormatted } from '../utils/date-utils';
 import { useDateContext } from '../context/date-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
-import { ChevronLeft, ChevronRight, Minus, Plus, UserRound, X } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Minus, Plus, UserRound, X, PlusCircle, ChevronUpCircle, ChevronDownCircle } from 'lucide-react-native';
+import CalendarModal from '../components/ui/calendar-modal';
+import DateNavigationHeader from '../components/ui/date-navigation-header';
 
 // Helper function to check if user profile is complete with minimum required data
 function isProfileComplete(profile: UserProfile | null): boolean {
@@ -396,162 +398,21 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           elevation: 3,
         }
       ]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
-          <TouchableOpacity
-            onPress={() => {
-              const prevDate = new Date(selectedDate);
-              prevDate.setDate(prevDate.getDate() - 1);
-              setSelectedDate(formatToLocalISODate(prevDate));
-            }}
-          >
-            <ChevronLeft strokeWidth={1.5} size={24} color={theme.theme.colors.primary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity onPress={() => setShowCalendarModal(true)}>
-            <Text style={[
-              styles.dateHeader, 
-              { 
-                fontFamily: theme.theme.typography.fontFamily.bold,
-                color: selectedDate === getTodayFormatted() ? theme.theme.colors.primary : theme.theme.colors.text
-              }
-            ]}>
-              {new Date(selectedDate).toLocaleDateString('de-DE', { 
-                weekday: 'long', 
-                day: 'numeric',
-                month: 'long', 
-                year: 'numeric'
-              })}
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            onPress={() => {
-              const nextDate = new Date(selectedDate);
-              nextDate.setDate(nextDate.getDate() + 1);
-              setSelectedDate(formatToLocalISODate(nextDate));
-            }}
-          >
-            <ChevronRight strokeWidth={1.5} size={24} color={theme.theme.colors.primary} />
-          </TouchableOpacity>
-        </View>
+        {/* Wiederverwendbare Datumsnavigations-Komponente */}
+        <DateNavigationHeader
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          onCalendarOpen={() => setShowCalendarModal(true)}
+        />
       </View>
       
-      {/* Calendar Modal */}
-      <Modal
-        visible={showCalendarModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowCalendarModal(false)}
-      >
-        <TouchableOpacity
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 20
-          }}
-          activeOpacity={1}
-          onPress={() => setShowCalendarModal(false)}
-        >
-          <View 
-            style={{
-              width: '100%',
-              backgroundColor: theme.theme.colors.card,
-              borderRadius: 16,
-              padding: 16,
-              shadowColor: theme.theme.colors.shadow,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 4,
-            }}
-            onStartShouldSetResponder={() => true}
-            onTouchEnd={(e) => e.stopPropagation()}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <Text style={{ 
-                fontFamily: theme.theme.typography.fontFamily.bold,
-                fontSize: 18,
-                color: theme.theme.colors.text
-              }}>
-                Datum auswählen
-              </Text>
-              <TouchableOpacity onPress={() => setShowCalendarModal(false)}>
-                <X strokeWidth={1.5} size={24} color={theme.theme.colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <Calendar
-              onDayPress={(day) => {
-                setSelectedDate(day.dateString);
-                setShowCalendarModal(false);
-              }}
-              markedDates={{
-                [selectedDate]: { selected: true, selectedColor: theme.theme.colors.primary }
-              }}
-              theme={{
-                calendarBackground: theme.theme.colors.card,
-                textSectionTitleColor: theme.theme.colors.text,
-                selectedDayBackgroundColor: theme.theme.colors.primary,
-                selectedDayTextColor: '#ffffff',
-                todayTextColor: theme.theme.colors.primary,
-                dayTextColor: theme.theme.colors.text,
-                textDisabledColor: theme.theme.colors.border,
-                monthTextColor: theme.theme.colors.text,
-                arrowColor: theme.theme.colors.primary,
-                textDayFontFamily: theme.theme.typography.fontFamily.regular,
-                textMonthFontFamily: theme.theme.typography.fontFamily.medium,
-                textDayHeaderFontFamily: theme.theme.typography.fontFamily.medium
-              }}
-            />
-            
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: theme.theme.colors.border,
-                  paddingVertical: 10,
-                  paddingHorizontal: 16,
-                  borderRadius: 8,
-                  flex: 1,
-                  marginRight: 10,
-                  alignItems: 'center'
-                }}
-                onPress={() => {
-                  setSelectedDate(getTodayFormatted());
-                  setShowCalendarModal(false);
-                }}
-              >
-                <Text style={{ 
-                  fontFamily: theme.theme.typography.fontFamily.medium,
-                  color: theme.theme.colors.text
-                }}>
-                  Heute
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{
-                  backgroundColor: theme.theme.colors.primary,
-                  paddingVertical: 10,
-                  paddingHorizontal: 16,
-                  borderRadius: 8,
-                  flex: 1,
-                  alignItems: 'center'
-                }}
-                onPress={() => setShowCalendarModal(false)}
-              >
-                <Text style={{ 
-                  fontFamily: theme.theme.typography.fontFamily.medium,
-                  color: '#ffffff'
-                }}>
-                  Schließen
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      {/* Wiederverwendbare Calendar Modal Komponente */}
+      <CalendarModal
+        isVisible={showCalendarModal}
+        onClose={() => setShowCalendarModal(false)}
+        selectedDate={selectedDate}
+        onDateSelect={(date) => setSelectedDate(date)}
+      />
 
       <ScrollView
         style={styles.scrollContent}
