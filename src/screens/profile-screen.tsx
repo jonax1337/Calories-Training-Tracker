@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Text, View, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar, Platform, Modal, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Text, View, ScrollView, TextInput, TouchableOpacity, Alert, Modal, Platform, ActivityIndicator, StatusBar } from 'react-native';
+import SliderWithInput from '../components/ui/slider-with-input';
 import { Award, Bed, BedDouble, BicepsFlexed, Bike, Dumbbell, Footprints, Star, X } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
@@ -748,7 +749,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         flexDirection: 'column', 
         width: '100%',          
         padding: theme.spacing.m,
-        marginBottom: theme.spacing.s,
+        marginBottom: theme.spacing.m,
         borderRadius: theme.borderRadius.medium,
         backgroundColor: theme.colors.card,
         borderWidth: 1,
@@ -809,299 +810,51 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             </Text>
           </TouchableOpacity>
         </View>
-      {/* Weight */}
-      <View style={[styles.inputContainer, {
-        flexDirection: 'column', 
-        width: '100%',          
-        padding: theme.spacing.m,
-        marginTop: theme.spacing.s,
-        marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.medium,
-        backgroundColor: theme.colors.card,
-        borderWidth: 1,
-        borderColor: theme.colors.border
-      }]}>
-        <View style={{
-          width: '100%',
-          marginBottom: theme.spacing.s      
-        }}>
-          <Text style={[styles.inputLabel, { 
-            fontFamily: theme.typography.fontFamily.medium, 
-            color: theme.colors.text,
-            fontSize: theme.typography.fontSize.m
-          }]}>
-            Gewicht
-          </Text>
-        </View>
-        
-        {/* Weight value display */}
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.medium,
-            fontSize: theme.typography.fontSize.s,
-            color: theme.colors.textLight
-          }}>
-            Kilogramm
-          </Text>
-          <TextInput
-            style={{
-              color: theme.colors.primary,
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: theme.typography.fontSize.l,
-              textAlign: 'center',
-              minWidth: 80,
-              padding: theme.spacing.xs,
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.borderRadius.small,
-              borderWidth: 1,
-              borderColor: theme.colors.primary,
-              elevation: 2,
-              shadowColor: theme.colors.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 1
-            }}
-            value={weightInputText}
-            placeholder="70.00"
-            onChangeText={(text) => {
-              // Konvertiere zu Punkt für die interne Verarbeitung
-              let processedText = text.replace(/,/g, '.');
-              
-              // Stelle sicher, dass nur ein Dezimalpunkt verwendet wird
-              const parts = processedText.split('.');
-              if (parts.length > 2) {
-                processedText = parts[0] + '.' + parts.slice(1).join('');
-              }
-              
-              // Sofort das Komma durch einen Punkt im Anzeige-Text ersetzen
-              setWeightInputText(processedText);
-              
-              // Wert für die Profilaktualisierung verwenden
-              const numValue = parseFloat(processedText);
-              
-              // Aktualisiere das Profil nur, wenn eine gültige Zahl eingegeben wurde
-              if (!isNaN(numValue)) {
-                setProfile(prev => ({
-                  ...prev,
-                  weight: numValue
-                }));
-                
-                // Aktualisiere auch den Slider innerhalb der gültigen Grenzen
-                if (numValue > 200) {
-                  setWeightSliderValue(200);
-                } else if (numValue < 30) {
-                  setWeightSliderValue(30);
-                } else {
-                  setWeightSliderValue(numValue);
-                }
-              }
-            }}
-            keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
-            selectTextOnFocus={true}
-          />
-        </View>
-        
-        {/* Weight slider */}
-        <View style={{
-          width: '100%',        
-          marginBottom: theme.spacing.s
-        }}>
-          <Slider
-            style={{ width: '100%', height: 40 }}
-            minimumValue={30}
-            maximumValue={200}
-            step={0.1}
-            value={Math.min(Math.max(weightSliderValue, 30), 200)}
-            minimumTrackTintColor={theme.colors.primary}
-            maximumTrackTintColor={theme.colors.border}
-            thumbTintColor={theme.colors.primary}
-            onValueChange={(value: number) => {
-              // Runde auf 2 Nachkommastellen für bessere Anzeige
-              const roundedValue = Math.round(value * 100) / 100;
-              setWeightSliderValue(roundedValue);
-              
-              // Aktualisiere den Texteingabe-State mit dem formatierten Wert (mit Punkt als Dezimaltrennzeichen)
-              const formattedValue = roundedValue.toFixed(2);
-              setWeightInputText(formattedValue);
-              
-              // Aktualisiere auch das Profil
-              setProfile(prev => ({
-                ...prev,
-                weight: roundedValue
-              }));
-            }}
-          />
-        </View>
-        
-        {/* Slider labels */}
-        <View style={{
-          width: '100%',         
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>30</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>115</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>200</Text>
-        </View>
-      </View>
+      {/* Gewicht mit wiederverwendbarer SliderWithInput-Komponente */}
+      <SliderWithInput
+        minValue={30}
+        maxValue={200}
+        middleValue={115}
+        step={0.1}
+        decimalPlaces={2}
+        allowDecimals={true}
+        value={profile.weight || 70}
+        onValueChange={(value: number) => {
+          setProfile(prev => ({
+            ...prev,
+            weight: value
+          }));
+        }}
+        label="Gewicht"
+        unit="Kilogramm"
+        placeholder="70.00"
+      />
       
-      {/* Height */}
-      <View style={[styles.inputContainer, {
-        flexDirection: 'column', 
-        width: '100%',          
-        padding: theme.spacing.m,
-        marginTop: theme.spacing.s,
-        marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.medium,
-        backgroundColor: theme.colors.card,
-        borderWidth: 1,
-        borderColor: theme.colors.border
-      }]}>
-        <View style={{
-          width: '100%',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={[styles.inputLabel, { 
-            fontFamily: theme.typography.fontFamily.medium, 
-            color: theme.colors.text,
-            fontSize: theme.typography.fontSize.m
-          }]}>
-            Größe
-          </Text>
-        </View>
-        
-        {/* Height value display */}
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.medium,
-            fontSize: theme.typography.fontSize.s,
-            color: theme.colors.textLight
-          }}>
-            Zentimeter
-          </Text>
-          <TextInput
-            style={{
-              color: theme.colors.primary,
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: theme.typography.fontSize.l,
-              textAlign: 'center',
-              minWidth: 80,
-              padding: theme.spacing.xs,
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.borderRadius.small,
-              borderWidth: 1,
-              borderColor: theme.colors.primary,
-              elevation: 2,
-              shadowColor: theme.colors.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 1
-            }}
-            value={profile.height?.toString() || ''}
-            placeholder="170"
-            onChangeText={(text) => {
-              // Erlaube grundsätzlich alle Eingaben und bereinige später
-              // Ersetze Komma durch Punkt für konsistente Dezimalzahlen
-              let processedText = text.replace(',', '.');
-              
-              // Wir aktualisieren erst das Textfeld direkt, um keine Blockierung zu haben
-              handleTextChange('height', processedText);
-              
-              // Dann versuchen wir, den Wert als Zahl zu interpretieren
-              const numValue = parseFloat(processedText);
-              
-              // Wenn es eine gültige Zahl ist, aktualisiere den Slider
-              // Auch wenn es außerhalb des Bereichs ist
-              if (!isNaN(numValue)) {
-                if (numValue > 240) {
-                  // Bei höheren Werten, setze Slider auf Maximum
-                  setHeightSliderValue(240);
-                } else if (numValue < 120) {
-                  // Bei niedrigeren Werten, setze Slider auf Minimum
-                  setHeightSliderValue(120);
-                } else {
-                  // Bei Werten im gültigen Bereich, setze exakten Wert
-                  setHeightSliderValue(numValue);
-                }
-              }
-            }}
-            keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
-            selectTextOnFocus={true}
-          />
-        </View>
-        
-        {/* Height slider */}
-        <View style={{
-          width: '100%',        
-          marginBottom: theme.spacing.s
-        }}>
-          <Slider
-            style={{ width: '100%', height: 40 }}
-            minimumValue={120}
-            maximumValue={240}
-            step={1}
-            value={Math.min(Math.max(heightSliderValue, 120), 240)}
-            minimumTrackTintColor={theme.colors.primary}
-            maximumTrackTintColor={theme.colors.border}
-            thumbTintColor={theme.colors.primary}
-            onValueChange={(value: number) => {
-              const intValue = Math.round(value);
-              setHeightSliderValue(intValue);
-              handleTextChange('height', intValue.toString());
-            }}
-          />
-        </View>
-        
-        {/* Slider labels */}
-        <View style={{
-          width: '100%',         
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>120</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>180</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>240</Text>
-        </View>
-      </View>
-
+      {/* Körpergröße mit wiederverwendbarer SliderWithInput-Komponente */}
+      <SliderWithInput
+        minValue={120}
+        maxValue={240}
+        middleValue={180}
+        step={1}
+        decimalPlaces={0}
+        allowDecimals={false}
+        value={profile.height || 170}
+        onValueChange={(value: number) => {
+          setProfile(prev => ({
+            ...prev,
+            height: value
+          }));
+        }}
+        label="Größe"
+        unit="Zentimeter"
+        placeholder="170"
+      />
+      
       {/* BMI Indikator */}
       <View style={[styles.inputContainer, {
         flexDirection: 'column', 
         width: '100%',          
         padding: theme.spacing.m,
-        marginTop: theme.spacing.s,
         marginBottom: theme.spacing.s,
         borderRadius: theme.borderRadius.medium,
         backgroundColor: theme.colors.card,
@@ -1307,7 +1060,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         width: '100%',          
         padding: theme.spacing.m,
         marginTop: theme.spacing.s,
-        marginBottom: theme.spacing.s,
+        marginBottom: theme.spacing.xl,
         borderRadius: theme.borderRadius.medium,
         backgroundColor: theme.colors.card,
         borderWidth: 1,
@@ -1620,20 +1373,10 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       
       {/* U00dcberschrift fu00fcr Ziele */}
       <View style={{ marginTop: theme.spacing.m, marginBottom: theme.spacing.s }}>
-        <Text style={{
-          fontFamily: theme.typography.fontFamily.bold,
-          fontSize: theme.typography.fontSize.l,
-          color: theme.colors.text,
-          marginBottom: theme.spacing.xs
-        }}>
-          Dein Ernährungsziel
-        </Text>
-        <Text style={{
-          fontFamily: theme.typography.fontFamily.regular,
-          fontSize: theme.typography.fontSize.s,
-          color: theme.colors.textLight,
-          marginBottom: theme.spacing.s
-        }}>
+      <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+        Dein Ernährungsziel
+      </Text>
+        <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
           Wähle dein Ernährungsziel oder lege eigene Werte fest. Die Empfehlungen basieren auf deinen Körperdaten.
         </Text>
       </View>
@@ -2121,177 +1864,28 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           </Text>
         )}
 
-      {/* Water Goal */}
-      <View style={[styles.inputContainer, {
-        flexDirection: 'column', 
-        width: '100%',          
-        padding: theme.spacing.m,
-        marginTop: theme.spacing.s,
-        marginBottom: theme.spacing.s,
-        borderRadius: theme.borderRadius.medium,
-        backgroundColor: theme.colors.card,
-        borderWidth: 1,
-        borderColor: theme.colors.border
-      }]}>
-        <View style={{
-          width: '100%',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={[styles.inputLabel, { 
-            fontFamily: theme.typography.fontFamily.medium, 
-            color: theme.colors.text,
-            fontSize: theme.typography.fontSize.m
-          }]}>
-            Wasserziel
-          </Text>
-        </View>
-        
-        {/* Water value display */}
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.medium,
-            fontSize: theme.typography.fontSize.s,
-            color: theme.colors.textLight
-          }}>
-            Milliliter
-          </Text>
-          <TextInput
-            style={{
-              color: theme.colors.primary,
-              fontFamily: theme.typography.fontFamily.bold,
-              fontSize: theme.typography.fontSize.l,
-              textAlign: 'center',
-              minWidth: 80,
-              padding: theme.spacing.xs,
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.borderRadius.small,
-              borderWidth: 1,
-              borderColor: theme.colors.primary,
-              elevation: 2,
-              shadowColor: theme.colors.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 1
-            }}
-            value={profile.goals.dailyWater?.toString() || ''}
-            placeholder="2000"
-            onChangeText={(text) => {
-              // Direkt an das Profil übergeben, wie in der Original-Version
-              handleTextChange('goals.dailyWater', text);
-              
-              // Slider-Wert nur aktualisieren, wenn eine gültige Zahl eingegeben wurde
-              const numValue = parseInt(text);
-              if (!isNaN(numValue)) {
-                setWaterSliderValue(numValue);
-              }
-            }}
-            keyboardType="numeric"
-            selectTextOnFocus={true}
-          />
-        </View>
-        
-        {/* Water slider */}
-        <View style={{
-          width: '100%',        
-          marginBottom: theme.spacing.s
-        }}>
-          <Slider
-            style={{ width: '100%', height: 40 }}
-            minimumValue={500}
-            maximumValue={4000}
-            step={100}
-            value={Math.min(Math.max(waterSliderValue, 500), 4000)}
-            minimumTrackTintColor={theme.colors.primary}
-            maximumTrackTintColor={theme.colors.border}
-            thumbTintColor={theme.colors.primary}
-            onValueChange={(value: number) => {
-              const intValue = Math.round(value);
-              setWaterSliderValue(intValue);
-              handleTextChange('goals.dailyWater', intValue.toString());
-            }}
-          />
-        </View>
-        
-        {/* Slider labels */}
-        <View style={{
-          width: '100%',         
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginBottom: theme.spacing.s
-        }}>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>500</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>2000</Text>
-          <Text style={{
-            color: theme.colors.textLight,
-            fontSize: theme.typography.fontSize.xs
-          }}>4000</Text>
-        </View>
-      </View>
-      
-      {/* Health Integration Section */}
-      <Text 
-        style={[
-          styles.sectionTitle, 
-          { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.bold,
-            fontSize: theme.typography.fontSize.xl,
-            marginTop: theme.spacing.l,
-            marginBottom: theme.spacing.m,
-          }
-        ]}
-      >
-        Gesundheitsintegrierung
-      </Text>
-      
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: theme.colors.textLight,
-            fontFamily: theme.typography.fontFamily.regular,
-            fontSize: theme.typography.fontSize.m,
-            marginBottom: theme.spacing.l,
-          }
-        ]}
-      >
-        Verbindung mit deinen Gesundheitsdaten
-      </Text>
-      
-      <TouchableOpacity 
-        style={[
-          styles.connectButton, 
-          { 
-            backgroundColor: healthPermission ? theme.colors.success : theme.colors.info,
-            borderRadius: theme.borderRadius.medium,
-            padding: 16, // 2 Grid-Punkte (16px)
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginVertical: 8, // 1 Grid-Punkt (8px)
-          }
-        ]}
-        onPress={handleRequestPermissions}
-      >
-        <Text style={[styles.connectButtonText, { fontFamily: theme.typography.fontFamily.bold, color: 'white' }]}>
-          {healthPermission ? 'Gesundheitsdaten zugeordnet ✓' : 'Gesundheitsdaten zugeordnet'}
-        </Text>
-      </TouchableOpacity>
-      
-      <Text style={[styles.permissionInfo, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-        Dies wird erlauben, dass die App auf Ihre Gesundheitsdaten zugreift, wie z.B. Schritte, Herzfrequenz und Aktivität.
-      </Text>
+      {/* Wasserziel mit wiederverwendbarer SliderWithInput-Komponente */}
+      <SliderWithInput
+        minValue={500}
+        maxValue={4000}
+        middleValue={2000}
+        step={100}
+        decimalPlaces={0}
+        allowDecimals={false}
+        value={profile.goals.dailyWater || 2000}
+        onValueChange={(value: number) => {
+          setProfile(prev => ({
+            ...prev,
+            goals: {
+              ...prev.goals,
+              dailyWater: value
+            }
+          }));
+        }}
+        label="Wasserziel"
+        unit="Milliliter"
+        placeholder="2000"
+      />
       
       {/* Save Button */}
       <TouchableOpacity 
@@ -2310,8 +1904,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         onPress={handleSave}
         disabled={isLoading}
       >
-        <Text style={[styles.saveButtonText, { fontFamily: theme.typography.fontFamily.bold, color: 'white', fontSize: 16 }]}>
-          {isLoading ? 'Saving...' : 'Save Profile'}
+        <Text style={[styles.saveButtonText, { fontFamily: theme.typography.fontFamily.bold, color: 'white', fontSize: theme.typography.fontSize.m }]}>
+          {isLoading ? 'Speichern...' : 'Profil speichern'}
         </Text>
       </TouchableOpacity>
       </ScrollView>

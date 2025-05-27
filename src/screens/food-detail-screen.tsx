@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, Vibration, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
-import Slider from '@react-native-community/slider';
+import SliderWithInput from '../components/ui/slider-with-input';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { FoodItem, MealType, FoodEntry } from '../types';
@@ -27,10 +27,22 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Get parameters from navigation
   const { barcode, foodId, mealType, foodItem: passedFoodItem, selectedDate: passedDate, existingEntryId, servingAmount: passedServingAmount } = route.params || {};
   
+  // Debug-Log, um zu sehen, welcher Wert übergeben wird
+  console.log('Food Detail Screen: Empfangene servingAmount:', passedServingAmount);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
-  const [servings, setServings] = useState(passedServingAmount ? passedServingAmount.toFixed(2) : '100.00'); // Übernimm Portionsgröße oder Default
-  const [sliderValue, setSliderValue] = useState(passedServingAmount || 100); // Slider-Wert (identisch mit servings, aber als number)
+  
+  // Stelle sicher, dass wir den passedServingAmount-Wert mit 2 Nachkommastellen initialisieren, falls vorhanden
+  // Andernfalls verwenden wir den Standardwert 100.00
+  const [servings, setServings] = useState(
+    typeof passedServingAmount === 'number' ? passedServingAmount.toFixed(2) : '100.00'
+  ); 
+  
+  // sliderValue sollte identisch mit dem numerischen Wert sein
+  const [sliderValue, setSliderValue] = useState(
+    typeof passedServingAmount === 'number' ? passedServingAmount : 100
+  );
   
   // Set selected meal based on navigation parameter or default to Lunch
   const [selectedMeal, setSelectedMeal] = useState<MealType>(
@@ -71,14 +83,26 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Load food data when component mounts or create empty food item for manual entry
   useEffect(() => {
     const loadFoodData = async () => {
+      // WICHTIG: Prüfe zuerst, ob wir einen existierenden Eintrag bearbeiten
+      // und hole die richtige Portionsgröße aus dem food entry
+      if (isEditing && existingEntryId && passedServingAmount) {
+        console.log(`Bearbeite existierenden Eintrag mit ID ${existingEntryId}, Menge: ${passedServingAmount}g`);
+        
+        // Hier verwenden wir die übergebene Portionsgröße aus dem Food Entry
+        // NICHT die Standardgröße des Produkts!
+        setServings(passedServingAmount.toFixed(2));
+        setSliderValue(passedServingAmount);
+      }
+      
       // Wenn ein FoodItem direkt übergeben wurde, verwende dieses
       if (passedFoodItem) {
         console.log('Verwende direkt übergebenes FoodItem:', passedFoodItem.id);
         setFoodItem(passedFoodItem);
         setCustomName(passedFoodItem.name);
         
-        // Setze die Portionsgröße auf die tatsächliche Füllmenge des Produkts
-        if (passedFoodItem.nutrition && passedFoodItem.nutrition.servingSizeGrams) {
+        // Setze die Portionsgröße NUR, wenn wir KEINEN existierenden Eintrag bearbeiten
+        // Ansonsten verwenden wir die Menge aus dem Food Entry!
+        if (!isEditing && passedFoodItem.nutrition && passedFoodItem.nutrition.servingSizeGrams) {
           const productSize = passedFoodItem.nutrition.servingSizeGrams;
           console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}g`);
           setServings(productSize.toFixed(2));
@@ -329,145 +353,28 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             />
             )}
 
-            {/* Servings input */}
-            {/* Mengeneingabe mit Slider - angepasst an Profile-Screen-Stil */}
-            <View style={{
-              flexDirection: 'column', 
-              width: '100%',          
-              padding: theme.spacing.xs,
-              marginTop: theme.spacing.s,
-              marginBottom: theme.spacing.s,
-              borderRadius: theme.borderRadius.medium,
-              backgroundColor: theme.colors.card,
-              borderWidth: 1,
-              borderColor: theme.colors.border
-            }}>
-              {/* Überschrift */}
-              <View style={{
-                width: '100%'      
-              }}>
-                <Text style={{ 
-                  fontFamily: theme.typography.fontFamily.medium, 
-                  color: theme.colors.text,
-                  marginTop: theme.spacing.xs,
-                  marginLeft: theme.spacing.xs,
-                  fontSize: theme.typography.fontSize.m
-                }}>
-                  Menge
-                </Text>
-              </View>
-              
-              {/* Wertanzeige - Klickbare/Editierbare Grammzahl */}
-              <View style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-                paddingHorizontal: theme.spacing.xs,
-                marginBottom: theme.spacing.xs
-              }}>
-                <Text style={{
-                  fontFamily: theme.typography.fontFamily.medium,
-                  fontSize: theme.typography.fontSize.s,
-                  color: theme.colors.textLight
-                }}>
-                  Gramm
-                </Text>
-                <TextInput
-                  style={{
-                    color: theme.colors.primary,
-                    fontFamily: theme.typography.fontFamily.bold,
-                    fontSize: theme.typography.fontSize.l,
-                    textAlign: 'center',
-                    minWidth: 80,
-                    padding: theme.spacing.xs,
-                    backgroundColor: theme.colors.card,
-                    borderRadius: theme.borderRadius.small,
-                    borderWidth: 1,
-                    borderColor: theme.colors.primary,
-                    elevation: 2,
-                    shadowColor: theme.colors.shadow,
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 1
-                  }}
-                  value={servings}
-                  placeholder="100"
-                  selectTextOnFocus={true}
-                  onChangeText={(text) => {
-                    // Validiere und formatiere die Eingabe
-                    const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
-                    setServings(validText);
-                    
-                    // Aktualisiere auch den Slider, falls der Wert im gültigen Bereich liegt
-                    const numValue = parseFloat(validText);
-                    if (!isNaN(numValue)) {
-                      if (numValue > 500) {
-                        // Bei höheren Werten, setze Slider auf Maximum
-                        setSliderValue(500);
-                      } else if (numValue < 1) {
-                        // Bei niedrigeren Werten, setze Slider auf Minimum
-                        setSliderValue(1);
-                      } else {
-                        // Bei Werten im gültigen Bereich, setze exakten Wert
-                        setSliderValue(Math.round(numValue));
-                      }
-                    }
-                  }}
-                  keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
-                />
-              </View>
-              
-              {/* Slider */}
-              <View style={{
-                width: '100%',        
-                marginBottom: theme.spacing.xs,
-                paddingHorizontal: theme.spacing.xs
-              }}>
-                <Slider
-                  style={{ width: '100%', height: 30 }}
-                  minimumValue={1}
-                  maximumValue={500}
-                  step={1}
-                  value={Math.min(Math.max(sliderValue, 1), 500)}
-                  minimumTrackTintColor={theme.colors.primary}
-                  maximumTrackTintColor={theme.colors.border}
-                  thumbTintColor={theme.colors.primary}
-                  onValueChange={(value: number) => {
-                    // Runde auf ganze Zahlen für bessere Anzeige
-                    const roundedValue = Math.round(value);
-                    setSliderValue(roundedValue);
-                    setServings(roundedValue.toString());
-                  }}
-                />
-              </View>
-                
-              {/* Slider-Beschriftungen */}
-              <View style={{
-                width: '100%',         
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                paddingHorizontal: theme.spacing.xs,
-                marginBottom: theme.spacing.xs
-              }}>
-                <Text style={{
-                  color: theme.colors.textLight,
-                  fontSize: theme.typography.fontSize.xs
-                }}>1</Text>
-                <Text style={{
-                  color: theme.colors.textLight,
-                  fontSize: theme.typography.fontSize.xs
-                }}>250</Text>
-                <Text style={{
-                  color: theme.colors.textLight,
-                  fontSize: theme.typography.fontSize.xs
-                }}>500</Text>
-              </View>
-            </View>
+            {/* Mengeneingabe mit wiederverwendbarem SliderWithInput */}
+            <SliderWithInput
+              minValue={1}
+              maxValue={1000}
+              middleValue={500}
+              step={0.01}
+              decimalPlaces={2}
+              allowDecimals={true}
+              value={parseFloat(servings) || 100}
+              onValueChange={(value: number) => {
+                setServings(value.toFixed(2));  // Formatiere mit 2 Nachkommastellen
+                // Wir brauchen sliderValue für die Konsistenz im bestehenden Code
+                setSliderValue(value);
+              }}
+              label="Menge"
+              unit="Gramm"
+              placeholder="100"
+            />
             
             {/* Mahlzeitenauswahl - nur im Bearbeitungsmodus anzeigen */}
             {isEditing && (
-              <View style={[styles.card, { marginTop: theme.spacing.m }]}>
+              <View style={[styles.card, { marginTop: theme.spacing.m, borderWidth: 1, borderColor: theme.colors.border }]}>
                 <Text style={styles.sectionTitle}>
                   Mahlzeit auswählen
                 </Text>
