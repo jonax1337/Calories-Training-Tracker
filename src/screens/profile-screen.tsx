@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, View, ScrollView, TextInput, TouchableOpacity, Alert, Modal, Platform, ActivityIndicator, StatusBar } from 'react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
-import { Award, Bed, BedDouble, BicepsFlexed, Bike, Dumbbell, Footprints, Star, X } from 'lucide-react-native';
+import { Award, Bed, BedDouble, BicepsFlexed, Bike, ChevronDown, ChevronUp, Dumbbell, Footprints, Star, X } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -274,7 +274,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             case 'maintain_weight':
             case 'halten':
             case 'maintenance':
-            case 'maintain':       // Gewicht halten & Fitness verbessern
+            case 'maintain':       // Gewicht halten
             default:
               // Halten: TDEE (Maintenance)
               dailyCalories = maintenanceCalories;
@@ -1376,7 +1376,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
         Dein Ernährungsziel
       </Text>
-        <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+        <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, marginBottom: theme.spacing.m }]}>
           Wähle dein Ernährungsziel oder lege eigene Werte fest. Die Empfehlungen basieren auf deinen Körperdaten.
         </Text>
       </View>
@@ -1403,7 +1403,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                 // Ziele definieren
                 const goals = [
                   { id: 'gain', title: 'Gesunde Gewichtszunahme', description: 'Für Personen mit Untergewicht oder Muskelaufbau-Ziel.' },
-                  { id: 'maintain', title: 'Gewicht halten & Fitness verbessern', description: 'Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.' },
+                  { id: 'maintain', title: 'Gewicht halten', description: 'Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.' },
                   { id: 'lose_moderate', title: 'Moderate Gewichtsreduktion', description: 'Für leichtes Übergewicht, langsamer aber nachhaltiger Gewichtsverlust.' },
                   { id: 'lose_fast', title: 'Gesunde Gewichtsreduktion', description: 'Für stärkeres Übergewicht, schnellerer Gewichtsverlust.' },
                   { id: 'custom', title: 'Benutzerdefiniert', description: 'Eigene Ziele manuell festlegen.' },
@@ -1476,28 +1476,28 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                       }}>
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Kalorien</Text>
-                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                          <Text style={{ color: theme.colors.nutrition.calories, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
                             {getDisplayGoals().dailyCalories}
                           </Text>
                         </View>
                         
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Protein</Text>
-                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                          <Text style={{ color: theme.colors.nutrition.protein, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
                             {getDisplayGoals().dailyProtein}g
                           </Text>
                         </View>
                         
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Kohlenhydrate</Text>
-                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                          <Text style={{ color: theme.colors.nutrition.carbs, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
                             {getDisplayGoals().dailyCarbs}g
                           </Text>
                         </View>
                         
                         <View style={{ alignItems: 'center' }}>
                           <Text style={{ color: theme.colors.textLight, fontSize: theme.typography.fontSize.xs }}>Fett</Text>
-                          <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
+                          <Text style={{ color: theme.colors.nutrition.fat, fontWeight: 'bold', fontSize: theme.typography.fontSize.m }}>
                             {getDisplayGoals().dailyFat}g
                           </Text>
                         </View>
@@ -1665,7 +1665,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                         color: theme.colors.primary,
                         fontSize: theme.typography.fontSize.m,
                       }}>
-                        {goalsExpanded ? '▲' : '▼'}
+                        {/* Akkordeon-Icon */}
+                        {goalsExpanded ? (
+                          <ChevronUp size={theme.typography.fontSize.xxl} color={theme.colors.primary} strokeWidth={1.5} />
+                        ) : (
+                          <ChevronDown size={theme.typography.fontSize.xxl} color={theme.colors.primary} strokeWidth={1.5} />
+                        )}
                       </Text>
                     </TouchableOpacity>
                     
@@ -1693,14 +1698,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                             }
                             // Otherwise, hide the goal if it's the currently selected one.
                             return goalType.id !== selectedGoalId;
-                          }).map(goal => (
+                          }).map((goal, index, array) => (
                           <TouchableOpacity 
                             key={goal.id}
                             style={{
                               paddingVertical: theme.spacing.s,
-                              borderBottomWidth: 1,
-                              borderBottomColor: theme.colors.border + '40',
-                              marginBottom: theme.spacing.s,
+                              borderTopWidth: index === 0 ? 0 : 1, // Keine Linie über dem ersten Element
+                              borderTopColor: theme.colors.border + '40',
+                              marginBottom: index === array.length - 1 ? 0 : theme.spacing.s, // Kein Abstand nach unten beim letzten Element
                             }}
                             onPress={() => {
                               // Je nach gewähltem Ziel andere Nährwerte setzen
@@ -1770,7 +1775,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                                 case 'maintain_weight':
                                 case 'halten':
                                 case 'maintenance':
-                                case 'maintain':       // Gewicht halten & Fitness verbessern
+                                case 'maintain':       // Gewicht halten
                                 default:
                                   // Halten: TDEE (Maintenance)
                                   dailyCalories = maintenanceCalories;

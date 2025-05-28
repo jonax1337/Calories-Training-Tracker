@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Calories Calculator",
-    "slug": "calories-calculator",
+    "name": "Track & Train",
+    "slug": "track-and-train",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

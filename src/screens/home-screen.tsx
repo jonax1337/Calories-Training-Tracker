@@ -186,17 +186,31 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     }
   };
 
-  // Funktion zum Erhöhen des Gewichts
+  // Funktion zum Erhöhen des Gewichts um 0.1
   const incrementWeight = () => {
     if (currentWeight !== undefined) {
-      updateWeight(parseFloat((currentWeight + 0.1).toFixed(1)));
+      updateWeight(parseFloat((currentWeight + 0.1).toFixed(2)));
     }
   };
   
-  // Funktion zum Verringern des Gewichts
+  // Funktion zum Verringern des Gewichts um 0.1
   const decrementWeight = () => {
     if (currentWeight !== undefined && currentWeight > 0.1) {
-      updateWeight(parseFloat((currentWeight - 0.1).toFixed(1)));
+      updateWeight(parseFloat((currentWeight - 0.1).toFixed(2)));
+    }
+  };
+  
+  // Funktion zum Erhöhen des Gewichts um 0.01 (feinere Kontrolle)
+  const incrementWeightSmall = () => {
+    if (currentWeight !== undefined) {
+      updateWeight(parseFloat((currentWeight + 0.01).toFixed(2)));
+    }
+  };
+  
+  // Funktion zum Verringern des Gewichts um 0.01 (feinere Kontrolle)
+  const decrementWeightSmall = () => {
+    if (currentWeight !== undefined && currentWeight > 0.01) {
+      updateWeight(parseFloat((currentWeight - 0.01).toFixed(2)));
     }
   };
 
@@ -596,7 +610,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           }
         ]}>Gewicht</Text>
         
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+        <View style={{ flexDirection: 'column', marginTop: 8 }}>
+          {/* Reihe mit großen Buttons für 0.1 kg Änderungen */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <TouchableOpacity
             style={{
               backgroundColor: theme.theme.colors.primary,
@@ -630,7 +646,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               fontSize: 24,
               color: theme.theme.colors.text
             }}>
-              {(currentWeight !== undefined && currentWeight !== null) ? `${currentWeight.toFixed(1)} kg` : '-'}
+              {(currentWeight !== undefined && currentWeight !== null) ? `${currentWeight.toFixed(2)} kg` : '-'}
             </Text>
           </View>
           
@@ -653,6 +669,50 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           >
             <Plus strokeWidth={1.5} size={24} color="white" />
           </TouchableOpacity>
+          </View>
+          
+          {/* Reihe mit kleinen Buttons für 0.01 kg Änderungen */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.theme.colors.primary + '15',
+                borderRadius: 99,
+                width: 26,
+                height: 26,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 8,
+              }}
+              onPress={decrementWeightSmall}
+              disabled={isUpdatingWeight || currentWeight === undefined || currentWeight <= 0.01}
+            >
+              <Minus strokeWidth={1.5} size={14} color={theme.theme.colors.primary} />
+            </TouchableOpacity>
+            
+            <Text style={{
+              fontFamily: theme.theme.typography.fontFamily.regular,
+              fontSize: 12,
+              color: theme.theme.colors.textLight
+            }}>
+              ±0.01 kg
+            </Text>
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.theme.colors.primary + '15',
+                borderRadius: 99,
+                width: 26,
+                height: 26,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginLeft: 8,
+              }}
+              onPress={incrementWeightSmall}
+              disabled={isUpdatingWeight || currentWeight === undefined}
+            >
+              <Plus strokeWidth={1.5} size={14} color={theme.theme.colors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
