@@ -6,7 +6,6 @@ import { login } from '../services/auth-service';
 import { useTheme } from '../theme/theme-context';
 import { RootStackParamList } from '../navigation';
 import { createAuthStyles } from '../styles/screens/auth-styles';
-import { Ionicons } from '@expo/vector-icons';
 import { Flame } from 'lucide-react-native';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;

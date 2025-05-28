@@ -365,7 +365,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           <Text style={{
             fontFamily: theme.theme.typography.fontFamily.regular,
             fontSize: theme.theme.typography.fontSize.m,
-            color: theme.theme.colors.secondary,
+            color: theme.theme.colors.textLight,
             textAlign: 'center',
             marginBottom: 24
           }}>
@@ -502,7 +502,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           }
         ]}>Wasser</Text>
       
-        <View style={{ height: 160, marginVertical: 8 }}>
+        <View style={{ height: theme.theme.spacing.xl * 5, marginVertical: theme.theme.spacing.s }}>
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={openWaterModal}
@@ -510,81 +510,53 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           >
             <WaveAnimation 
               fillPercentage={Math.min((totals.water / (goals.dailyWater || 2000)) * 100, 100)} 
-              color="#03A9F4"
               text={`${totals.water} / ${goals.dailyWater || 2000} ml`}
+              color={theme.theme.colors.primary}
+              textColor={theme.theme.colors.text}
             />
           </TouchableOpacity>
         </View>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, marginBottom: 8 }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: "rgba(3, 169, 244, 0.2)",
-              borderRadius: theme.theme.borderRadius.medium,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
-              width: 96,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginHorizontal: 8,
-            }}
-            onPress={() => addWater(100)}
-            disabled={isUpdatingWater}
-          >
-            <Text style={{
-              fontFamily: theme.theme.typography.fontFamily.medium,
-              color: "#03A9F4",
-              fontSize: 16,
-            }}>
-              +100 ml
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={{
-              backgroundColor: "rgba(3, 169, 244, 0.2)",
-              borderRadius: theme.theme.borderRadius.medium,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
-              width: 96,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginHorizontal: 8,
-            }}
-            onPress={() => addWater(250)}
-            disabled={isUpdatingWater}
-          >
-            <Text style={{
-              fontFamily: theme.theme.typography.fontFamily.medium,
-              color: "#03A9F4",
-              fontSize: 16,
-            }}>
-              +250 ml
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={{
-              backgroundColor: "rgba(3, 169, 244, 0.2)",
-              borderRadius: theme.theme.borderRadius.medium,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
-              width: 96,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginHorizontal: 8,
-            }}
-            onPress={() => addWater(500)}
-            disabled={isUpdatingWater}
-          >
-            <Text style={{
-              fontFamily: theme.theme.typography.fontFamily.medium,
-              color: "#03A9F4",
-              fontSize: 16,
-            }}>
-              +500 ml
-            </Text>
-          </TouchableOpacity>
+        <View style={{ 
+          flexDirection: 'row', 
+          justifyContent: 'space-between', 
+          flexWrap: 'wrap',
+          marginTop: theme.theme.spacing.xs, 
+          marginBottom: theme.theme.spacing.xs
+        }}>
+          {[
+            { amount: 100, value: '+100ml' },
+            { amount: 250, value: '+250ml' },
+            { amount: 330, value: '+330ml' },
+            { amount: 500, value: '+500ml' },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.amount}
+              style={{
+                backgroundColor: theme.theme.colors.primary,
+                borderRadius: theme.theme.borderRadius.medium,
+                paddingVertical: theme.theme.spacing.m,
+                paddingHorizontal: theme.theme.spacing.s,
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: theme.theme.spacing.xs,
+                minWidth: 60,
+                flex: 1,
+                maxWidth: 120,
+              }}
+              onPress={() => addWater(item.amount)}
+              disabled={isUpdatingWater}
+            >
+              <Text style={{
+                fontFamily: theme.theme.typography.fontFamily.medium,
+                color: "white",
+                fontSize: theme.theme.typography.fontSize.s,
+                textAlign: 'center',
+              }}>
+                {item.value}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
       

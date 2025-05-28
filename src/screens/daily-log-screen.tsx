@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal, Animated } from 'react-native';
+import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal, Animated, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-native-gesture-handler';
 import { Calendar } from 'react-native-calendars';
+import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,13 +18,23 @@ import { formatToLocalISODate, formatDateForDisplay, getTodayFormatted } from '.
 import { useDateContext } from '../context/date-context';
 import { createDailyLogStyles } from '../styles/screens/daily-log-styles';
 
-export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
+function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
+  // Refs für die Animation der verschiedenen Mahlzeiten
+  const animationRefs = useRef<{[key: string]: Animated.Value}>({});
+  // State für aktuelle Animation
+  const [animatingMealType, setAnimatingMealType] = useState<string | null>(null);
+  
   // Wiederverwendbare Komponente für den Kalorien-Anzeige und Akkordeon-Button Bereich
   const MealAccordionButton = ({ mealType, calories }: { mealType: string, calories: number }) => (
     <TouchableOpacity
       style={{ flexDirection: 'row', alignItems: 'center' }}
       onPress={(e) => {
         e.stopPropagation();
+        // Animation auslösen und Timer für Reset setzen
+        setAnimatingMealType(mealType);
+        // Nach 300ms (Animation + etwas Puffer) den animierenden Status zurücksetzen
+        setTimeout(() => setAnimatingMealType(null), 300);
+        // State ändern
         toggleMealAccordion(mealType);
       }}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -44,17 +55,52 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
   const MealAccordionContent = ({ mealType, isLast = false }: { mealType: string, isLast?: boolean }) => {
     const entries = dailyLog?.foodEntries.filter(entry => entry.mealType === mealType) || [];
     
-    return expandedMeals[mealType] ? (
-      <View style={{
+    // Sicherstellen, dass wir eine Animation-Ref für diesen meal type haben
+    useEffect(() => {
+      if (!animationRefs.current[mealType]) {
+        animationRefs.current[mealType] = new Animated.Value(0);
+      }
+    }, [mealType]);
+    
+    // Starte Animation, wenn sich expandedMeals ändert oder animatingMealType gesetzt ist
+    useEffect(() => {
+      if (mealType === animatingMealType) {
+        // Animation starten
+        Animated.timing(animationRefs.current[mealType], {
+          toValue: expandedMeals[mealType] ? 1 : 0,
+          duration: 250,
+          useNativeDriver: true
+        }).start();
+      } else {
+        // Sofort ohne Animation setzen
+        animationRefs.current[mealType]?.setValue(expandedMeals[mealType] ? 1 : 0);
+      }
+    }, [expandedMeals[mealType], animatingMealType, mealType]);
+    
+    // Wir rendern nichts, wenn nicht expandiert
+    if (!expandedMeals[mealType]) return null;
+    
+    // Sicherheitsprüfung, falls animationRefs.current[mealType] noch nicht existiert
+    const animatedValue = animationRefs.current[mealType] || new Animated.Value(1);
+    
+    return (
+      <Animated.View style={{
         backgroundColor: theme.colors.card,
         borderBottomLeftRadius: theme.borderRadius.medium,
         borderBottomRightRadius: theme.borderRadius.medium,
-        borderTopWidth: 1,     // Subtile Trennlinie
-        borderTopColor: theme.colors.border + '40', // Transparentes Grau
-        paddingHorizontal: theme.spacing.s, // Horizontaler Innenabstand
-        paddingTop: theme.spacing.s,        // Oberer Innenabstand
-        paddingBottom: theme.spacing.m, // Unterer Innenabstand für bessere Optik
-        marginBottom: isLast ? 0 : theme.spacing.m,  // Abstand zum nächsten Element, außer bei letztem Element
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border + '40',
+        paddingHorizontal: theme.spacing.s,
+        paddingTop: theme.spacing.s,
+        paddingBottom: theme.spacing.m,
+        marginBottom: isLast ? 0 : theme.spacing.m,
+        opacity: animatedValue, // Animation der Transparenz
+        transform: [{ 
+          translateY: animatedValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-20, 0] // Gleitet von oben ein
+          })
+        }]
       }}>
         {entries.length > 0 ? (
           entries.map((entry, index, array) => (
@@ -74,12 +120,8 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
               overshootRight={false} // Keine Überschwingung nach rechts
               onSwipeableOpen={(direction) => {
                 if (direction === 'left') {
-                  // Haptisches Feedback - Bearbeiten
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   handleOpenFoodDetails(entry);
                 } else if (direction === 'right') {
-                  // Haptisches Feedback - Löschen
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                   handleRemoveEntry(entry.id);
                 }
               }}
@@ -246,11 +288,11 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
             Keine Einträge vorhanden
           </Text>
         )}
-      </View>
-    ) : null;
+      </Animated.View>
+    )
   };
   // Get theme from context
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   // Get safe area insets
   const insets = useSafeAreaInsets();
   
@@ -274,6 +316,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
 
   // Toggle expand/collapse state for meal sections
   const toggleMealAccordion = (mealType: string) => {
+    // State aktualisieren (expandiert/nicht expandiert)
     setExpandedMeals(prev => ({
       ...prev,
       [mealType]: !prev[mealType]
@@ -329,92 +372,83 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     loadDailyLog();
   }, [loadDailyLog]);
 
-  // Handle removing a food entry
+  // Action Sheet Hook
+  const { showActionSheetWithOptions } = useActionSheet();
+  
+  // Handle removing a food entry mit Action Sheet
   const handleRemoveEntry = async (entryId: string) => {
-    Alert.alert(
-      'Eintrag entfernen',
-      'Möchtest du diesen Eintrag wirklich entfernen?',
-      [
-        { 
-          text: 'Abbrechen', 
-          style: 'cancel',
-          onPress: () => {
-            try {
-              // Verzögerung für zuverlässigeres Zurücksetzen
-              const swipeable = swipeableRefs.current.get(entryId);
-                if (swipeable) {
-                  // Haptisches Feedback für Abbruch
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  // Versuche den Swipe zu schließen
-                  swipeable.close();
-                }
-            } catch (error) {
-              console.error('Fehler beim Zurücksetzen des Swipe:', error);
-            }
-          }
-        },
-        {
-          text: 'Entfernen',
-          style: 'destructive',
-          onPress: async () => {
-            if (!dailyLog) return;
-            
-            try {
-              // First update local state for immediate UI feedback
-              const updatedEntries = dailyLog.foodEntries.filter(
-                entry => entry.id !== entryId
-              );
-
-              const updatedLog = {
-                ...dailyLog,
-                foodEntries: updatedEntries
-              };
-
-              // Set the updated log in state
-              setDailyLog(updatedLog);
-              
-              // Save to database
-              console.log(`Removing food entry: ${entryId}`);
-              await saveDailyLog(updatedLog);
-              
-              // Reload data from database to ensure UI is up-to-date
-              console.log('Reloading daily log after removing entry');
-              await loadDailyLog();
-            } catch (error) {
-              console.error('Error removing food entry:', error);
-              Alert.alert('Fehler', 'Der Eintrag konnte nicht entfernt werden.');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  // Handle adding water intake with debouncing
-  const handleAddWater = async (amount: number) => {
-    if (!dailyLog) return;
+    // Action Sheet Options
+    const options = ['Abbrechen', 'Löschen'];
+    const destructiveButtonIndex = 1;
+    const cancelButtonIndex = 0;
     
-    try {
-      // First update local state for immediate UI feedback
-      const updatedLog = {
-        ...dailyLog,
-        waterIntake: Math.max(0, dailyLog.waterIntake + amount) // Ensure we don't go below 0
-      };
-
-      // Set the updated log in state
-      setDailyLog(updatedLog);
-      
-      // Save to database
-      console.log(`Updating water intake by ${amount}ml, new total: ${updatedLog.waterIntake}ml`);
-      await saveDailyLog(updatedLog);
-      
-      // Reload data from database to ensure UI is up-to-date
-      console.log('Reloading daily log after updating water intake');
-      await loadDailyLog();
-    } catch (error) {
-      console.error('Error updating water intake:', error);
-      Alert.alert('Fehler', 'Die Wassermenge konnte nicht aktualisiert werden.');
+    // Action Sheet Styling und Options
+    const actionSheetOptions: any = {
+      options,
+      cancelButtonIndex,
+      destructiveButtonIndex,
+      // Setze das Theme für das Action Sheet
+      userInterfaceStyle: (isDarkMode ? 'dark' : 'light') as 'dark' | 'light',
+      // Für iOS: Container Styling
+      containerStyle: { backgroundColor: theme.colors.card },
+      // Für iOS: Text Styling für Optionen
+      textStyle: { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.text },
+      // Für iOS: Title Styling
+      titleTextStyle: { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text },
+      // Für iOS: Message Styling
+      messageTextStyle: { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.text },
+    };
+    
+    // iOS-spezifisch
+    if (Platform.OS === 'ios') {
+      actionSheetOptions.userInterfaceStyle = isDarkMode ? 'dark' : 'light';
     }
+    
+    showActionSheetWithOptions(actionSheetOptions, async (selectedIndex) => {
+      // Abbrechen wurde ausgewählt oder Sheet wurde geschlossen
+      if (selectedIndex === cancelButtonIndex) {
+        // Swipeable Element zurücksetzen
+        const swipeable = swipeableRefs.current.get(entryId);
+        if (swipeable) {
+          // Haptisches Feedback für Abbruch
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          // Swipe zurücksetzen
+          swipeable.close();
+        }
+        return;
+      }
+      
+      // Entfernen wurde ausgewählt
+      if (selectedIndex === destructiveButtonIndex) {
+        if (!dailyLog) return;
+        
+        try {
+          // Haptisches Feedback für Löschen
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          
+          // Lokalen State aktualisieren für sofortiges UI-Feedback
+          const updatedEntries = dailyLog.foodEntries.filter(
+            entry => entry.id !== entryId
+          );
+
+          const updatedLog = {
+            ...dailyLog,
+            foodEntries: updatedEntries
+          };
+
+          // Log im State aktualisieren
+          setDailyLog(updatedLog);
+          
+          // In der Datenbank speichern
+          console.log(`Removing food entry: ${entryId}`);
+          await saveDailyLog(updatedLog);
+
+          await loadDailyLog();
+        } catch (error) {
+          Alert.alert('Fehler', 'Der Eintrag konnte nicht entfernt werden.');
+        }
+      }
+    });
   };
 
   // Funktion zum Öffnen der Food-Details eines Eintrags
@@ -492,208 +526,7 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
     );
   };
 
-  // Group food entries by meal type
-  const groupEntriesByMealType = () => {
-    if (!dailyLog || dailyLog.foodEntries.length === 0) {
-      return [];
-    }
-
-    const mealGroups: Record<string, FoodEntry[]> = {};
-
-    // Initialize meal groups
-    Object.values(MealType).forEach(mealType => {
-      mealGroups[mealType] = [];
-    });
-    // Group entries by meal type
-    dailyLog.foodEntries.forEach(entry => {
-      mealGroups[entry.mealType].push(entry);
-    });
-    // Convert to array format for rendering
-    return Object.entries(mealGroups)
-      .filter(([_, entries]) => entries.length > 0) // Only include meal types with entries
-      .map(([mealType, entries]) => ({
-        mealType,
-        entries
-      }));
-  };
-
   const totals = calculateTotals();
-  const mealGroups = groupEntriesByMealType();
-
-  // Render a food entry item
-  const renderFoodEntry = ({ item }: { item: FoodEntry }) => {
-    const { foodItem, servingAmount } = item;
-    const { nutrition } = foodItem;
-
-    return (
-      <View style={styles.foodEntryCard}>
-        <View style={styles.foodEntryHeader}>
-          <Text style={styles.foodName}>
-            {foodItem.name}
-          </Text>
-          <TouchableOpacity
-            onPress={() => handleRemoveEntry(item.id)}
-            style={styles.removeButton}
-          >
-            <Text style={styles.removeButtonText}>
-              Entfernen
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {foodItem.brand && (
-          <Text style={styles.brandText}>
-            {foodItem.brand}
-          </Text>
-        )}
-
-        <View style={styles.servingContainer}>
-          <Text style={styles.servingText}>
-            {servingAmount} {servingAmount > 1 ? 'Portionen' : 'Portion'} ({nutrition.servingSize})
-          </Text>
-        </View>
-
-        <View style={styles.nutritionContainer}>
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { color: theme.colors.primary }]}>
-              {Math.round(nutrition.calories * servingAmount)}
-            </Text>
-            <Text style={styles.nutritionLabel}>
-              kcal
-            </Text>
-          </View>
-
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { color: theme.colors.accent }]}>
-              {Math.round(nutrition.protein * servingAmount)}g
-            </Text>
-            <Text style={styles.nutritionLabel}>
-              Eiweiß
-            </Text>
-          </View>
-
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { color: theme.colors.warning }]}>
-              {Math.round(nutrition.carbs * servingAmount)}g
-            </Text>
-            <Text style={styles.nutritionLabel}>
-              Kohlenhydrate
-            </Text>
-          </View>
-
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionValue, { color: theme.colors.error }]}>
-              {Math.round(nutrition.fat * servingAmount)}g
-            </Text>
-            <Text style={styles.nutritionLabel}>
-              Fett
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.viewButton} 
-          onPress={() => navigation.getParent()?.navigate('FoodDetail', { foodId: item.id })}
-        >
-          <Text style={styles.viewButtonText}>
-            Details anzeigen
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  // Function to toggle meal expansion
-  const toggleMeal = (mealType: string) => {
-    setExpandedMeals(prev => ({
-      ...prev,
-      [mealType]: !prev[mealType]
-    }));
-  };
-  
-  // Function to add food to a specific meal type
-  const handleAddFood = (mealType: string) => {
-    // Navigate to the Add Food screen with the specific meal type
-    navigation.getParent()?.navigate('Add', { screen: 'Scanner', params: { mealType } });
-  };
-
-  // Render a meal type group
-  const renderMealGroup = ({ item }: { item: { mealType: string; entries: FoodEntry[] } }) => {
-    const { mealType, entries } = item;
-    const isExpanded = expandedMeals[mealType] || false;
-    const mealCalories = totals.mealTotals[mealType as keyof typeof totals.mealTotals].calories;
-    const entryCount = entries.length;
-
-    return (
-      <View style={styles.mealSection}>
-        <View style={[styles.mealHeader, { marginBottom: isExpanded ? theme.spacing.xs : theme.spacing.m }]}>
-          {/* Hauptbereich der Mahlzeit - klickbar um zum Scanner zu gehen */}
-          <TouchableOpacity 
-            onPress={() => navigation.getParent()?.navigate('Add', { screen: 'Scanner', params: { mealType } })}
-            style={{ flex: 1 }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.mealHeaderText}>
-                {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-              </Text>
-              <Text style={styles.mealCountText}>
-                ({entryCount} {entryCount === 1 ? 'Eintrag' : 'Einträge'})
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Rechte Seite: Kalorien + Accordion Icon */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.mealCaloriesText}>
-              {Math.round(mealCalories)} kcal
-            </Text>
-
-            {/* EINFACHES ICON zum Auf-/Zuklappen */}
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                toggleMeal(mealType);
-              }}
-              style={styles.accordionButton}
-              accessibilityLabel={"Mahlzeit " + mealType + (isExpanded ? " einklappen" : " ausklappen")}
-            >
-              {isExpanded ? (
-                <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
-              ) : (
-                <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Expandierbarer Bereich */}
-        {isExpanded && (
-          <View style={{
-            marginBottom: 16,
-            marginLeft: 4,
-            marginRight: 4,
-          }}>
-            {entries.length > 0 ? (
-              <FlatList
-                data={entries}
-                renderItem={renderFoodEntry}
-                keyExtractor={(entry) => entry.id}
-                scrollEnabled={false}
-              />
-            ) : (
-              <Text style={{
-                textAlign: 'center',
-                color: theme.colors.textLight,
-                padding: 16,
-              }}>
-                Keine Einträge vorhanden
-              </Text>
-            )}
-          </View>
-        )}
-      </View>
-    );
-  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -952,3 +785,12 @@ export default function DailyLogScreen({ navigation }: JournalTabScreenProps) {
 };
 
 // Styles wurden in eine separate Datei ausgelagert
+
+// Wrapper-Komponente mit ActionSheetProvider
+export default function DailyLogScreen(props: JournalTabScreenProps) {
+  return (
+    <ActionSheetProvider>
+      <DailyLogScreenContent {...props} />
+    </ActionSheetProvider>
+  );
+}

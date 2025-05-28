@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -24,6 +24,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
+        "UIUserInterfaceStyle": "automatic",
         "NSCameraUsageDescription": "This app uses the camera to scan barcodes from food products.",
         "NSHealthShareUsageDescription": "This app requires access to your health data to track your fitness activities and sync with your nutritional intake.",
         "NSHealthUpdateUsageDescription": "This app requires permission to update your health data."

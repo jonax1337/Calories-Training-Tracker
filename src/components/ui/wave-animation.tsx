@@ -8,6 +8,7 @@ interface WaveAnimationProps {
   color?: string;
   text?: string;
   icon?: React.ReactNode;
+  textColor?: string;
 }
 
 // Statischer HTML Content außerhalb der Komponente - wird NIE neu erstellt
@@ -409,7 +410,8 @@ const WaveAnimation = ({
   fillPercentage,
   color = '#2196F3',
   text,
-  icon
+  icon,
+  textColor = '#2196F3'
 }: WaveAnimationProps) => {
   const theme = useTheme();
   const webViewRef = useRef<WebView>(null);
@@ -531,6 +533,35 @@ const WaveAnimation = ({
       webViewRef.current.postMessage(script);
     }
   }, [color, webViewLoaded]);
+
+  // Update text wenn sich der Text oder die Textfarbe ändert
+useEffect(() => {
+  if (webViewRef.current && webViewLoaded) {
+    const script = `
+      const contentOverlay = document.querySelector('.content-overlay');
+      const textElement = document.querySelector('.text');
+      
+      if (contentOverlay && textElement) {
+        if ('${text}' && '${text}' !== 'undefined') {
+          contentOverlay.style.display = 'flex';
+          textElement.textContent = '${text || ''}';
+          // Setze die Textfarbe
+          textElement.style.color = '${textColor}';
+          // Passe den Schatten an - heller/dunkler je nach Theme
+          const isLightText = '${textColor}'.toLowerCase().includes('fff') || 
+                              '${textColor}'.toLowerCase().includes('white');
+          textElement.style.textShadow = isLightText 
+            ? '0 1px 2px rgba(0,0,0,0.3)' 
+            : '0 1px 2px rgba(255,255,255,0.3)';
+        } else {
+          contentOverlay.style.display = 'none';
+        }
+      }
+      true;
+    `;
+    webViewRef.current.postMessage(script);
+  }
+}, [text, textColor, webViewLoaded]); // textColor zu den Dependencies hinzufügen
 
   // Update text wenn sich der Text ändert
   useEffect(() => {

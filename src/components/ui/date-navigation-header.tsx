@@ -47,17 +47,18 @@ function DateNavigationHeader({
 
   return (
     <View style={[styles.container, style]}>
-      <TouchableOpacity
-        onPress={goToPreviousDay}
-        style={styles.arrowButton}
+      <TouchableOpacity 
+        onPress={goToPreviousDay} 
+        hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
       >
-        <ChevronLeft size={24} color={theme.colors.primary} strokeWidth={1.5} />
+        <ChevronLeft 
+          size={theme.typography.fontSize.xxl} 
+          color={theme.colors.primary} 
+          strokeWidth={1.5}
+        />
       </TouchableOpacity>
       
-      <TouchableOpacity 
-        onPress={onCalendarOpen}
-        style={styles.dateButton}
-      >
+      <TouchableOpacity onPress={onCalendarOpen} style={styles.dateButton}>
         <Text style={[
           styles.dateText, 
           { 
@@ -73,11 +74,11 @@ function DateNavigationHeader({
         </Text>
       </TouchableOpacity>
       
-      <TouchableOpacity
+      <TouchableOpacity 
         onPress={goToNextDay}
-        style={styles.arrowButton}
+        hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
       >
-        <ChevronRight size={24} color={theme.colors.primary} strokeWidth={1.5} />
+        <ChevronRight size={theme.typography.fontSize.xxl} color={theme.colors.primary} strokeWidth={1.5} />
       </TouchableOpacity>
     </View>
   );
@@ -92,14 +93,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
-  arrowButton: {
-    padding: 8,
-    borderRadius: 8,
-  },
   dateButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.s,
   },
   dateText: {
     fontFamily: theme.typography.fontFamily.bold,
