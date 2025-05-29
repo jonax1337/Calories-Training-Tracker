@@ -18,14 +18,12 @@ type RootStackParamList = {
   DailyLog: { date?: string };
 };
 import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme-context';
 import { updateUserProfile, fetchUserProfile } from '../services/profile-api';
-import { formatToLocalISODate } from '../utils/date-utils';
 import { ArrowRight, ArrowLeft, User, UserRound, Calendar, Weight, Ruler, Activity, Target, Heart, Bike, Bed, BedDouble, Dumbbell, Footprints, ArrowDown, ArrowUp, Award, Minus, Star, X, VenusAndMars, PencilRuler, Goal } from 'lucide-react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
+import { DatePicker } from '../components/ui/date-picker';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Intro'>;
 
@@ -50,27 +48,8 @@ const IntroScreen: React.FC = () => {
     },
   });
   
-  // Zustände für die Datumauswahl
+  // Zustand für das Geburtsdatum
   const [birthDate, setBirthDate] = useState<Date>(new Date(new Date().getFullYear() - 25, 0, 1));
-  const [showDatePickerModal, setShowDatePickerModal] = useState<boolean>(false);
-  const [tempBirthDate, setTempBirthDate] = useState<Date | null>(null);
-  
-  // Funktionen zur Verwaltung des DatePicker-Modals
-  const openDatePickerModal = () => {
-    setTempBirthDate(birthDate);
-    setShowDatePickerModal(true);
-  };
-  
-  const confirmDatePickerModal = () => {
-    if (tempBirthDate) {
-      setBirthDate(tempBirthDate);
-    }
-    setShowDatePickerModal(false);
-  };
-  
-  const cancelDatePickerModal = () => {
-    setShowDatePickerModal(false);
-  };
   
   // Funktion zum Berechnen des Alters aus dem Geburtsdatum
   const calculateAge = (birthdate: Date): number => {
@@ -313,18 +292,18 @@ const IntroScreen: React.FC = () => {
               Dein Alter beeinflusst deinen Kalorienbedarf.
             </Text>
             
-            <TouchableOpacity 
-              style={[styles.datePickerButton, { 
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.card 
-              }]}
-              onPress={openDatePickerModal}
-            >
-              <Text style={[styles.dateText, { color: theme.colors.text }]}>
-                {birthDate.toLocaleDateString('de-DE')}
-              </Text>
-              <Calendar size={20} color={theme.colors.textLight} />
-            </TouchableOpacity>
+            <DatePicker
+              label="Geburtsdatum"
+              value={birthDate}
+              onValueChange={(date) => {
+                setBirthDate(date);
+              }}
+              ageLabel={true}
+              customButtonText="Auswählen"
+              customModalTitle="Geburtsdatum auswählen"
+              maxDate={new Date(new Date().getFullYear() + 1, 0, 0)}
+              minDate={new Date(1900, 0, 1)}
+            />
           </View>
         );
         
@@ -656,117 +635,7 @@ const IntroScreen: React.FC = () => {
     }
   };
   
-  // Modal-Komponente für DateTimePicker
-  const renderDatePickerModal = () => {
-    if (!showDatePickerModal) return null;
-    
-    return (
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showDatePickerModal}
-        onRequestClose={cancelDatePickerModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card, borderRadius: 16 }]}>
-            <Text style={[styles.modalTitle, { 
-              fontFamily: theme.typography?.fontFamily?.bold, 
-              color: theme.colors.text 
-            }]}>
-              Geburtsdatum auswählen
-            </Text>
-            {/* Close button for modal */}
-            <TouchableOpacity onPress={cancelDatePickerModal} style={styles.modalCloseButton}>
-              <X size={24} color={theme.colors.text} strokeWidth={1.5} />
-            </TouchableOpacity>
-            
-            <View style={styles.datePickerContainer}>
-              {Platform.OS === 'web' ? (
-                <input
-                  type="date"
-                  value={(tempBirthDate || birthDate).toISOString().split('T')[0]}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const newDate = new Date(e.target.value);
-                      setTempBirthDate(newDate);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    border: `1px solid ${theme.colors.border}`,
-                    borderRadius: 8,
-                    backgroundColor: theme.colors.background,
-                    fontSize: '16px',
-                    padding: '12px',
-                    color: theme.colors.text,
-                    outline: 'none'
-                  }}
-                  max={new Date().toISOString().split('T')[0]}
-                  min="1900-01-01"
-                />
-              ) : (
-                <View style={[{
-                  backgroundColor: theme.colors.background,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: 'rgba(0,0,0,0.1)',
-                  overflow: 'hidden',
-                  // Flex-Container für DateTimePicker
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0
-                }]} >
-                  {/* Wrapper für den DateTimePicker mit negativem Margin zum Verschieben nach links */}
-                  <View style={{
-                    marginLeft: -30, // Verschiebt den Picker 15px nach links für bessere Zentrierung
-                    width: '100%', // Leicht vergrößert, um Abschneidungen zu vermeiden
-                  }}>
-                    <DateTimePicker
-                      testID="dateTimePickerModal"
-                      value={tempBirthDate || birthDate}
-                      mode="date"
-                      display="spinner"
-                      onChange={(event, selectedDate) => {
-                        if (selectedDate) {
-                          setTempBirthDate(selectedDate);
-                        }
-                      }}
-                      maximumDate={new Date()}
-                      minimumDate={new Date(1900, 0, 1)}
-                      themeVariant={theme.dark ? 'dark' : 'light'}
-                      style={{
-                        height: 200
-                      }}
-                    />
-                  </View>
-                </View>
-              )}
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.error + '20', borderRadius: 8 }]}
-                onPress={cancelDatePickerModal}
-              >
-                <Text style={{ color: theme.colors.error, fontFamily: theme.typography?.fontFamily?.medium }}>
-                  Abbrechen
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.primary + '20', borderRadius: 8 }]}
-                onPress={confirmDatePickerModal}
-              >
-                <Text style={{ color: theme.colors.primary, fontFamily: theme.typography?.fontFamily?.medium }}>
-                  Speichern
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
+  // DateTimePicker-Funktionalität wurde in die DatePicker-Komponente verschoben
 
   return (
     <SafeAreaView style={[styles.container, { 
@@ -776,8 +645,7 @@ const IntroScreen: React.FC = () => {
       paddingLeft: insets.left,
       paddingRight: insets.right
     }]}>
-      {/* DatePicker-Modal */}
-      {renderDatePickerModal()}
+      {/* DatePicker-Modal wurde in die DatePicker-Komponente verschoben */}
       
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Fortschrittsanzeige */}
@@ -905,49 +773,7 @@ const styles = StyleSheet.create({
     fontFamily: 'SpaceGrotesk-Bold', // Verwende die custom Schriftart statt fontWeight
     marginHorizontal: 10,
   },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    width: '100%',
-    padding: 20,
-    borderRadius: 16,
-    position: 'relative',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: 'SpaceGrotesk-Bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-  },
-  datePickerContainer: {
-    marginVertical: 20,
-    width: '100%',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 5,
-  },
+  // DatePicker-Styles wurden in die DatePicker-Komponente verschoben
   pickerContainer: {
     width: '100%',
     borderWidth: 1,
@@ -956,21 +782,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     marginTop: 10,
-  },
-  datePickerButton: {
-    width: '100%',
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    marginTop: 10,
-  },
-  dateText: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Regular',
   },
   sliderContainer: {
     width: '100%',

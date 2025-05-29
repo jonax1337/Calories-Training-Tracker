@@ -4,7 +4,6 @@ import SliderWithInput from '../components/ui/slider-with-input';
 import { Award, Bed, BedDouble, BicepsFlexed, Bike, ChevronDown, ChevronUp, Dumbbell, Footprints, Star, X } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import { ProfileTabScreenProps } from '../types/navigation-types';
 import { ActivityLevel, UserProfile, UserGoal, GoalType } from '../types';
@@ -15,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, formatDateForDisplay, getLocalDateComponents } from '../utils/date-utils';
 import { createProfileStyles } from '../styles/screens/profile-styles';
 import * as Haptics from 'expo-haptics';
+import { DatePicker } from '../components/ui/date-picker';
 
 function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // Get theme from context
@@ -46,8 +46,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   const [waterSliderValue, setWaterSliderValue] = useState<number>(2500);
   const [weightInputText, setWeightInputText] = useState<string>('');
   const [birthDate, setBirthDate] = useState<Date>(new Date(new Date().getFullYear() - 25, 0, 1)); // Default 25 Jahre alt
-  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
-  const [tempBirthDate, setTempBirthDate] = useState<Date | null>(null);
+  // Removed date picker modal state - now handled in DatePicker component
   
   // State für ausgeklapptes Ziel-Menü und ausgewähltes Ziel
   const [goalsExpanded, setGoalsExpanded] = useState(false);
@@ -67,37 +66,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     dailyWater: 2500
   });
   
-  // Funktion zum Berechnen des Alters aus dem Geburtsdatum
-  const calculateAge = (birthdate: Date): number => {
-    const today = new Date();
-    let age = today.getFullYear() - birthdate.getFullYear();
-    const m = today.getMonth() - birthdate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-  
-  // Funktionen für den Datepicker-Modal
-  const openDatePickerModal = () => {
-    setTempBirthDate(birthDate);
-    setShowDatePickerModal(true);
-  };
-  
-  const cancelDatePickerModal = () => {
-    setShowDatePickerModal(false);
-    setTempBirthDate(null);
-  };
-  
-  const confirmDatePickerModal = () => {
-    if (tempBirthDate) {
-      setBirthDate(tempBirthDate);
-      updateBirthDate(tempBirthDate);
-    }
-    setShowDatePickerModal(false);
-  };
-  
-  // Aktualisiert das Geburtsdatum im Profil
+    // Aktualisiert das Geburtsdatum im Profil
   const updateBirthDate = (date: Date) => {
     // Create a date string in YYYY-MM-DD format that preserves the exact date
     // without timezone shifts
@@ -108,11 +77,21 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     
     console.log(`Selected date: ${date.toDateString()}, formatted as: ${formattedDate}`);
     
-    const age = calculateAge(date);
-    
     // Aktualisiere sowohl Geburtsdatum als auch Alter im Profil
     handleTextChange('birthDate', formattedDate);
+    
+    // Alter wird basierend auf Geburtsdatum berechnet
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+    
     handleTextChange('age', age.toString());
+    
+    // Aktualisiere den lokalen State
+    setBirthDate(date);
   };
 
   // Create a function to load profile data that can be called when needed
@@ -461,7 +440,13 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
       const month = String(birthDateObj.getMonth() + 1).padStart(2, '0');
       const day = String(birthDateObj.getDate()).padStart(2, '0');
       const formattedBirthDate = `${year}-${month}-${day}`;
-      const calculatedAge = calculateAge(birthDateObj);
+      // Calculate age directly since calculateAge function was moved to DatePicker component
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDateObj.getFullYear();
+      const m = today.getMonth() - birthDateObj.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+        calculatedAge--;
+      }
 
       const updatedProfileData = {
         ...profile,
@@ -542,119 +527,10 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     }
   };
 
-  // Modal-Komponente für DateTimePicker
-  const renderDatePickerModal = () => {
-    if (!showDatePickerModal) return null;
-    
-    return (
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showDatePickerModal}
-        onRequestClose={cancelDatePickerModal} // Added onRequestClose for Android back button
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
-            <Text style={[styles.modalTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-              Geburtsdatum auswählen
-            </Text>
-            {/* Close button for modal */}
-            <TouchableOpacity onPress={cancelDatePickerModal} style={styles.modalCloseButton}>
-              <X size={24} color={theme.colors.text} strokeWidth={1.5} />
-            </TouchableOpacity>
-            
-            <View style={styles.datePickerContainer}>
-              {Platform.OS === 'web' ? (
-                <input
-                  type="date"
-                  value={(tempBirthDate || birthDate).toISOString().split('T')[0]}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const newDate = new Date(e.target.value);
-                      setTempBirthDate(newDate);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    border: `1px solid ${theme.colors.border}`,
-                    borderRadius: theme.borderRadius.small,
-                    backgroundColor: theme.colors.background,
-                    fontSize: '16px',
-                    padding: '12px',
-                    color: theme.colors.text,
-                    outline: 'none'
-                  }}
-                  max={new Date().toISOString().split('T')[0]}
-                  min="1900-01-01"
-                />
-              ) : (
-                <View style={[{
-                  backgroundColor: theme.colors.background,
-                  borderRadius: theme.borderRadius.small,
-                  borderWidth: 1,
-                  borderColor: 'rgba(0,0,0,0.1)',
-                  overflow: 'hidden',
-                  // Flex-Container für DateTimePicker
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0
-                }]} >
-                  {/* Wrapper für den DateTimePicker mit negativem Margin zum Verschieben nach links */}
-                  <View style={{
-                    marginLeft: -30, // Verschiebt den Picker 15px nach links für bessere Zentrierung
-                    width: '100%', // Leicht vergrößert, um Abschneidungen zu vermeiden
-                  }}>
-                    <DateTimePicker
-                      testID="dateTimePickerModal"
-                      value={tempBirthDate || birthDate}
-                      mode="date"
-                      display="spinner"
-                      onChange={(event, selectedDate) => {
-                        if (selectedDate) {
-                          setTempBirthDate(selectedDate);
-                        }
-                      }}
-                      maximumDate={new Date()}
-                      minimumDate={new Date(1900, 0, 1)}
-                      themeVariant={theme.dark ? 'dark' : 'light'}
-                      style={{
-                        height: 200
-                      }}
-                    />
-                  </View>
-                </View>
-              )}
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.error + '20', borderRadius: theme.borderRadius.small }]}
-                onPress={cancelDatePickerModal}
-              >
-                <Text style={{ color: theme.colors.error, fontFamily: theme.typography.fontFamily.medium }}>
-                  Abbrechen
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.primary + '20', borderRadius: theme.borderRadius.small }]}
-                onPress={confirmDatePickerModal}
-              >
-                <Text style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.medium }}>
-                  Speichern
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
+    // Removed date picker modal - now handled in DatePicker component
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* DatePicker-Modal */}
-      {renderDatePickerModal()}
       
       {/* Sticky Header */}
       <View style={[
@@ -693,71 +569,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         </Text>
 
       {/* Birth Date (statt Alter) */}
-      <View style={[styles.inputContainer, {
-        flexDirection: 'column', 
-        width: '100%',          
-        padding: theme.spacing.m,
-        marginBottom: theme.spacing.m,
-        borderRadius: theme.borderRadius.medium,
-        backgroundColor: theme.colors.card,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        overflow: 'hidden'
-      }]}>
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          marginBottom: theme.spacing.m
-        }}>
-          <Text style={[styles.inputLabel, { 
-            fontFamily: theme.typography.fontFamily.medium, 
-            color: theme.colors.text,
-            fontSize: theme.typography.fontSize.m,
-          }]}>
-            Geburtsdatum
-          </Text>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.medium,
-            fontSize: theme.typography.fontSize.s,
-            color: theme.colors.textLight
-          }}>
-            {calculateAge(birthDate)} Jahre
-          </Text>
-        </View>
-          
-          {/* Anklickbare Datums-Anzeige */}
-          <TouchableOpacity
-            style={{
-              width: '100%',
-              backgroundColor: theme.colors.background,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.medium,
-              padding: theme.spacing.m,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-            onPress={openDatePickerModal}
-          >
-            <Text style={{
-              fontFamily: theme.typography.fontFamily.medium,
-              fontSize: theme.typography.fontSize.m,
-              color: theme.colors.text
-            }}>
-              {birthDate.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
-            </Text>
-            <Text style={{
-              fontFamily: theme.typography.fontFamily.medium,
-              fontSize: theme.typography.fontSize.s,
-              color: theme.colors.primary
-            }}>
-              Ändern
-            </Text>
-          </TouchableOpacity>
-        </View>
+      <DatePicker 
+        label="Geburtsdatum"
+        value={birthDate}
+        onValueChange={updateBirthDate}
+        ageLabel={true}
+        customButtonText="Ändern"
+        customModalTitle="Geburtsdatum auswählen"
+      />
       {/* Gewicht mit wiederverwendbarer SliderWithInput-Komponente */}
       <SliderWithInput
         minValue={30}
