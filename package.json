@@ -59,7 +59,8 @@
     "tone": "^15.1.22",
     "use-sound": "^5.0.0",
     "uuid": "^11.1.0",
-    "vision-camera-code-scanner": "^0.2.0"
+    "vision-camera-code-scanner": "^0.2.0",
+    "@expo/ui": "~0.1.1-alpha.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

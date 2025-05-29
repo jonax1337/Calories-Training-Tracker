@@ -8,6 +8,7 @@ import { RootStackParamList } from '../navigation';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { createAuthStyles } from '../styles/screens/auth-styles';
 import { debounce } from 'lodash';
+import * as Haptics from 'expo-haptics';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -158,13 +159,10 @@ const RegisterScreen = () => {
         // The NavigationContent component will detect the auth change and switch to AppStack
         setIsLoading(false);
         resetErrors();
-        // Force app reload to refresh navigation state
-        setTimeout(() => {
-          // This timeout is just to give the user visual feedback that registration succeeded
-          // The navigation will happen automatically when the app detects the auth token
-          alert('Registrierung erfolgreich!');
-        }, 500);
-        return; // Exit early to prevent further error calls
+        // Vibration and Haptics
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Exit early to prevent further error calls
+        return;
       } else {
         setGeneralError('Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
       }
@@ -425,35 +423,6 @@ const RegisterScreen = () => {
                 {confirmPasswordError}
               </Text>
             )}
-          </View>
-
-          <View style={{ marginBottom: theme.spacing.xl }}>
-            <Text style={{
-              fontSize: theme.typography.fontSize.s,
-              color: theme.colors.text,
-              marginBottom: theme.spacing.xs,
-              fontFamily: theme.typography.fontFamily.medium
-            }}>
-              Geburtsdatum
-            </Text>
-            <View style={{
-              backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              borderWidth: 1,
-              borderRadius: theme.borderRadius.medium,
-              paddingVertical: theme.spacing.s,
-              alignItems: 'center'
-            }}>
-              <DateTimePicker
-                value={birthDate}
-                mode="date"
-                display="spinner"
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-                textColor={theme.colors.text}
-                style={{ height: 120 }}
-              />
-            </View>
           </View>
 
           {generalError && (

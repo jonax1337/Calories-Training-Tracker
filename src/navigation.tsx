@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -17,6 +17,7 @@ import SettingsScreen from './screens/settings-screen';
 import FoodDetailScreen from './screens/food-detail-screen';
 import LoginScreen from './screens/login-screen';
 import RegisterScreen from './screens/register-screen';
+import IntroScreen from './screens/intro-screen';
 import TrainingScreen from './screens/training-screen';
 import HIITTimerScreen from './screens/hiit-timer-screen';
 import HIITTimerSettingsScreen from './screens/hiit-timer-settings-screen';
@@ -34,6 +35,26 @@ export interface HIITSettings {
 import { isAuthenticated } from './services/auth-service';
 import { resetAuthState } from './services/reset-auth';
 
+// Profile services
+import { fetchUserProfile } from './services/profile-api';
+
+// Helper functions
+function isProfileComplete(profile: any): boolean {
+  if (!profile) return false;
+  
+  // Check required fields for properly tracking calories and health
+  return (
+    profile.weight !== undefined && 
+    profile.weight > 0 &&
+    profile.height !== undefined && 
+    profile.height > 0 &&
+    profile.gender !== undefined &&
+    profile.birthDate !== undefined &&
+    profile.activityLevel !== undefined &&
+    profile.goals !== undefined
+  );
+}
+
 // Theme provider
 import { ThemeProvider, useTheme } from './theme/theme-context';
 import LoadingScreen from './components/ui/loading-screen';
@@ -43,6 +64,7 @@ export type RootStackParamList = {
   // Auth screens
   Login: undefined;
   Register: undefined;
+  Intro: undefined;
   // Main app screens
   TabNavigator: undefined;
   BarcodeScanner: { mealType?: string };
@@ -235,10 +257,46 @@ function AuthStack() {
 // Main App Stack Navigator (Protected routes)
 function AppStack() {
   const { theme } = useTheme();
+  const [initialRoute, setInitialRoute] = useState<"TabNavigator" | "Intro">("TabNavigator");
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Check if the profile is complete on mount and set the initial route accordingly
+  useEffect(() => {
+    const checkProfileComplete = async () => {
+      try {
+        const userProfile = await fetchUserProfile();
+        const isComplete = isProfileComplete(userProfile);
+        setInitialRoute(isComplete ? "TabNavigator" : "Intro");
+      } catch (error) {
+        console.error('Error checking profile completeness:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkProfileComplete();
+  }, []);
+  
+  // Show loading indicator while checking profile
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={{
+          fontFamily: theme.typography.fontFamily.medium,
+          fontSize: theme.typography.fontSize.m,
+          color: theme.colors.textLight,
+          marginTop: 16
+        }}>
+          Lade Profil...
+        </Text>
+      </View>
+    );
+  }
   
   return (
     <Stack.Navigator 
-      initialRouteName="TabNavigator"
+      initialRouteName={initialRoute}
       screenOptions={{
         headerStyle: {
           backgroundColor: theme.colors.primary,
@@ -345,6 +403,15 @@ function AppStack() {
             title: 'Lebensmittel hinzufügen',
             animation: 'slide_from_right',
           };
+        }}
+      />
+      <Stack.Screen 
+        name="Intro" 
+        component={IntroScreen} 
+        options={{
+          title: 'Profil einrichten',
+          headerShown: false, // Header ausblenden für besseres Onboarding-Erlebnis
+          animation: 'slide_from_right',
         }}
       />
     </Stack.Navigator>

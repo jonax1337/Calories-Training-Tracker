@@ -331,66 +331,33 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       )
     : 0;
 
-  // Check if profile is complete - if not, show a message directing to profile screen
+  // Check if profile is complete - if not, redirect to the Intro screen
+  useEffect(() => {
+    if (!isProfileComplete(userProfile)) {
+      // Verwende den Root-Navigator, um zum Intro-Screen zu navigieren
+      // @ts-ignore - Wir wissen, dass der Root-Navigator diese Route kennt
+      navigation.getParent()?.navigate('Intro');
+    }
+  }, [userProfile, navigation]);
+  
+  // Falls das Profil nicht vollständig ist und die Navigation zum Intro-Screen
+  // noch nicht abgeschlossen ist, zeige einen Ladebildschirm
   if (!isProfileComplete(userProfile)) {
     return (
       <View style={[styles.container, { 
         backgroundColor: theme.theme.colors.background,
         justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20 
+        alignItems: 'center' 
       }]}>
-        <View style={{
-          backgroundColor: theme.theme.colors.card,
-          borderRadius: 16,
-          padding: 24,
-          width: '100%',
-          alignItems: 'center',
-          shadowColor: theme.theme.colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 4,
+        <ActivityIndicator size="large" color={theme.theme.colors.primary} />
+        <Text style={{
+          fontFamily: theme.theme.typography.fontFamily.medium,
+          fontSize: theme.theme.typography.fontSize.m,
+          color: theme.theme.colors.textLight,
+          marginTop: 16
         }}>
-          <UserRound strokeWidth={1.5} size={theme.theme.typography.fontSize.xl} color={theme.theme.colors.primary} style={{ marginBottom: 20 }} />
-          <Text style={{
-            fontFamily: theme.theme.typography.fontFamily.bold,
-            fontSize: theme.theme.typography.fontSize.xl,
-            color: theme.theme.colors.text,
-            textAlign: 'center',
-            marginBottom: 12
-          }}>
-            Profil vervollständigen
-          </Text>
-          <Text style={{
-            fontFamily: theme.theme.typography.fontFamily.regular,
-            fontSize: theme.theme.typography.fontSize.m,
-            color: theme.theme.colors.textLight,
-            textAlign: 'center',
-            marginBottom: 24
-          }}>
-            Bitte vervollständige dein Profil, um deine Kalorien und Aktivitäten richtig zu verfolgen.
-          </Text>
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.theme.colors.primary,
-              paddingVertical: 12,
-              paddingHorizontal: 24,
-              borderRadius: 8,
-              width: '100%',
-              alignItems: 'center'
-            }}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <Text style={{
-              fontFamily: theme.theme.typography.fontFamily.medium,
-              fontSize: 16,
-              color: '#fff'
-            }}>
-              Zum Profil
-            </Text>
-          </TouchableOpacity>
-        </View>
+          Profil wird vorbereitet...
+        </Text>
       </View>
     );
   }

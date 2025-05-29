@@ -542,58 +542,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
     }
   };
 
-  // Request health permissions
-  const handleRequestPermissions = async () => {
-    try {
-      const hasPermission = await requestHealthPermissions();
-      setHealthPermission(hasPermission);
-      if (hasPermission) {
-        Alert.alert('Success', 'Health permissions granted');
-      } else {
-        Alert.alert('Error', 'Health permissions denied');
-      }
-    } catch (error) {
-      console.error('Error requesting health permissions:', error);
-      Alert.alert('Error', 'Failed to request health permissions');
-    }
-  };
-
-  // Render an activity level button
-  const renderActivityButton = (level: ActivityLevel, label: string, description: string) => (
-    <TouchableOpacity
-      style={[
-        styles.activityButton,
-        { 
-          backgroundColor: theme.colors.card,
-          borderRadius: theme.borderRadius.medium,
-          borderColor: theme.colors.border,
-        },
-        profile.activityLevel === level && { 
-          backgroundColor: theme.colors.primaryLight,
-          borderColor: theme.colors.primary 
-        },
-      ]}
-      onPress={() => handleActivityChange(level)}
-    >
-      <View style={styles.activityButtonContent}>
-        <Text style={[
-          styles.activityButtonLabel,
-          { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text },
-          profile.activityLevel === level && { color: theme.colors.primary },
-        ]}>
-          {label}
-        </Text>
-        <Text style={[
-          styles.activityButtonDescription,
-          { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight },
-          profile.activityLevel === level && { color: theme.colors.primary },
-        ]}>
-          {description}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-
   // Modal-Komponente für DateTimePicker
   const renderDatePickerModal = () => {
     if (!showDatePickerModal) return null;
@@ -873,7 +821,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             color: theme.colors.text,
             fontSize: theme.typography.fontSize.m,
           }}>
-            Body-Mass-Index (BMI)
+            BMI
           </Text>
           
           {/* BMI-Wert anzeigen, wenn sowohl Gewicht als auch Gru00f6u00dfe vorhanden sind */}
@@ -946,43 +894,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                 <View style={{flex: 1, backgroundColor: '#F44336'}} />
               </View>
             )}
-          </View>
-
-          {/* BMI-Kategorie-Marker */}
-          <View style={{
-            position: 'absolute',
-            top: 10, // Align mit der Skala
-            left: 0,
-            right: 0,
-            height: 6
-          }}>
-            {/* Markierungen der wichtigen BMI-Grenzen */}
-            <View style={{
-              position: 'absolute',
-              left: '20%', // BMI 18.5 (Untergewicht/Normal)
-              height: 6,
-              width: 2,
-              backgroundColor: 'white',
-              top: 0
-            }} />
-            
-            <View style={{
-              position: 'absolute',
-              left: '50%', // BMI 25 (Normal/Übergewicht)
-              height: 6,
-              width: 2,
-              backgroundColor: 'white',
-              top: 0
-            }} />
-            
-            <View style={{
-              position: 'absolute',
-              left: '75%', // BMI 30 (Übergewicht/Adipositas)
-              height: 6,
-              width: 2,
-              backgroundColor: 'white',
-              top: 0
-            }} />
           </View>
           
           {/* BMI-Marker - mit verbesserter Skalierung */}
@@ -1114,7 +1025,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderWidth: 1,
             borderColor: theme.colors.border,
             borderRadius: theme.borderRadius.small,
-            height: 56, // Reduzierte Höhe nach 8-Punkt-Grid (7*8=56)
+            height: 56 * 1.5, // Reduzierte Höhe nach 8-Punkt-Grid (7*8=56)
             justifyContent: 'center',
             overflow: 'hidden'
           }}>
@@ -1128,11 +1039,11 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
               style={{
                 width: '100%',
                 color: theme.colors.text,
-                height: 56, // Passend zur Container-Höhe
+                height: 56 * 2, // Passend zur Container-Höhe
               }}
               itemStyle={{
                 fontSize: 16,
-                height: 56, // Passend zur Container-Höhe
+                height: 56 * 2, // Passend zur Container-Höhe
                 fontWeight: 'bold',
                 color: theme.colors.text
               }}
