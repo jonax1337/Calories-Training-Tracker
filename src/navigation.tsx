@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -264,9 +265,19 @@ function AppStack() {
   useEffect(() => {
     const checkProfileComplete = async () => {
       try {
-        const userProfile = await fetchUserProfile();
-        const isComplete = isProfileComplete(userProfile);
-        setInitialRoute(isComplete ? "TabNavigator" : "Intro");
+        // Überprüfe zuerst, ob das Onboarding als abgeschlossen markiert wurde
+        const onboardingCompleted = await AsyncStorage.getItem('ONBOARDING_COMPLETED');
+        
+        if (onboardingCompleted === 'true') {
+          // Wenn das Onboarding explizit als abgeschlossen markiert wurde, zeige den TabNavigator
+          console.log('Onboarding wurde als abgeschlossen markiert, navigiere zu TabNavigator');
+          setInitialRoute("TabNavigator");
+        } else {
+          // Andernfalls überprüfe das Profil auf Vollständigkeit
+          const userProfile = await fetchUserProfile();
+          const isComplete = isProfileComplete(userProfile);
+          setInitialRoute(isComplete ? "TabNavigator" : "Intro");
+        }
       } catch (error) {
         console.error('Error checking profile completeness:', error);
       } finally {

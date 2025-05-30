@@ -28,14 +28,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   onValueChange,
   ageLabel = false,
   minDate = new Date(1900, 0, 1),
-  maxDate = new Date(new Date().getFullYear() + 1, 0, 0),
+  maxDate = new Date(),
   customButtonText = 'Ändern',
   customModalTitle = 'Datum auswählen',
 }) => {
   const { theme } = useTheme();
   const styles = createProfileStyles(theme);
-  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
+
+  // Plattformspezifisches Verhalten - auf Android brauchen wir keinen Modal
 
   // Funktion zum Berechnen des Alters aus dem Geburtsdatum
   const calculateAge = (birthdate: Date): number => {
@@ -48,34 +50,71 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     return age;
   };
   
-  // Funktionen für den Datepicker-Modal
-  const openDatePickerModal = () => {
-    setTempDate(value);
-    setShowDatePickerModal(true);
+  // Funktionen für den Datepicker
+  const openDatePicker = () => {
+    if (Platform.OS === 'android') {
+      // Auf Android öffnen wir direkt den nativen DatePicker ohne Modal
+      setShowDatePicker(true);
+    } else {
+      // Auf iOS/Web verwenden wir unseren Custom Modal
+      setTempDate(value);
+      setShowDatePicker(true);
+    }
   };
   
-  const cancelDatePickerModal = () => {
-    setShowDatePickerModal(false);
+  const cancelDatePicker = () => {
+    setShowDatePicker(false);
     setTempDate(null);
   };
   
-  const confirmDatePickerModal = () => {
+  const confirmDatePicker = () => {
     if (tempDate) {
       onValueChange(tempDate);
     }
-    setShowDatePickerModal(false);
+    setShowDatePicker(false);
+  };
+  
+  // Callback für Android DatePicker
+  const onAndroidDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (event.type === 'dismissed') {
+      // User canceled the picker
+      return;
+    }
+    if (selectedDate) {
+      onValueChange(selectedDate);
+    }
   };
 
-  // Modal-Komponente für DateTimePicker
-  const renderDatePickerModal = () => {
-    if (!showDatePickerModal) return null;
+  // DatePicker Komponente - plattformspezifisch
+  const renderDatePicker = () => {
+    // Für Android: Nativer Dialog ohne Modal
+    if (Platform.OS === 'android') {
+      if (showDatePicker) {
+        return (
+          <DateTimePicker
+            testID="datePickerAndroid"
+            value={value}
+            mode="date"
+            display="default" // Nativer Android Date Picker
+            onChange={onAndroidDateChange}
+            maximumDate={maxDate}
+            minimumDate={minDate}
+          />
+        );
+      }
+      return null;
+    }
+    
+    // Für iOS und Web: Modal mit DatePicker
+    if (!showDatePicker) return null;
     
     return (
       <Modal
         animationType="fade"
         transparent={true}
-        visible={showDatePickerModal}
-        onRequestClose={cancelDatePickerModal} // Added onRequestClose for Android back button
+        visible={showDatePicker}
+        onRequestClose={cancelDatePicker}
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
@@ -83,7 +122,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               {customModalTitle}
             </Text>
             {/* Close button for modal */}
-            <TouchableOpacity onPress={cancelDatePickerModal} style={styles.modalCloseButton}>
+            <TouchableOpacity onPress={cancelDatePicker} style={styles.modalCloseButton}>
               <X size={24} color={theme.colors.text} strokeWidth={1.5} />
             </TouchableOpacity>
             
@@ -118,34 +157,27 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                   borderWidth: 1,
                   borderColor: 'rgba(0,0,0,0.1)',
                   overflow: 'hidden',
-                  // Flex-Container für DateTimePicker
                   alignItems: 'center',
                   justifyContent: 'center',
                   padding: 0
                 }]} >
-                  {/* Wrapper für den DateTimePicker mit negativem Margin zum Verschieben nach links */}
-                  <View style={{
-                    marginLeft: -30, // Verschiebt den Picker 15px nach links für bessere Zentrierung
-                    width: '100%', // Leicht vergrößert, um Abschneidungen zu vermeiden
-                  }}>
-                    <DateTimePicker
-                      testID="dateTimePickerModal"
-                      value={tempDate || value}
-                      mode="date"
-                      display="spinner"
-                      onChange={(event, selectedDate) => {
-                        if (selectedDate) {
-                          setTempDate(selectedDate);
-                        }
-                      }}
-                      maximumDate={maxDate}
-                      minimumDate={minDate}
-                      themeVariant={theme.dark ? 'dark' : 'light'}
-                      style={{
-                        height: 200
-                      }}
-                    />
-                  </View>
+                  <DateTimePicker
+                    testID="dateTimePickerModal"
+                    value={tempDate || value}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        setTempDate(selectedDate);
+                      }
+                    }}
+                    maximumDate={maxDate}
+                    minimumDate={minDate}
+                    themeVariant={theme.dark ? 'dark' : 'light'}
+                    style={{
+                      height: 200
+                    }}
+                  />
                 </View>
               )}
             </View>
@@ -153,7 +185,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: theme.colors.error + '20', borderRadius: theme.borderRadius.small }]}
-                onPress={cancelDatePickerModal}
+                onPress={cancelDatePicker}
               >
                 <Text style={{ color: theme.colors.error, fontFamily: theme.typography.fontFamily.medium }}>
                   Abbrechen
@@ -162,7 +194,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: theme.colors.primary + '20', borderRadius: theme.borderRadius.small }]}
-                onPress={confirmDatePickerModal}
+                onPress={confirmDatePicker}
               >
                 <Text style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.medium }}>
                   Speichern
@@ -177,8 +209,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   return (
     <>
-      {/* DatePicker-Modal */}
-      {renderDatePickerModal()}
+      {/* DatePicker - plattformspezifisch */}
+      {renderDatePicker()}
       
       {/* Date Input Container */}
       <View style={[styles.inputContainer, {
@@ -230,7 +262,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             justifyContent: 'space-between',
             alignItems: 'center'
           }}
-          onPress={openDatePickerModal}
+          onPress={openDatePicker}
         >
           <Text style={{
             fontFamily: theme.typography.fontFamily.medium,

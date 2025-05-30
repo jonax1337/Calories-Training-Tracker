@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, SafeAreaView, Modal, Platform, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, SafeAreaView, Modal, Platform, ActivityIndicator, Alert } from 'react-native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityLevel, UserProfile } from '../types';
 
 // Definiere die RootStackParamList hier direkt, um den Import-Fehler zu beheben
@@ -20,10 +21,11 @@ type RootStackParamList = {
 import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme-context';
-import { updateUserProfile, fetchUserProfile } from '../services/profile-api';
+import { updateUserProfile, fetchUserProfile, fetchGoalTypes, createOrUpdateUserGoal } from '../services/profile-api';
 import { ArrowRight, ArrowLeft, User, UserRound, Calendar, Weight, Ruler, Activity, Target, Heart, Bike, Bed, BedDouble, Dumbbell, Footprints, ArrowDown, ArrowUp, Award, Minus, Star, X, VenusAndMars, PencilRuler, Goal } from 'lucide-react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { DatePicker } from '../components/ui/date-picker';
+import LoadingScreen from '../components/ui/loading-screen';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Intro'>;
 
@@ -34,11 +36,14 @@ const IntroScreen: React.FC = () => {
   
   // Der aktuelle Schritt im Onboarding-Prozess
   const [currentStep, setCurrentStep] = useState<number>(0);
+  // Ladezustand für das Abschließen des Onboardings
+  const [isCompleting, setIsCompleting] = useState<boolean>(false);
   
   // Profildaten, die während des Onboardings gesammelt werden
   const [profile, setProfile] = useState<UserProfile>({
     id: 'user_1', // Wir verwenden dieselbe ID wie im ProfileScreen
     name: '',
+    gender: 'male', // Standardwert für Geschlecht setzen
     goals: {
       dailyCalories: 2000,
       dailyProtein: 50,
@@ -51,6 +56,17 @@ const IntroScreen: React.FC = () => {
   // Zustand für das Geburtsdatum
   const [birthDate, setBirthDate] = useState<Date>(new Date(new Date().getFullYear() - 25, 0, 1));
   
+  // Zustände für Ziele und Zieltypen
+  const [goalTypes, setGoalTypes] = useState<any[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [calculatedGoalValues, setCalculatedGoalValues] = useState({
+    dailyCalories: 2000,
+    dailyProtein: 50,
+    dailyCarbs: 250,
+    dailyFat: 70,
+    dailyWater: 2000,
+  });
+  
   // Funktion zum Berechnen des Alters aus dem Geburtsdatum
   const calculateAge = (birthdate: Date): number => {
     const today = new Date();
@@ -62,9 +78,138 @@ const IntroScreen: React.FC = () => {
     return age;
   };
   
-  // State für Slider-Werte
-  const [weightValue, setWeightValue] = useState<number>(70);
-  const [heightValue, setHeightValue] = useState<number>(170);
+  // Laden der Zieltypen beim ersten Rendern
+  useEffect(() => {
+    const loadGoalTypes = async () => {
+      try {
+        const types = await fetchGoalTypes();
+        setGoalTypes(types);
+      } catch (error) {
+        console.error('Fehler beim Laden der Zieltypen:', error);
+      }
+    };
+    
+    loadGoalTypes();
+  }, []);
+  
+  // Funktion zum Berechnen der empfohlenen Ziele basierend auf BMI
+  const calculateRecommendedGoals = () => {
+    if (!profile.weight || !profile.height || !profile.gender || !profile.activityLevel) {
+      return;
+    }
+    
+    // Berechne BMI
+    const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+    
+    // Wähle ein Ziel basierend auf BMI
+    let recommendedGoalId = 'maintain'; // Standard: Gewicht halten
+    
+    if (bmi < 18.5) {
+      // Untergewicht - Zunehmen empfehlen
+      recommendedGoalId = 'gain';
+      setSelectedGoalId('gain');
+    } else if (bmi < 25) {
+      // Normalgewicht - Halten empfehlen
+      recommendedGoalId = 'maintain';
+      setSelectedGoalId('maintain');
+    } else if (bmi < 30) {
+      // Übergewicht - Leicht reduzieren empfehlen
+      recommendedGoalId = 'lose_moderate';
+      setSelectedGoalId('lose_moderate');
+    } else {
+      // Adipositas - Stärker reduzieren empfehlen
+      recommendedGoalId = 'lose_fast';
+      setSelectedGoalId('lose_fast');
+    }
+    
+    // Berechne die empfohlenen Werte basierend auf dem Ziel
+    calculateGoalValues(recommendedGoalId);
+  };
+  
+  // Funktion zum Berechnen der konkreten Zielwerte
+  const calculateGoalValues = (goalId: string) => {
+    if (!profile.weight || !profile.height || !profile.gender || !profile.activityLevel) {
+      return;
+    }
+    
+    // Alter aus dem Geburtsdatum berechnen (falls gesetzt)
+    const age = birthDate ? calculateAge(birthDate) : 30;
+    
+    // Basis-Kalorienverbrauch mit Harris-Benedict-Formel berechnen
+    let bmr = 0;
+    if (profile.gender === 'male') {
+      // Männer: BMR = 66.5 + (13.75 * kg) + (5.003 * cm) - (6.75 * Alter)
+      bmr = 66.5 + (13.75 * profile.weight) + (5.003 * profile.height) - (6.75 * age);
+    } else {
+      // Frauen: BMR = 655.1 + (9.563 * kg) + (1.850 * cm) - (4.676 * Alter)
+      bmr = 655.1 + (9.563 * profile.weight) + (1.850 * profile.height) - (4.676 * age);
+    }
+    
+    // Multiplikator basierend auf Aktivitätsstufe
+    let activityMultiplier = 1.2; // Sedentär
+    switch(profile.activityLevel) {
+      case ActivityLevel.Sedentary: activityMultiplier = 1.2; break;
+      case ActivityLevel.LightlyActive: activityMultiplier = 1.375; break;
+      case ActivityLevel.ModeratelyActive: activityMultiplier = 1.55; break;
+      case ActivityLevel.VeryActive: activityMultiplier = 1.725; break;
+      case ActivityLevel.ExtremelyActive: activityMultiplier = 1.9; break;
+    }
+    
+    // Täglicher Kalorienbedarf zum Gewicht halten (TDEE)
+    const maintenanceCalories = Math.round(bmr * activityMultiplier);
+    
+    let dailyCalories = 0;
+    let protein = 0;
+    let carbs = 0;
+    let fat = 0;
+    const dailyWater = 2000; // Standardwert für Wasser
+    
+    // Ziel-basierte Berechnung - Exakt wie im Profile-Screen
+    switch (goalId) {
+      case 'lose_fast':
+        // Schnelles Abnehmen: TDEE - 500 Kalorien
+        dailyCalories = maintenanceCalories - 500;
+        protein = Math.round((profile.weight || 70) * 2.0); // Fallback zu 70kg wie im Profile-Screen
+        carbs = Math.round((dailyCalories * 0.30) / 4);
+        fat = Math.round((dailyCalories * 0.25) / 9);
+        break;
+      case 'lose_moderate':
+        // Moderates Abnehmen: TDEE - 300 Kalorien
+        dailyCalories = maintenanceCalories - 300;
+        protein = Math.round((profile.weight || 70) * 1.6); // Fallback zu 70kg
+        carbs = Math.round((dailyCalories * 0.40) / 4);
+        fat = Math.round((dailyCalories * 0.30) / 9);
+        break;
+      case 'gain':
+        // Zunehmen: TDEE + 400 Kalorien
+        dailyCalories = maintenanceCalories + 400;
+        protein = Math.round((profile.weight || 70) * 1.6); // Fallback zu 70kg
+        carbs = Math.round((dailyCalories * 0.50) / 4);
+        fat = Math.round((dailyCalories * 0.25) / 9);
+        break;
+      case 'maintain':
+      default:
+        // Halten: TDEE (Maintenance)
+        dailyCalories = maintenanceCalories;
+        protein = Math.round((profile.weight || 70) * 1.4); // Fallback zu 70kg
+        carbs = Math.round((dailyCalories * 0.45) / 4);
+        fat = Math.round((dailyCalories * 0.30) / 9);
+        break;
+    }
+    
+    // Setze die berechneten Werte
+    setCalculatedGoalValues({
+      dailyCalories,
+      dailyProtein: protein,
+      dailyCarbs: carbs,
+      dailyFat: fat,
+      dailyWater
+    });
+  };
+  
+  // State für Slider-Werte - mit dem Profile synchronisiert
+  const [weightValue, setWeightValue] = useState<number>(profile.weight || 70);
+  const [heightValue, setHeightValue] = useState<number>(profile.height || 170);
   
   useEffect(() => {
     // Lade vorhandene Profildaten, falls vorhanden
@@ -100,76 +245,30 @@ const IntroScreen: React.FC = () => {
     loadProfile();
   }, []);
   
+  // useEffect für die Zielberechnung, wenn wir zum Zielschritt oder Zusammenfassungsschritt gelangen
+  useEffect(() => {
+    if ((currentStep === 5 || currentStep === 6) && profile.weight && profile.height && profile.gender && profile.activityLevel) {
+      // Wenn ein Ziel bereits ausgewählt wurde, berechne die Werte für dieses Ziel
+      if (selectedGoalId) {
+        calculateGoalValues(selectedGoalId);
+      } else {
+        // Ansonsten berechne die empfohlenen Ziele basierend auf BMI
+        calculateRecommendedGoals();
+      }
+    }
+  }, [currentStep, profile.weight, profile.height, profile.gender, profile.activityLevel, selectedGoalId]);
+  
   // Aktualisiere das Profil mit den gesammelten Daten
   const updateProfile = async () => {
     try {
       // Berechne das Alter aus dem Geburtsdatum
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
+      const age = calculateAge(birthDate);
       
-      // Erstelle ein formatiertes Datum im YYYY-MM-DD Format
+      // Formatiere das Datum für die Speicherung (YYYY-MM-DD)
       const year = birthDate.getFullYear();
-      const month = String(birthDate.getMonth() + 1).padStart(2, '0');
+      const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // +1, da Monate von 0 beginnen
       const day = String(birthDate.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
-      
-      // Berechne Zielwerte basierend auf dem Profil und dem ausgewählten Ziel
-      let goalCalories = 2000;
-      let goalProtein = 50;
-      let goalCarbs = 250;
-      let goalFat = 70;
-      
-      // Basis-Kalorienverbrauch mit Harris-Benedict-Formel berechnen
-      if (profile.gender && weightValue && heightValue && age) {
-        let bmr = 0;
-        if (profile.gender === 'male') {
-          // Männer: BMR = 66.5 + (13.75 * kg) + (5.003 * cm) - (6.75 * Alter)
-          bmr = 66.5 + (13.75 * weightValue) + (5.003 * heightValue) - (6.75 * age);
-        } else {
-          // Frauen: BMR = 655.1 + (9.563 * kg) + (1.850 * cm) - (4.676 * Alter)
-          bmr = 655.1 + (9.563 * weightValue) + (1.850 * heightValue) - (4.676 * age);
-        }
-        
-        // Multiplikator basierend auf Aktivitätsstufe
-        let activityMultiplier = 1.2; // Sedentär
-        switch(profile.activityLevel) {
-          case ActivityLevel.Sedentary: activityMultiplier = 1.2; break;
-          case ActivityLevel.LightlyActive: activityMultiplier = 1.375; break;
-          case ActivityLevel.ModeratelyActive: activityMultiplier = 1.55; break;
-          case ActivityLevel.VeryActive: activityMultiplier = 1.725; break;
-          case ActivityLevel.ExtremelyActive: activityMultiplier = 1.9; break;
-        }
-        
-        // Täglicher Kalorienbedarf zum Gewicht halten (TDEE)
-        const maintenanceCalories = Math.round(bmr * activityMultiplier);
-        
-        // Berechne basierend auf dem ausgewählten Ziel
-        switch (profile.activeGoalTypeId) {
-          case 'lose_weight': // Abnehmen
-            goalCalories = maintenanceCalories - 500;
-            goalProtein = Math.round(weightValue * 1.8); // Mehr Protein zur Sättigung
-            goalCarbs = Math.round((goalCalories * 0.35) / 4); // 35% Kohlenhydrate
-            goalFat = Math.round((goalCalories * 0.30) / 9); // 30% Fett
-            break;
-          case 'gain_weight': // Zunehmen/Muskelaufbau
-            goalCalories = maintenanceCalories + 400;
-            goalProtein = Math.round(weightValue * 1.6); // Mehr Protein für Muskelaufbau
-            goalCarbs = Math.round((goalCalories * 0.50) / 4); // 50% Kohlenhydrate
-            goalFat = Math.round((goalCalories * 0.25) / 9); // 25% Fett
-            break;
-          case 'maintain_weight': // Halten
-          default:
-            goalCalories = maintenanceCalories;
-            goalProtein = Math.round(weightValue * 1.4);
-            goalCarbs = Math.round((goalCalories * 0.45) / 4); // 45% Kohlenhydrate
-            goalFat = Math.round((goalCalories * 0.30) / 9); // 30% Fett
-            break;
-        }
-      }
       
       // Aktualisiere das Profil mit allen gesammelten Daten
       const updatedProfile: UserProfile = {
@@ -178,25 +277,83 @@ const IntroScreen: React.FC = () => {
         height: heightValue,
         age: age,
         birthDate: formattedDate,
+        // Stelle sicher, dass das Geschlecht explizit gesetzt ist (auch wenn es der Standardwert ist)
+        gender: profile.gender || 'male', // Verwende den aktuellen Wert oder 'male' als Fallback
+        activeGoalTypeId: selectedGoalId || null, // Speichere das ausgewählte Ziel
         goals: {
-          dailyCalories: goalCalories,
-          dailyProtein: goalProtein,
-          dailyCarbs: goalCarbs,
-          dailyFat: goalFat,
-          dailyWater: 2500 // Standardwert für Wasser
+          // Verwende die berechneten Zielwerte
+          dailyCalories: calculatedGoalValues.dailyCalories,
+          dailyProtein: calculatedGoalValues.dailyProtein,
+          dailyCarbs: calculatedGoalValues.dailyCarbs,
+          dailyFat: calculatedGoalValues.dailyFat,
+          dailyWater: calculatedGoalValues.dailyWater
         }
       };
       
+      // Profil in der API aktualisieren
       await updateUserProfile(updatedProfile);
       
-      // Navigiere zum TabNavigator, der dann zum Home-Screen führt
-      // @ts-ignore - Die Route existiert im Root-Navigator
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'TabNavigator' }]
-      });
+      // Wenn ein Ziel ausgewählt wurde, speichere es auch als UserGoal
+      if (selectedGoalId) {
+        try {
+          const userGoal = {
+            userId: updatedProfile.id,
+            goalTypeId: selectedGoalId,
+            isCustom: false,
+            dailyCalories: calculatedGoalValues.dailyCalories,
+            dailyProtein: calculatedGoalValues.dailyProtein,
+            dailyCarbs: calculatedGoalValues.dailyCarbs,
+            dailyFat: calculatedGoalValues.dailyFat,
+            dailyWater: calculatedGoalValues.dailyWater
+          };
+          
+          await createOrUpdateUserGoal(userGoal);
+        } catch (goalError) {
+          console.error('Fehler beim Speichern des Benutzerziels:', goalError);
+          // Fehler beim Speichern des Ziels sollte den gesamten Vorgang nicht abbrechen
+        }
+      }
+      
+      // Profile als vollständig markieren
+      await AsyncStorage.setItem('ONBOARDING_COMPLETED', 'true');
+      
+      // Kurze Verzögerung, dann die Zurück-Navigation nutzen
+      setTimeout(async () => {
+        try {
+          // Da die Zurück-Geste funktioniert, nutzen wir genau diese Funktionalität programmatisch
+          if (navigation.canGoBack()) {
+            // Auf diesem Weg kommen wir zum Home-Screen, wie du beschrieben hast
+            navigation.goBack();
+            
+            // Damit wir besser verstehen, was passiert, loggen wir die erfolgreiche Navigation
+            console.log('Navigation mit goBack() durchgeführt');
+          } else {
+            // Falls kein Zurück möglich ist, versuchen wir es direkt
+            navigation.navigate('TabNavigator' as any);
+            console.log('Navigation mit navigate("TabNavigator") durchgeführt');
+          }
+        } catch (error) {
+          console.error('Navigationsfehler:', error);
+          
+          // Ladebildschirm ausblenden bei Fehlern
+          setIsCompleting(false);
+          
+          // Benutzerfreundliche Fehlermeldung
+          Alert.alert(
+            'Fast geschafft!',
+            'Dein Profil wurde gespeichert. Tippe auf "OK" und nutze die Zurück-Geste, um zum Hauptbildschirm zu gelangen.',
+            [{ text: 'OK' }]
+          );
+        }
+      }, 1200);
     } catch (error) {
       console.error('Error updating profile during intro:', error);
+      setIsCompleting(false); // Bei einem Fehler den Ladezustand deaktivieren
+      Alert.alert(
+        'Fehler',
+        'Beim Speichern des Profils ist ein Fehler aufgetreten. Bitte versuche es erneut.',
+        [{ text: 'OK' }]
+      );
     }
   };
   
@@ -204,8 +361,14 @@ const IntroScreen: React.FC = () => {
   const goToNextStep = () => {
     if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
+      
+      // Wenn wir zum Zielschritt wechseln, berechne die empfohlenen Ziele
+      if (currentStep === 4) {
+        calculateRecommendedGoals();
+      }
     } else {
       // Beim letzten Schritt: Profil aktualisieren und zur Hauptseite navigieren
+      setIsCompleting(true); // Ladezustand aktivieren
       updateProfile();
     }
   };
@@ -259,7 +422,7 @@ const IntroScreen: React.FC = () => {
               backgroundColor: theme.colors.card
             }]}>
               <Picker
-                selectedValue={profile.gender || 'male'}
+                selectedValue={profile.gender}
                 onValueChange={(value) => {
                   const genderValue = typeof value === 'string' ? value : String(value);
                   setProfile(prev => ({ ...prev, gender: genderValue as 'male' | 'female' | 'divers' }));
@@ -334,6 +497,7 @@ const IntroScreen: React.FC = () => {
                   ...prev,
                   weight: value
                 }));
+                setWeightValue(value);
               }}
               label="Gewicht"
               unit="Kilogramm"
@@ -356,6 +520,7 @@ const IntroScreen: React.FC = () => {
                   ...prev,
                   height: value
                 }));
+                setHeightValue(value);
               }}
               label="Größe"
               unit="Zentimeter"
@@ -473,71 +638,108 @@ const IntroScreen: React.FC = () => {
         );
       
       case 5: // Ziele
+        
         return (
           <View style={styles.stepContainer}>
-            <Goal size={48} color={theme.colors.primary} style={styles.stepIcon} />
+            <Target size={48} color={theme.colors.primary} style={styles.stepIcon} />
             <Text style={[styles.title, { color: theme.colors.text }]}>Dein Ziel</Text>
             <Text style={[styles.description, { color: theme.colors.textLight }]}>
-              Was möchtest du mit dieser App erreichen?
+              Wähle ein Ziel, das zu dir passt. Basierend auf deinem BMI empfehlen wir:
             </Text>
             
-            {/* Zieloptionen */}
-            <TouchableOpacity 
-              style={[
-                styles.goalOption, 
-                { 
-                  borderColor: profile.activeGoalTypeId === 'lose_weight' ? theme.colors.primary : theme.colors.border,
-                  backgroundColor: profile.activeGoalTypeId === 'lose_weight' ? `${theme.colors.primary}20` : theme.colors.card
-                }
-              ]}
-              onPress={() => setProfile(prev => ({...prev, activeGoalTypeId: 'lose_weight'}))}
-            >
-              <ArrowDown size={30} color={theme.colors.primary} />
-              <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Abnehmen</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
-                  Kaloriendefizit, um Gewicht zu verlieren
-                </Text>
+            {goalTypes.length > 0 ? (
+              <View style={styles.goalOptionsContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.goalOption, 
+                    { 
+                      borderColor: selectedGoalId === 'gain' ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: selectedGoalId === 'gain' ? `${theme.colors.primary}20` : theme.colors.card
+                    }
+                  ]}
+                  onPress={() => {
+                    setSelectedGoalId('gain');
+                    calculateGoalValues('gain');
+                  }}
+                >
+                  <ArrowUp size={30} color={theme.colors.primary} />
+                  <View style={styles.goalText}>
+                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtszunahme</Text>
+                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                      Für Personen mit Untergewicht oder Muskelaufbau-Ziel.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.goalOption, 
+                    { 
+                      borderColor: selectedGoalId === 'maintain' ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: selectedGoalId === 'maintain' ? `${theme.colors.primary}20` : theme.colors.card
+                    }
+                  ]}
+                  onPress={() => {
+                    setSelectedGoalId('maintain');
+                    calculateGoalValues('maintain');
+                  }}
+                >
+                  <Minus size={30} color={theme.colors.primary} />
+                  <View style={styles.goalText}>
+                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gewicht halten & Fitness verbessern</Text>
+                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                      Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.goalOption, 
+                    { 
+                      borderColor: selectedGoalId === 'lose_moderate' ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: selectedGoalId === 'lose_moderate' ? `${theme.colors.primary}20` : theme.colors.card
+                    }
+                  ]}
+                  onPress={() => {
+                    setSelectedGoalId('lose_moderate');
+                    calculateGoalValues('lose_moderate');
+                  }}
+                >
+                  <ArrowDown size={30} color={theme.colors.primary} />
+                  <View style={styles.goalText}>
+                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Moderate Gewichtsreduktion</Text>
+                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                      Für leichtes Übergewicht, langsamer aber nachhaltiger Gewichtsverlust.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.goalOption, 
+                    { 
+                      borderColor: selectedGoalId === 'lose_fast' ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: selectedGoalId === 'lose_fast' ? `${theme.colors.primary}20` : theme.colors.card
+                    }
+                  ]}
+                  onPress={() => {
+                    setSelectedGoalId('lose_fast');
+                    calculateGoalValues('lose_fast');
+                  }}
+                >
+                  <ArrowDown size={30} color={theme.colors.primary} />
+                  <View style={styles.goalText}>
+                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtsreduktion</Text>
+                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                      Für stärkeres Übergewicht, schnellerer Gewichtsverlust.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[
-                styles.goalOption, 
-                { 
-                  borderColor: profile.activeGoalTypeId === 'maintain_weight' ? theme.colors.primary : theme.colors.border,
-                  backgroundColor: profile.activeGoalTypeId === 'maintain_weight' ? `${theme.colors.primary}20` : theme.colors.card
-                }
-              ]}
-              onPress={() => setProfile(prev => ({...prev, activeGoalTypeId: 'maintain_weight'}))}
-            >
-              <Minus size={30} color={theme.colors.primary} />
-              <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Gewicht halten</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
-                  Ausgeglichene Kalorienbilanz
-                </Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[
-                styles.goalOption, 
-                { 
-                  borderColor: profile.activeGoalTypeId === 'gain_weight' ? theme.colors.primary : theme.colors.border,
-                  backgroundColor: profile.activeGoalTypeId === 'gain_weight' ? `${theme.colors.primary}20` : theme.colors.card
-                }
-              ]}
-              onPress={() => setProfile(prev => ({...prev, activeGoalTypeId: 'gain_weight'}))}
-            >
-              <ArrowUp size={30} color={theme.colors.primary} />
-              <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Zunehmen</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
-                  Kalorienuüberschuss für Muskelaufbau oder Gewichtszunahme
-                </Text>
-              </View>
-            </TouchableOpacity>
+            ) : (
+              <ActivityIndicator size='large' color={theme.colors.primary} />
+            )}
           </View>
         );
       
@@ -573,9 +775,10 @@ const IntroScreen: React.FC = () => {
               <View style={styles.summaryRow}>
                 <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Geschlecht:</Text>
                 <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-                  {profile.gender === 'male' ? 'Männlich' : 
+                  {/* Immer einen Wert anzeigen, Standardwert ist 'male' */}
+                  {(profile.gender || 'male') === 'male' ? 'Männlich' : 
                    profile.gender === 'female' ? 'Weiblich' : 
-                   profile.gender === 'divers' ? 'Divers' : '-'}
+                   profile.gender === 'divers' ? 'Divers' : 'Männlich'}
                 </Text>
               </View>
               
@@ -621,9 +824,17 @@ const IntroScreen: React.FC = () => {
               <View style={styles.summaryRow}>
                 <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Ziel:</Text>
                 <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-                  {profile.activeGoalTypeId === 'lose_weight' ? 'Abnehmen' : 
-                   profile.activeGoalTypeId === 'maintain_weight' ? 'Gewicht halten' : 
-                   profile.activeGoalTypeId === 'gain_weight' ? 'Zunehmen' : '-'}
+                  {selectedGoalId === 'gain' ? 'Gesunde Gewichtszunahme' : 
+                   selectedGoalId === 'maintain' ? 'Gewicht halten & Fitness verbessern' : 
+                   selectedGoalId === 'lose_moderate' ? 'Moderate Gewichtsreduktion' : 
+                   selectedGoalId === 'lose_fast' ? 'Gesunde Gewichtsreduktion' : '-'}
+                </Text>
+              </View>
+              
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Kalorienziel:</Text>
+                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                  {calculatedGoalValues.dailyCalories} kcal
                 </Text>
               </View>
             </View>
@@ -637,6 +848,11 @@ const IntroScreen: React.FC = () => {
   
   // DateTimePicker-Funktionalität wurde in die DatePicker-Komponente verschoben
 
+  // Wenn das Onboarding abgeschlossen wird, zeigen wir einen Ladebildschirm an
+  if (isCompleting) {
+    return <LoadingScreen message="Dein Profil wird gespeichert..." />;
+  }
+  
   return (
     <SafeAreaView style={[styles.container, { 
       backgroundColor: theme.colors.background,
@@ -845,6 +1061,23 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 16,
     fontFamily: 'SpaceGrotesk-Bold',
+  },
+  // Styles für Zielauswahl
+  goalOptionsContainer: {
+    width: '100%',
+    marginTop: 15,
+  },
+  goalText: {
+    marginLeft: 15,
+  },
+  goalTitle: {
+    fontSize: 16,
+    fontFamily: 'SpaceGrotesk-Bold',
+    marginBottom: 5,
+  },
+  goalDescription: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk-Regular',
   },
 });
 
