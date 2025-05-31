@@ -49,12 +49,10 @@ const RegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   
   // Feldspezifische Fehler
-  const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
@@ -67,7 +65,6 @@ const RegisterScreen = () => {
   
   // Funktion zum Zurücksetzen aller Fehler
   const resetErrors = () => {
-    setNameError(null);
     setEmailError(null);
     setPasswordError(null);
     setConfirmPasswordError(null);
@@ -112,12 +109,6 @@ const RegisterScreen = () => {
     
     let hasErrors = false;
     
-    // Validate inputs
-    if (!name.trim()) {
-      setNameError('Name ist erforderlich');
-      hasErrors = true;
-    }
-    
     if (!email.trim()) {
       setEmailError('E-Mail-Adresse ist erforderlich');
       hasErrors = true;
@@ -150,7 +141,6 @@ const RegisterScreen = () => {
       const response = await register({
         email,
         password,
-        name,
         birthDate: birthDate.toISOString().split('T')[0],
       });
       
@@ -197,49 +187,7 @@ const RegisterScreen = () => {
         {/* Entferne den globalen Fehler oben */}
 
         <View style={{ paddingHorizontal: theme.spacing.m }}>
-          <View style={{ marginBottom: theme.spacing.l }}>
-            <Text style={{
-              fontSize: theme.typography.fontSize.s,
-              color: theme.colors.text,
-              marginBottom: theme.spacing.xs,
-              marginTop: theme.spacing.m,
-              fontFamily: theme.typography.fontFamily.medium
-            }}>
-              Name
-            </Text>
-            <TextInput
-              style={{
-                backgroundColor: theme.colors.card,
-                color: theme.colors.text,
-                borderColor: nameError ? theme.colors.error : theme.colors.border,
-                borderWidth: 1,
-                borderRadius: theme.borderRadius.medium,
-                padding: theme.spacing.m,
-                fontSize: theme.typography.fontSize.m,
-                fontFamily: theme.typography.fontFamily.regular
-              }}
-              value={name}
-              onChangeText={(value) => {
-                setName(value);
-                if (value.trim()) setNameError(null);
-              }}
-              placeholder="Ihr vollständiger Name"
-              placeholderTextColor={theme.colors.disabled}
-              autoCapitalize="words"
-            />
-            {nameError && (
-              <Text style={{
-                color: theme.colors.error,
-                fontSize: theme.typography.fontSize.s,
-                marginTop: 5,
-                fontFamily: theme.typography.fontFamily.medium
-              }}>
-                {nameError}
-              </Text>
-            )}
-          </View>
-
-          <View style={{ marginBottom: theme.spacing.l }}>
+          <View style={{ marginTop: theme.spacing.m, marginBottom: theme.spacing.l }}>
             <Text style={{
               fontSize: theme.typography.fontSize.s,
               color: theme.colors.text,

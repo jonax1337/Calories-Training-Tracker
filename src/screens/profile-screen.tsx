@@ -832,7 +832,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             >
               <option value="male">Männlich</option>
               <option value="female">Weiblich</option>
-              <option value="divers">Divers</option>
             </select>
           </View>
         ) : (
@@ -844,7 +843,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderWidth: 1,
             borderColor: theme.colors.border,
             borderRadius: theme.borderRadius.small,
-            height: 56 * 1.5, // Reduzierte Höhe nach 8-Punkt-Grid (7*8=56)
+            height: Platform.OS === 'ios' ? 56 * 1.5 : 50, // Reduzierte Höhe nach 8-Punkt-Grid (7*8=56)
             justifyContent: 'center',
             overflow: 'hidden'
           }}>
@@ -871,7 +870,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             >
               <Picker.Item label="Männlich" value="male" />
               <Picker.Item label="Weiblich" value="female" />
-              <Picker.Item label="Divers" value="divers" />
             </Picker>
           </View>
         )}

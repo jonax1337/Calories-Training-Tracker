@@ -10,8 +10,8 @@ interface LoginCredentials {
 interface RegisterData {
   email: string;
   password: string;
-  name: string;
   birthDate?: string;
+  name?: string;
 }
 
 interface AuthResponse {
@@ -19,8 +19,8 @@ interface AuthResponse {
   user: {
     id: string;
     email: string;
-    name: string;
     birthDate?: string;
+    name?: string;
   };
 }
 
@@ -39,7 +39,15 @@ const authApi = axios.create({
 // Register new user
 export async function register(data: RegisterData): Promise<AuthResponse | null> {
   try {
-    const response = await authApi.post('/register', data);
+    // Füge einen leeren Namen hinzu, da der Server diesen möglicherweise noch erwartet
+    const requestData = {
+      ...data,
+      name: null // Versende null als Namenswert
+    };
+    
+    console.log('Sende Registrierungsdaten:', JSON.stringify(requestData, null, 2));
+    
+    const response = await authApi.post('/register', requestData);
     
     if (response.data.token) {
       // Save auth token and user ID
@@ -48,8 +56,18 @@ export async function register(data: RegisterData): Promise<AuthResponse | null>
     }
     
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    // Detaillierte Fehlerinformationen
     console.error('Registration error:', error);
+    
+    if (error.response) {
+      // Der Server hat geantwortet, aber mit einem Fehlercode
+      console.error('Server response:', {
+        status: error.response.status,
+        data: error.response.data
+      });
+    }
+    
     return null;
   }
 }
