@@ -5,6 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityLevel, UserProfile } from '../types';
 import * as Haptics from 'expo-haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, interpolate, FadeIn, FadeOut, SlideInRight, SlideOutLeft, Layout } from 'react-native-reanimated';
 
 // Definiere die RootStackParamList hier direkt, um den Import-Fehler zu beheben
 type RootStackParamList = {
@@ -64,6 +65,8 @@ const IntroScreen: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(0);
   // Ladezustand für das Abschließen des Onboardings
   const [isCompleting, setIsCompleting] = useState<boolean>(false);
+  // Animationsrichtung: 'forward' oder 'backward'
+  const [animationDirection, setAnimationDirection] = useState<'forward' | 'backward'>('forward');
   
   // Profildaten, die während des Onboardings gesammelt werden
   const [profile, setProfile] = useState<UserProfile>({
@@ -457,19 +460,22 @@ const IntroScreen: React.FC = () => {
       );
       return;
     }
-
-    if (currentStep < 6) { 
-      setCurrentStep(currentStep + 1);
-      
-      // Wenn wir zum Zielschritt wechseln, berechne die empfohlenen Ziele und setze selectedGoalId
-      if (currentStep === 3) {
-        const recommendedGoalId = calculateRecommendedGoals();
-        // Setze selectedGoalId nur, wenn noch keins ausgewählt wurde
-        if (!selectedGoalId) {
-          setSelectedGoalId(recommendedGoalId);
+    // Setze Animationsrichtung auf vorwärts
+    setAnimationDirection('forward');
+    
+    if (currentStep < 6) {
+      // Kurze Verzögerung für sanften Übergang
+      setTimeout(() => {
+        setCurrentStep(currentStep + 1);
+        if (currentStep === 3) {
+          const recommendedGoalId = calculateRecommendedGoals();
+          if (!selectedGoalId) {
+            setSelectedGoalId(recommendedGoalId);
+          }
         }
-      }
+      }, 50);
     } else {
+      setIsCompleting(true);
       // Erst nach der Zusammenfassung: Profil aktualisieren und zur Hauptseite navigieren
       setIsCompleting(true); // Ladezustand aktivieren
       updateProfile();
@@ -478,7 +484,12 @@ const IntroScreen: React.FC = () => {
   
   const goToPreviousStep = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      // Setze Animationsrichtung auf rückwärts
+      setAnimationDirection('backward');
+      // Kurze Verzögerung für sanften Übergang
+      setTimeout(() => {
+        setCurrentStep(currentStep - 1);
+      }, 50);
     }
   };
   
@@ -986,10 +997,10 @@ const IntroScreen: React.FC = () => {
     }]}>
       {/* DatePicker-Modal wurde in die DatePicker-Komponente verschoben */}
       
-      {/* Fortschrittsanzeige - statisch oben */}
+      {/* Fortschrittsanzeige - animiert */}
       <View style={styles.progressContainer}>
         {Array(7).fill(0).map((_, index) => (
-          <View 
+          <Animated.View 
             key={index}
             style={[
               styles.progressDot,
@@ -997,57 +1008,100 @@ const IntroScreen: React.FC = () => {
                 backgroundColor: index <= currentStep ? theme.colors.primary : theme.colors.border
               }
             ]}
-          />
+            layout={Layout.duration(300).easing(Easing.bezier(0.25, 0.1, 0.25, 1))}
+          >
+            {index === currentStep && (
+              <Animated.View 
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  borderRadius: 10,
+                  borderWidth: 2,
+                  borderColor: theme.colors.primary,
+                  opacity: 0.5
+                }}
+                entering={FadeIn.duration(300)}
+                exiting={FadeOut.duration(300)}
+              />
+            )}
+          </Animated.View>
         ))}
       </View>
       
-      {/* Hauptinhalt im ScrollView */}
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Aktueller Schritt */}
-        {renderStep()}
-      </ScrollView>
+      {/* Hauptinhalt im animierten ScrollView */}
+      <Animated.ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Aktueller Schritt mit Animation */}
+        <Animated.View key={`step-${currentStep}`} 
+          entering={animationDirection === 'forward' ? SlideInRight.duration(300).easing(Easing.out(Easing.cubic)) : FadeIn.duration(300)}
+          exiting={animationDirection === 'forward' ? FadeOut.duration(300) : SlideOutLeft.duration(300).easing(Easing.out(Easing.cubic))}
+          layout={Layout.duration(300)}
+        >
+          {renderStep()}
+        </Animated.View>
+      </Animated.ScrollView>
       
-      {/* Navigation - statisch unten */}
+      {/* Navigation - animiert unten */}
       <View style={[styles.navigationContainer, { backgroundColor: theme.colors.background }]}>
         {currentStep > 0 ? (
-          <TouchableOpacity 
-            style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
-            onPress={() => { goToPreviousStep(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            exiting={FadeOut.duration(300)}
+            style={styles.leftButtonContainer}
           >
-            <ArrowLeft size={20} color={theme.colors.text} />
-            <Text style={[styles.buttonText, { color: theme.colors.text }]}>Zurück</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
+              onPress={() => { goToPreviousStep(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            >
+              <ArrowLeft size={20} color={theme.colors.text} />
+              <Text style={[styles.buttonText, { color: theme.colors.text }]}>Zurück</Text>
+            </TouchableOpacity>
+          </Animated.View>
         ) : (
-          <TouchableOpacity 
-            style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
-            onPress={cancelOnboarding}
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            exiting={FadeOut.duration(300)}
+            style={styles.leftButtonContainer}
           >
-            <X size={20} color={theme.colors.text} />
-            <Text style={[styles.buttonText, { color: theme.colors.text }]}>Abbrechen</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
+              onPress={cancelOnboarding}
+            >
+              <X size={20} color={theme.colors.text} />
+              <Text style={[styles.buttonText, { color: theme.colors.text }]}>Abbrechen</Text>
+            </TouchableOpacity>
+          </Animated.View>
         )}
         
-        <TouchableOpacity 
-          style={[
-            styles.navButton, 
-            styles.nextButton, 
-            { 
-              backgroundColor: isStepValid() ? theme.colors.primary : theme.colors.disabled,
-              opacity: isStepValid() ? 1 : 0.7,
-              borderRadius: theme.borderRadius.s
-            }
-          ]}
-          onPress={() => { 
-            goToNextStep();
-            {currentStep === 6 ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);}
-          }}
-          disabled={!isStepValid()}
+        <Animated.View
+          entering={FadeIn.duration(300)}
+          exiting={FadeOut.duration(300)}
+          style={styles.rightButtonContainer}
         >
-          <Text style={[styles.buttonText, { color: '#fff' }]}>
-            {currentStep === 6 ? 'Fertig' : 'Weiter'}
-          </Text>
-          <ArrowRight size={20} color="#fff" />
-        </TouchableOpacity>
+          <TouchableOpacity 
+            style={[
+              styles.navButton, 
+              styles.nextButton, 
+              { 
+                backgroundColor: isStepValid() ? theme.colors.primary : theme.colors.disabled,
+                opacity: isStepValid() ? 1 : 0.7,
+                borderRadius: theme.borderRadius.s
+              }
+            ]}
+            onPress={() => { 
+              goToNextStep();
+              {currentStep === 6 ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);}
+            }}
+            disabled={!isStepValid()}
+          >
+            <Text style={[styles.buttonText, { color: '#fff' }]}>
+              {currentStep === 6 ? 'Fertig' : 'Weiter'}
+            </Text>
+            <ArrowRight size={20} color="#fff" />
+          </TouchableOpacity>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -1135,6 +1189,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
+  },
+  leftButtonContainer: {
+    // Container für den linken Button (Zurück/Abbrechen)
+    alignSelf: 'flex-start',
+  },
+  rightButtonContainer: {
+    // Container für den rechten Button (Weiter/Fertig)
+    alignSelf: 'flex-end',
   },
   backButton: {
     borderWidth: 1,
