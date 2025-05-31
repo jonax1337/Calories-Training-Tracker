@@ -11,7 +11,6 @@ interface RegisterData {
   email: string;
   password: string;
   birthDate?: string;
-  name?: string;
 }
 
 interface AuthResponse {
@@ -20,7 +19,6 @@ interface AuthResponse {
     id: string;
     email: string;
     birthDate?: string;
-    name?: string;
   };
 }
 

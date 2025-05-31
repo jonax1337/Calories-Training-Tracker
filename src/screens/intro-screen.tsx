@@ -4,6 +4,7 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityLevel, UserProfile } from '../types';
+import * as Haptics from 'expo-haptics';
 
 // Definiere die RootStackParamList hier direkt, um den Import-Fehler zu beheben
 type RootStackParamList = {
@@ -22,10 +23,12 @@ import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme-context';
 import { updateUserProfile, fetchUserProfile, fetchGoalTypes, createOrUpdateUserGoal } from '../services/profile-api';
-import { ArrowRight, ArrowLeft, User, UserRound, Calendar, Weight, Ruler, Activity, Target, Heart, Bike, Bed, BedDouble, Dumbbell, Footprints, ArrowDown, ArrowUp, Award, Minus, Star, X, VenusAndMars, PencilRuler, Goal } from 'lucide-react-native';
+import { logout } from '../services/auth-service';
+import { ArrowRight, ArrowLeft, User, UserRound, Calendar, Weight, Ruler, Activity, Target, Heart, Bike, Bed, BedDouble, Dumbbell, Footprints, ArrowDown, ArrowUp, Award, Minus, Star, X, VenusAndMars, PencilRuler, Goal, ArrowBigUpDash, ArrowBigDownDash, ArrowBigDown, ChevronsDownUp, ChevronsUpDown, BicepsFlexed } from 'lucide-react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { DatePicker } from '../components/ui/date-picker';
 import LoadingScreen from '../components/ui/loading-screen';
+import { AndroidHaptics } from 'expo-haptics';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Intro'>;
 
@@ -33,6 +36,29 @@ const IntroScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  // Funktion zum Abbrechen des Onboardings
+  const cancelOnboarding = () => {
+    Alert.alert(
+      'Vorgang abbrechen',
+      'Möchtest du diesen Vorgang wirklich abbrechen? Du kannst dich später wieder anmelden.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Beenden', style: 'destructive', onPress: async () => {
+          // Verwende die logout-Funktion aus dem auth-service
+          const success = await logout();
+          if (success) {
+            // Die App navigiert automatisch zum Login-Screen
+            // aufgrund der Auth-Prüfung in NavigationContent
+            console.log('Onboarding abgebrochen, Benutzer abgemeldet');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          } else {
+            Alert.alert('Fehler', 'Beim Abbrechen des Onboardings ist ein Fehler aufgetreten.');
+          }
+        }}
+      ]
+    );
+  };
   
   // Der aktuelle Schritt im Onboarding-Prozess
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -43,8 +69,7 @@ const IntroScreen: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile>({
     id: 'user_1', // Wir verwenden dieselbe ID wie im ProfileScreen
     name: '',
-    gender: 'male', // Standardwert für Geschlecht setzen
-    activityLevel: undefined, // Kein Standardwert, damit Validierung greift
+    gender: undefined, // Kein Standardwert, damit der Benutzer eine Auswahl treffen muss
     goals: {
       dailyCalories: 2000,
       dailyProtein: 50,
@@ -406,8 +431,8 @@ const IntroScreen: React.FC = () => {
     switch (currentStep) {
       case 0: // Name
         return !!profile.name && profile.name.trim().length > 0;
-      case 1: // Geschlecht - Hier immer true, da wir einen Standardwert haben
-        return true;
+      case 1: // Geschlecht
+        return !!profile.gender; // Muss aktiv ausgewählt werden
       case 2: // Geburtsdatum
         return !!birthDate && calculateAge(birthDate) > 0 && calculateAge(birthDate) < 120;
       case 3: // Gewicht & Größe
@@ -426,7 +451,6 @@ const IntroScreen: React.FC = () => {
   const goToNextStep = () => {
     // Nur weitergehen, wenn der aktuelle Schritt gültig ist
     if (!isStepValid()) {
-      // Optional: Zeige eine Warnmeldung an
       Alert.alert(
         'Unvollständige Daten',
         'Bitte fülle alle erforderlichen Felder korrekt aus, bevor du fortfährst.'
@@ -434,7 +458,7 @@ const IntroScreen: React.FC = () => {
       return;
     }
 
-    if (currentStep < 5) {
+    if (currentStep < 6) { 
       setCurrentStep(currentStep + 1);
       
       // Wenn wir zum Zielschritt wechseln, berechne die empfohlenen Ziele und setze selectedGoalId
@@ -446,7 +470,7 @@ const IntroScreen: React.FC = () => {
         }
       }
     } else {
-      // Beim letzten Schritt: Profil aktualisieren und zur Hauptseite navigieren
+      // Erst nach der Zusammenfassung: Profil aktualisieren und zur Hauptseite navigieren
       setIsCompleting(true); // Ladezustand aktivieren
       updateProfile();
     }
@@ -475,12 +499,15 @@ const IntroScreen: React.FC = () => {
               style={[styles.input, { 
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
-                backgroundColor: theme.colors.card 
+                backgroundColor: theme.colors.card,
+                borderRadius: theme.borderRadius.s
               }]}
               value={profile.name}
               onChangeText={(text) => setProfile(prev => ({ ...prev, name: text }))}
               placeholder="Dein Name"
               placeholderTextColor={theme.colors.textLight}
+              enterKeyHint='done'
+              autoCapitalize='words'
             />
           </View>
         );
@@ -504,10 +531,15 @@ const IntroScreen: React.FC = () => {
               justifyContent: 'center'
             }]}>
               <Picker
-                selectedValue={profile.gender || 'male'}
+                selectedValue={profile.gender || ''}
                 onValueChange={(value) => {
                   const genderValue = typeof value === 'string' ? value : String(value);
-                  setProfile(prev => ({ ...prev, gender: genderValue as 'male' | 'female' }));
+                  if (genderValue === '') {
+                    // Wenn der Platzhalter gewählt wird, setzen wir gender auf undefined
+                    setProfile(prev => ({ ...prev, gender: undefined }));
+                  } else {
+                    setProfile(prev => ({ ...prev, gender: genderValue as 'male' | 'female' | 'divers' }));
+                  }
                 }}
                 style={{
                   width: '100%',
@@ -525,6 +557,7 @@ const IntroScreen: React.FC = () => {
                 mode="dropdown"
               >
                 <Picker.Item label="Männlich" value="male" />
+                <Picker.Item label="Bitte wähle dein Geschlecht" value="" />
                 <Picker.Item label="Weiblich" value="female" />
               </Picker>
             </View>
@@ -723,7 +756,7 @@ const IntroScreen: React.FC = () => {
               ]}
               onPress={() => setProfile(prev => ({...prev, activityLevel: ActivityLevel.ExtremelyActive}))}
             >
-              <Dumbbell size={30} color={theme.colors.primary} />
+              <BicepsFlexed size={30} color={theme.colors.primary} />
               <View style={styles.activityText}>
                 <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Extrem aktiv</Text>
                 <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
@@ -738,7 +771,7 @@ const IntroScreen: React.FC = () => {
         
         return (
           <View style={styles.stepContainer}>
-            <Target size={48} color={theme.colors.primary} style={styles.stepIcon} />
+            <Goal size={48} color={theme.colors.primary} style={styles.stepIcon} />
             <Text style={[styles.title, { color: theme.colors.text }]}>Dein Ziel</Text>
             <Text style={[styles.description, { color: theme.colors.textLight }]}>
               Wähle ein Ziel, das zu dir passt. Basierend auf deinem BMI empfehlen wir:
@@ -759,7 +792,7 @@ const IntroScreen: React.FC = () => {
                     calculateGoalValues('gain');
                   }}
                 >
-                  <ArrowUp size={30} color={theme.colors.primary} />
+                  <ArrowBigUpDash size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
                     <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtszunahme</Text>
                     <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
@@ -781,9 +814,9 @@ const IntroScreen: React.FC = () => {
                     calculateGoalValues('maintain');
                   }}
                 >
-                  <Minus size={30} color={theme.colors.primary} />
+                  <ChevronsUpDown size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
-                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gewicht halten & Fitness verbessern</Text>
+                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gewicht halten</Text>
                     <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
                       Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.
                     </Text>
@@ -803,7 +836,7 @@ const IntroScreen: React.FC = () => {
                     calculateGoalValues('lose_moderate');
                   }}
                 >
-                  <ArrowDown size={30} color={theme.colors.primary} />
+                  <ArrowBigDown size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
                     <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Moderate Gewichtsreduktion</Text>
                     <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
@@ -825,7 +858,7 @@ const IntroScreen: React.FC = () => {
                     calculateGoalValues('lose_fast');
                   }}
                 >
-                  <ArrowDown size={30} color={theme.colors.primary} />
+                  <ArrowBigDownDash size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
                     <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtsreduktion</Text>
                     <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
@@ -921,6 +954,13 @@ const IntroScreen: React.FC = () => {
                 </Text>
               </View>
             </View>
+            
+            {/* Informationstext zur Kalorienberechnung */}
+            <View style={[styles.infoContainer, { backgroundColor: `${theme.colors.primary}15`, borderColor: theme.colors.primary, borderRadius: theme.borderRadius.s }]}>
+              <Text style={[styles.infoText, { color: theme.colors.text }]}>
+                Wir berechnen deinen Kalorienbedarf mit der Harris-Benedict-Formel und passen ihn an dein Aktivitätslevel und Ziel an.
+              </Text>
+            </View>
           </View>
         );
       
@@ -937,7 +977,7 @@ const IntroScreen: React.FC = () => {
   }
   
   return (
-    <SafeAreaView style={[styles.container, { 
+    <SafeAreaView style={[styles.container, {
       backgroundColor: theme.colors.background,
       paddingTop: insets.top,
       paddingBottom: insets.bottom,
@@ -946,56 +986,69 @@ const IntroScreen: React.FC = () => {
     }]}>
       {/* DatePicker-Modal wurde in die DatePicker-Komponente verschoben */}
       
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Fortschrittsanzeige */}
-        <View style={styles.progressContainer}>
-          {Array(7).fill(0).map((_, index) => (
-            <View 
-              key={index}
-              style={[
-                styles.progressDot,
-                { 
-                  backgroundColor: index <= currentStep ? theme.colors.primary : theme.colors.border
-                }
-              ]}
-            />
-          ))}
-        </View>
-        
-        {/* Aktueller Schritt */}
-        {renderStep()}
-        
-        {/* Navigation */}
-        <View style={styles.navigationContainer}>
-          {currentStep > 0 && (
-            <TouchableOpacity 
-              style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border }]}
-              onPress={goToPreviousStep}
-            >
-              <ArrowLeft size={20} color={theme.colors.text} />
-              <Text style={[styles.buttonText, { color: theme.colors.text }]}>Zurück</Text>
-            </TouchableOpacity>
-          )}
-          
-          <TouchableOpacity 
+      {/* Fortschrittsanzeige - statisch oben */}
+      <View style={styles.progressContainer}>
+        {Array(7).fill(0).map((_, index) => (
+          <View 
+            key={index}
             style={[
-              styles.navButton, 
-              styles.nextButton, 
+              styles.progressDot,
               { 
-                backgroundColor: isStepValid() ? theme.colors.primary : theme.colors.disabled,
-                opacity: isStepValid() ? 1 : 0.7
+                backgroundColor: index <= currentStep ? theme.colors.primary : theme.colors.border
               }
             ]}
-            onPress={goToNextStep}
-            disabled={!isStepValid()}
-          >
-            <Text style={[styles.buttonText, { color: '#fff' }]}>
-              {currentStep === 6 ? 'Fertig' : 'Weiter'}
-            </Text>
-            <ArrowRight size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
+          />
+        ))}
+      </View>
+      
+      {/* Hauptinhalt im ScrollView */}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Aktueller Schritt */}
+        {renderStep()}
       </ScrollView>
+      
+      {/* Navigation - statisch unten */}
+      <View style={[styles.navigationContainer, { backgroundColor: theme.colors.background }]}>
+        {currentStep > 0 ? (
+          <TouchableOpacity 
+            style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
+            onPress={() => { goToPreviousStep(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+          >
+            <ArrowLeft size={20} color={theme.colors.text} />
+            <Text style={[styles.buttonText, { color: theme.colors.text }]}>Zurück</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
+            onPress={cancelOnboarding}
+          >
+            <X size={20} color={theme.colors.text} />
+            <Text style={[styles.buttonText, { color: theme.colors.text }]}>Abbrechen</Text>
+          </TouchableOpacity>
+        )}
+        
+        <TouchableOpacity 
+          style={[
+            styles.navButton, 
+            styles.nextButton, 
+            { 
+              backgroundColor: isStepValid() ? theme.colors.primary : theme.colors.disabled,
+              opacity: isStepValid() ? 1 : 0.7,
+              borderRadius: theme.borderRadius.s
+            }
+          ]}
+          onPress={() => { 
+            goToNextStep();
+            {currentStep === 6 ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);}
+          }}
+          disabled={!isStepValid()}
+        >
+          <Text style={[styles.buttonText, { color: '#fff' }]}>
+            {currentStep === 6 ? 'Fertig' : 'Weiter'}
+          </Text>
+          <ArrowRight size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -1008,26 +1061,32 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 20,
+    paddingTop: 10,
+    paddingBottom: 80, // Mehr Platz unten fu00fcr die Navigationsbuttons
   },
   progressContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 30,
+    paddingTop: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
+    width: 8, // Etwas kleiner
+    height: 8, // Etwas kleiner
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
   stepContainer: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 40,
+    justifyContent: 'flex-start', // Von oben anfangen statt zu zentrieren
+    paddingBottom: 20,
+    paddingTop: 20, // Neuer Abstand nach oben zu den Dots
   },
   stepIcon: {
     marginBottom: 16,
+    marginTop: 5, // Zusätzlicher Abstand zum oberen Rand
   },
   title: {
     fontSize: 24,
@@ -1060,14 +1119,22 @@ const styles = StyleSheet.create({
   navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    position: 'absolute',
+    bottom: 15, // Von 0 auf 15 geändert, um die Buttons nach oben zu verschieben
+    left: 0,
+    right: 0,
+    // Theme-Farben werden in der Komponente angewendet
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingBottom: 15, // Von 20 auf 15 reduziert
   },
   navButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
   },
   backButton: {
     borderWidth: 1,
@@ -1081,6 +1148,25 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   // DatePicker-Styles wurden in die DatePicker-Komponente verschoben
+  activityCardIconContainer: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Styles für den Informationscontainer zur Kalorienberechnung
+  infoContainer: {
+    width: '100%',
+    padding: 12,
+    marginTop: 15,
+    borderWidth: 1,
+  },
+  infoText: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk-Regular',
+    lineHeight: 18,
+  },
   pickerContainer: {
     width: '100%',
     borderWidth: 1,
@@ -1107,31 +1193,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    padding: 15,
+    padding: 10,
     borderWidth: 1,
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   activityText: {
-    marginLeft: 15,
+    marginLeft: 10,
+    flex: 1,
   },
   activityTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'SpaceGrotesk-Bold',
-    marginBottom: 5,
+    marginBottom: 2,
   },
   activityDescription: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'SpaceGrotesk-Regular',
   },
   goalOption: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    padding: 15,
+    padding: 10,
     borderWidth: 1,
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: 6, // Reduziert von 10
   },
   summaryContainer: {
     width: '100%',
@@ -1159,15 +1246,16 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   goalText: {
-    marginLeft: 15,
+    marginLeft: 10, // Reduziert von 15
+    flex: 1,
   },
   goalTitle: {
-    fontSize: 16,
+    fontSize: 14, // Reduziert von 16
     fontFamily: 'SpaceGrotesk-Bold',
-    marginBottom: 5,
+    marginBottom: 2, // Reduziert von 5
   },
   goalDescription: {
-    fontSize: 14,
+    fontSize: 12, // Reduziert von 14
     fontFamily: 'SpaceGrotesk-Regular',
   },
 });

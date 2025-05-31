@@ -5,7 +5,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { register, checkEmailExists } from '../services/auth-service';
 import { useTheme } from '../theme/theme-context';
 import { RootStackParamList } from '../navigation';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { createAuthStyles } from '../styles/screens/auth-styles';
 import { debounce } from 'lodash';
 import * as Haptics from 'expo-haptics';
@@ -49,7 +48,6 @@ const RegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [birthDate, setBirthDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   
   // Feldspezifische Fehler
@@ -141,7 +139,6 @@ const RegisterScreen = () => {
       const response = await register({
         email,
         password,
-        birthDate: birthDate.toISOString().split('T')[0],
       });
       
       if (response) {
@@ -161,12 +158,6 @@ const RegisterScreen = () => {
       console.error('Registration error:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (selectedDate) {
-      setBirthDate(selectedDate);
     }
   };
 
@@ -216,8 +207,9 @@ const RegisterScreen = () => {
                 placeholder="Ihre E-Mail-Adresse"
                 placeholderTextColor={theme.colors.disabled}
                 keyboardType="email-address"
-                autoCapitalize="none"
                 autoComplete="email"
+                autoCorrect={false}
+                enterKeyHint='done'
               />
               {isCheckingEmail && (
                 <ActivityIndicator 
@@ -277,6 +269,8 @@ const RegisterScreen = () => {
               placeholder="Ihr Passwort"
               placeholderTextColor={theme.colors.disabled}
               secureTextEntry
+              autoCorrect={false}
+              enterKeyHint='done'
             />
             
             {/* Passwortstärke-Anzeige */}
@@ -300,22 +294,10 @@ const RegisterScreen = () => {
                 <Text style={{
                   fontSize: theme.typography.fontSize.s,
                   color: getStrengthCategory(passwordStrength).color,
-                  fontFamily: theme.typography.fontFamily.medium
+                  fontFamily: theme.typography.fontFamily.medium,
                 }}>
                   {getStrengthCategory(passwordStrength).label}
                 </Text>
-                
-                {/* Passwort-Tipps */}
-                {passwordStrength < 70 && (
-                  <Text style={{
-                    fontSize: theme.typography.fontSize.xs,
-                    color: theme.colors.textLight,
-                    marginTop: 5,
-                    fontFamily: theme.typography.fontFamily.regular
-                  }}>
-                    Tipp: Verwenden Sie Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen für ein starkes Passwort.
-                  </Text>
-                )}
               </>
             )}
             
@@ -359,6 +341,9 @@ const RegisterScreen = () => {
               }}
               placeholder="Passwort wiederholen"
               placeholderTextColor={theme.colors.disabled}
+              autoCorrect={false}
+              autoCapitalize="none"
+              enterKeyHint='done'
               secureTextEntry
             />
             {confirmPasswordError && (

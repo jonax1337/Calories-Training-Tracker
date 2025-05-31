@@ -36,11 +36,11 @@ exports.register = async (req, res) => {
   try {
     await connection.beginTransaction();
     
-    const { email, password, name, birthDate } = req.body;
+    const { email, password, birthDate } = req.body;
     
     // Validate input
-    if (!email || !password || !name) {
-      return res.status(400).json({ message: 'Email, password and name are required' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
     }
     
     // Check if email already exists
@@ -62,9 +62,9 @@ exports.register = async (req, res) => {
     // Insert user with minimal required fields
     await connection.query(
       `INSERT INTO users (
-        id, email, password_hash, name, birth_date
-      ) VALUES (?, ?, ?, ?, ?)`,
-      [userId, email, passwordHash, name, birthDate]
+        id, email, password_hash, birth_date
+      ) VALUES (?, ?, ?, ?)`,
+      [userId, email, passwordHash, birthDate]
     );
     
     // Generate JWT token
@@ -79,7 +79,6 @@ exports.register = async (req, res) => {
       user: {
         id: userId,
         email,
-        name,
         birthDate
       }
     });
@@ -104,7 +103,7 @@ exports.login = async (req, res) => {
     
     // Find user by email
     const [users] = await pool.query(
-      'SELECT id, email, name, password_hash, birth_date FROM users WHERE email = ?',
+      'SELECT id, email, password_hash, birth_date FROM users WHERE email = ?',
       [email]
     );
     

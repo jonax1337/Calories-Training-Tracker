@@ -10,7 +10,7 @@ async function initializeDatabase() {
         id VARCHAR(36) PRIMARY KEY,
         email VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
         birth_date DATE,
         age INT,
         weight FLOAT,
