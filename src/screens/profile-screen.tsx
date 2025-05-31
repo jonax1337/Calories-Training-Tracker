@@ -897,206 +897,176 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         Wählen Sie Ihre typische Aktivitätsstufe, um Ihre Kalorienbedarf zu berechnen
       </Text>
       
-      {/* Grid-Layout für Aktivitätsstufen */}
+      {/* Vertikales Layout für Aktivitätsstufen wie im Intro Screen */}
       <View style={{ marginBottom: theme.spacing.m }}>
-        {/* Erste Zeile: Wenig aktiv und leicht aktiv */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: theme.spacing.xs }}>
-          {/* Sedentär Button */}
-          <TouchableOpacity
-            style={{
-              width: '49.25%',
-              borderWidth: 1,
-              borderColor: profile.activityLevel === ActivityLevel.Sedentary ? theme.colors.primary : theme.colors.border,
-              borderRadius: theme.borderRadius.medium,
-              padding: theme.spacing.m,
-              backgroundColor: profile.activityLevel === ActivityLevel.Sedentary ? `${theme.colors.primary}20` : theme.colors.card,
-            }}
-            onPress={() => handleActivityChange(ActivityLevel.Sedentary)}
-          >
-            <View style={{ alignItems: 'center' }}>
-              <BedDouble size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.Sedentary ? theme.colors.primary : theme.colors.text} />
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.bold,
-                  fontSize: theme.typography.fontSize.m,
-                  color: profile.activityLevel === ActivityLevel.Sedentary ? theme.colors.primary : theme.colors.text
-                }}
-              >
-                Sedentär
-              </Text>
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  fontSize: theme.typography.fontSize.xs,
-                  color: theme.colors.textLight,
-                  textAlign: 'center'
-                }}
-              >
-                Keine oder wenig Aktivität
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-          {/* Leicht aktiv Button */}
-          <TouchableOpacity
-            style={{
-              width: '49.25%',
-              borderWidth: 1,
-              borderColor: profile.activityLevel === ActivityLevel.LightlyActive ? theme.colors.primary : theme.colors.border,
-              borderRadius: theme.borderRadius.medium,
-              padding: theme.spacing.m,
-              backgroundColor: profile.activityLevel === ActivityLevel.LightlyActive ? `${theme.colors.primary}20` : theme.colors.card,
-            }}
-            onPress={() => handleActivityChange(ActivityLevel.LightlyActive)}
-          >
-            <View style={{ alignItems: 'center' }}>
-              <Footprints size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.LightlyActive ? theme.colors.primary : theme.colors.text} />
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.bold,
-                  fontSize: theme.typography.fontSize.m,
-                  color: profile.activityLevel === ActivityLevel.LightlyActive ? theme.colors.primary : theme.colors.text
-                }}
-              >
-                Leicht aktiv
-              </Text>
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  fontSize: theme.typography.fontSize.xs,
-                  color: theme.colors.textLight,
-                  textAlign: 'center'
-                }}
-              >
-                Leichtes Training 1-3 Tage/Woche
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {/* Sedentär Button */}
+        <TouchableOpacity 
+          style={{
+            width: '100%',
+            marginBottom: theme.spacing.xs,
+            borderWidth: 1,
+            borderColor: profile.activityLevel === ActivityLevel.Sedentary ? theme.colors.primary : theme.colors.border,
+            backgroundColor: profile.activityLevel === ActivityLevel.Sedentary ? `${theme.colors.primary}20` : theme.colors.card,
+            borderRadius: theme.borderRadius.medium,
+            padding: theme.spacing.m,
+            flexDirection: 'row',
+            alignItems: 'center'
+          }}
+          onPress={() => handleActivityChange(ActivityLevel.Sedentary)}
+        >
+          <BedDouble size={30} color={theme.colors.primary} />
+          <View style={{ marginLeft: theme.spacing.m, flex: 1 }}>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.m,
+              color: profile.activityLevel === ActivityLevel.Sedentary ? theme.colors.primary : theme.colors.text
+            }}>
+              Kaum aktiv
+            </Text>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.regular,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.textLight
+            }}>
+              Vorwiegend sitzende Tätigkeit, wenig Bewegung im Alltag
+            </Text>
+          </View>
+        </TouchableOpacity>
         
-        {/* Zweite Zeile: Mäßig aktiv und sehr aktiv */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: theme.spacing.xs }}>
-          {/* Mäßig aktiv Button */}
-          <TouchableOpacity
-            style={{
-              width: '49.25%',
-              borderWidth: 1,
-              borderColor: profile.activityLevel === ActivityLevel.ModeratelyActive ? theme.colors.primary : theme.colors.border,
-              borderRadius: theme.borderRadius.medium,
-              padding: theme.spacing.m,
-              backgroundColor: profile.activityLevel === ActivityLevel.ModeratelyActive ? `${theme.colors.primary}20` : theme.colors.card,
-            }}
-            onPress={() => handleActivityChange(ActivityLevel.ModeratelyActive)}
-          >
-            <View style={{ alignItems: 'center' }}>
-              <Bike size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.ModeratelyActive ? theme.colors.primary : theme.colors.text} />
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.bold,
-                  fontSize: theme.typography.fontSize.m,
-                  color: profile.activityLevel === ActivityLevel.ModeratelyActive ? theme.colors.primary : theme.colors.text
-                }}
-              >
-                Mäßig aktiv
-              </Text>
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  fontSize: theme.typography.fontSize.xs,
-                  color: theme.colors.textLight,
-                  textAlign: 'center'
-                }}
-              >
-                Mittlere Aktivität 3-5 Tage/Woche
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-          {/* Sehr aktiv Button */}
-          <TouchableOpacity
-            style={{
-              width: '49.25%',
-              borderWidth: 1,
-              borderColor: profile.activityLevel === ActivityLevel.VeryActive ? theme.colors.primary : theme.colors.border,
-              borderRadius: theme.borderRadius.medium,
-              padding: theme.spacing.m,
-              backgroundColor: profile.activityLevel === ActivityLevel.VeryActive ? `${theme.colors.primary}20` : theme.colors.card,
-            }}
-            onPress={() => handleActivityChange(ActivityLevel.VeryActive)}
-          >
-            <View style={{ alignItems: 'center' }}>
-              <Dumbbell size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.VeryActive ? theme.colors.primary : theme.colors.text} />
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.bold,
-                  fontSize: theme.typography.fontSize.m,
-                  color: profile.activityLevel === ActivityLevel.VeryActive ? theme.colors.primary : theme.colors.text
-                }}
-              >
-                Sehr aktiv
-              </Text>
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  fontSize: theme.typography.fontSize.xs,
-                  color: theme.colors.textLight,
-                  textAlign: 'center'
-                }}
-              >
-                Harte Aktivität 6-7 Tage/Woche
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {/* Leicht aktiv Button */}
+        <TouchableOpacity 
+          style={{
+            width: '100%',
+            marginBottom: theme.spacing.xs,
+            borderWidth: 1,
+            borderColor: profile.activityLevel === ActivityLevel.LightlyActive ? theme.colors.primary : theme.colors.border,
+            backgroundColor: profile.activityLevel === ActivityLevel.LightlyActive ? `${theme.colors.primary}20` : theme.colors.card,
+            borderRadius: theme.borderRadius.medium,
+            padding: theme.spacing.m,
+            flexDirection: 'row',
+            alignItems: 'center'
+          }}
+          onPress={() => handleActivityChange(ActivityLevel.LightlyActive)}
+        >
+          <Footprints size={30} color={theme.colors.primary} />
+          <View style={{ marginLeft: theme.spacing.m, flex: 1 }}>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.m,
+              color: profile.activityLevel === ActivityLevel.LightlyActive ? theme.colors.primary : theme.colors.text
+            }}>
+              Leicht aktiv
+            </Text>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.regular,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.textLight
+            }}>
+              Stehende Tätigkeit, leichter Spaziergang oder 1-2x Sport pro Woche
+            </Text>
+          </View>
+        </TouchableOpacity>
         
-        {/* Dritte Zeile: Extrem aktiv */}
-        <View style={{ alignItems: 'center' }}>
-          {/* Extrem aktiv Button */}
-          <TouchableOpacity
-            style={{
-              width: '100%',
-              borderWidth: 1,
-              borderColor: profile.activityLevel === ActivityLevel.ExtremelyActive ? theme.colors.primary : theme.colors.border,
-              borderRadius: theme.borderRadius.medium,
-              padding: theme.spacing.m,
-              backgroundColor: profile.activityLevel === ActivityLevel.ExtremelyActive ? `${theme.colors.primary}20` : theme.colors.card,
-            }}
-            onPress={() => handleActivityChange(ActivityLevel.ExtremelyActive)}
-          >
-            <View style={{ alignItems: 'center' }}>
-              <BicepsFlexed size={28} strokeWidth={1.5} color={profile.activityLevel === ActivityLevel.ExtremelyActive ? theme.colors.primary : theme.colors.text} />
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.bold,
-                  fontSize: theme.typography.fontSize.m,
-                  color: profile.activityLevel === ActivityLevel.ExtremelyActive ? theme.colors.primary : theme.colors.text
-                }}
-              >
-                Extrem aktiv
-              </Text>
-              <Text 
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  fontSize: theme.typography.fontSize.xs,
-                  color: theme.colors.textLight,
-                  textAlign: 'center'
-                }}
-              >
-                Harte tägliche Aktivität & physischer Job
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {/* Mäßig aktiv Button */}
+        <TouchableOpacity 
+          style={{
+            width: '100%',
+            marginBottom: theme.spacing.xs,
+            borderWidth: 1,
+            borderColor: profile.activityLevel === ActivityLevel.ModeratelyActive ? theme.colors.primary : theme.colors.border,
+            backgroundColor: profile.activityLevel === ActivityLevel.ModeratelyActive ? `${theme.colors.primary}20` : theme.colors.card,
+            borderRadius: theme.borderRadius.medium,
+            padding: theme.spacing.m,
+            flexDirection: 'row',
+            alignItems: 'center'
+          }}
+          onPress={() => handleActivityChange(ActivityLevel.ModeratelyActive)}
+        >
+          <Bike size={30} color={theme.colors.primary} />
+          <View style={{ marginLeft: theme.spacing.m, flex: 1 }}>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.m,
+              color: profile.activityLevel === ActivityLevel.ModeratelyActive ? theme.colors.primary : theme.colors.text
+            }}>
+              Mäßig aktiv
+            </Text>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.regular,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.textLight
+            }}>
+              Regelmäßige körperliche Aktivität, 2-3x Sport pro Woche
+            </Text>
+          </View>
+        </TouchableOpacity>
+        
+        {/* Sehr aktiv Button */}
+        <TouchableOpacity 
+          style={{
+            width: '100%',
+            marginBottom: theme.spacing.xs,
+            borderWidth: 1,
+            borderColor: profile.activityLevel === ActivityLevel.VeryActive ? theme.colors.primary : theme.colors.border,
+            backgroundColor: profile.activityLevel === ActivityLevel.VeryActive ? `${theme.colors.primary}20` : theme.colors.card,
+            borderRadius: theme.borderRadius.medium,
+            padding: theme.spacing.m,
+            flexDirection: 'row',
+            alignItems: 'center'
+          }}
+          onPress={() => handleActivityChange(ActivityLevel.VeryActive)}
+        >
+          <Dumbbell size={30} color={theme.colors.primary} />
+          <View style={{ marginLeft: theme.spacing.m, flex: 1 }}>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.m,
+              color: profile.activityLevel === ActivityLevel.VeryActive ? theme.colors.primary : theme.colors.text
+            }}>
+              Sehr aktiv
+            </Text>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.regular,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.textLight
+            }}>
+              Körperlich anstrengende Tätigkeit oder 4-5x Sport pro Woche
+            </Text>
+          </View>
+        </TouchableOpacity>
+        
+        {/* Extrem aktiv Button */}
+        <TouchableOpacity 
+          style={{
+            width: '100%',
+            borderWidth: 1,
+            borderColor: profile.activityLevel === ActivityLevel.ExtremelyActive ? theme.colors.primary : theme.colors.border,
+            backgroundColor: profile.activityLevel === ActivityLevel.ExtremelyActive ? `${theme.colors.primary}20` : theme.colors.card,
+            borderRadius: theme.borderRadius.medium,
+            padding: theme.spacing.m,
+            flexDirection: 'row',
+            alignItems: 'center'
+          }}
+          onPress={() => handleActivityChange(ActivityLevel.ExtremelyActive)}
+        >
+          <BicepsFlexed size={30} color={theme.colors.primary} />
+          <View style={{ marginLeft: theme.spacing.m, flex: 1 }}>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.bold,
+              fontSize: theme.typography.fontSize.m,
+              color: profile.activityLevel === ActivityLevel.ExtremelyActive ? theme.colors.primary : theme.colors.text
+            }}>
+              Extrem aktiv
+            </Text>
+            <Text style={{
+              fontFamily: theme.typography.fontFamily.regular,
+              fontSize: theme.typography.fontSize.s,
+              color: theme.colors.textLight
+            }}>
+              Sportler, tägliches intensives Training oder körperliche Arbeit
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
       
       {/* U00dcberschrift fu00fcr Ziele */}
@@ -1605,13 +1575,15 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         step={100}
         decimalPlaces={0}
         allowDecimals={false}
-        value={profile.goals.dailyWater || 2000}
+        value={waterSliderValue}
         onValueChange={(value: number) => {
+          // Beide States aktualisieren - sowohl Profil als auch den separaten Slider-Wert
+          setWaterSliderValue(value);
           setProfile(prev => ({
             ...prev,
             goals: {
               ...prev.goals,
-              dailyWater: value
+              dailyWater: value // Nur das Profil aktualisieren, nicht für die Speicherung verwenden
             }
           }));
         }}

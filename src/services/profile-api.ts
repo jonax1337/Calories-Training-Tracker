@@ -175,6 +175,13 @@ export const fetchUserGoals = async (): Promise<UserGoal[]> => {
     headers,
   });
 
+  // Bei 404 (keine Ziele gefunden) leeres Array zurückgeben statt Fehler zu werfen
+  if (response.status === 404) {
+    console.warn('Keine Ziele für diesen Benutzer gefunden. Leeres Array wird zurückgegeben.');
+    return [];
+  }
+  
+  // Bei anderen Fehlern weiterhin einen Fehler werfen
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: 'Failed to fetch user goals' }));
     console.error('Error fetching user goals:', response.status, errorData);

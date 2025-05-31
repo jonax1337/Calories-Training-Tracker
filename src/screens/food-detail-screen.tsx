@@ -347,10 +347,12 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
             {/* Nutrition information */}
             {foodItem?.nutrition && (
+            <View style={{ marginBottom: theme.spacing.l }}>
               <NutritionalInfoCard
               nutrition={foodItem.nutrition}
-              servingMultiplier={parseFloat(servings) / 100} /* Korrigiert: Immer durch 100 teilen, da Nährwerte pro 100g/ml gespeichert sind */
+              servingMultiplier={parseFloat(servings) / 100} 
             />
+            </View>
             )}
 
             {/* Mengeneingabe mit wiederverwendbarem SliderWithInput */}

@@ -8,7 +8,7 @@ import { fetchUserProfile, fetchUserGoals } from '../services/profile-api';
 import { fetchHealthData, calculateTotalCaloriesBurned } from '../services/health-service';
 import ProgressBar from '../components/ui/progress-bar';
 import WaveAnimation from '../components/ui/wave-animation';
-import { DailyLog, HealthData, UserProfile, UserGoals } from '../types';
+import { DailyLog, HealthData, UserProfile, UserGoal, UserGoals } from '../types';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatToLocalISODate, getTodayFormatted } from '../utils/date-utils';
@@ -66,8 +66,15 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       setUserProfile(profile);
       setCurrentWeight(profile?.weight);
 
-      // Load active user goal's nutritional targets
-      const currentUserGoals = await fetchUserGoals(); // Fetches UserGoal[]
+      // Load active user goal's nutritional targets - jetzt gibt dies ein leeres Array statt Fehler zurück
+      let currentUserGoals: UserGoal[] = [];
+      try {
+        currentUserGoals = await fetchUserGoals(); // Fetches UserGoal[] or empty array
+      } catch (error) {
+        console.warn('Konnte Benutzerziele nicht laden, verwende Fallback-Werte:', error);
+        // Fehler hier abfangen, damit der Rest der Daten trotzdem geladen werden kann
+      }
+      
       if (currentUserGoals && currentUserGoals.length > 0) {
         const activeGoal = currentUserGoals[0]; // Assuming the first one is the active one
         setActiveGoalTargets({
