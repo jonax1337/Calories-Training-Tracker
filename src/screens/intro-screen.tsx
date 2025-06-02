@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme-context';
 import { updateUserProfile, fetchUserProfile, fetchGoalTypes, createOrUpdateUserGoal } from '../services/profile-api';
 import { logout } from '../services/auth-service';
-import { ArrowRight, ArrowLeft, User, UserRound, Calendar, Weight, Ruler, Activity, Target, Heart, Bike, Bed, BedDouble, Dumbbell, Footprints, ArrowDown, ArrowUp, Award, Minus, Star, X, VenusAndMars, PencilRuler, Goal, ArrowBigUpDash, ArrowBigDownDash, ArrowBigDown, ChevronsDownUp, ChevronsUpDown, BicepsFlexed } from 'lucide-react-native';
+import { ArrowRight, ArrowLeft, User, UserRound, Calendar, Weight, Ruler, Activity, Target, Heart, Bike, Bed, BedDouble, Dumbbell, Footprints, ArrowDown, ArrowUp, Award, Minus, Star, X, VenusAndMars, PencilRuler, Goal, ArrowBigUpDash, ArrowBigDownDash, ArrowBigDown, ChevronsDownUp, ChevronsUpDown, BicepsFlexed, Scale, ChevronsDown, ChevronsUp } from 'lucide-react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { DatePicker } from '../components/ui/date-picker';
 import LoadingScreen from '../components/ui/loading-screen';
@@ -803,7 +803,7 @@ const IntroScreen: React.FC = () => {
                     calculateGoalValues('gain');
                   }}
                 >
-                  <ArrowBigUpDash size={30} color={theme.colors.primary} />
+                  <ChevronsUp size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
                     <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtszunahme</Text>
                     <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
@@ -825,7 +825,7 @@ const IntroScreen: React.FC = () => {
                     calculateGoalValues('maintain');
                   }}
                 >
-                  <ChevronsUpDown size={30} color={theme.colors.primary} />
+                  <Scale size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
                     <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gewicht halten</Text>
                     <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
@@ -869,7 +869,7 @@ const IntroScreen: React.FC = () => {
                     calculateGoalValues('lose_fast');
                   }}
                 >
-                  <ArrowBigDownDash size={30} color={theme.colors.primary} />
+                  <ChevronsDown size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
                     <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtsreduktion</Text>
                     <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>

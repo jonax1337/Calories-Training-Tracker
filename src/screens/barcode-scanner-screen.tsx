@@ -277,9 +277,9 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
                   onPress={() => setIsTorchOn(prev => !prev)}
                 >
                   {isTorchOn ? (
-                    <Zap size={24} color="white" strokeWidth={1.5} />
+                    <Zap size={24} color="white" />
                   ) : (
-                    <ZapOff size={24} color="white" strokeWidth={1.5} />
+                    <ZapOff size={24} color="white" />
                   )}
                 </TouchableOpacity>
               </View>

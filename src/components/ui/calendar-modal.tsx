@@ -49,7 +49,7 @@ function CalendarModal({ isVisible, onClose, selectedDate, onDateSelect }: Calen
               Datum auswählen
             </Text>
             <TouchableOpacity onPress={onClose}>
-              <X strokeWidth={1.5} size={24} color={theme.colors.text} />
+              <X size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
           

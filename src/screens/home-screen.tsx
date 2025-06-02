@@ -576,7 +576,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             onPress={decrementWeight}
             disabled={isUpdatingWeight || currentWeight === undefined || currentWeight <= 0.1}
           >
-            <Minus strokeWidth={1.5} size={24} color="white" />
+            <Minus size={24} color="white" />
           </TouchableOpacity>
           
           <View style={{
@@ -613,7 +613,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             onPress={incrementWeight}
             disabled={isUpdatingWeight || currentWeight === undefined}
           >
-            <Plus strokeWidth={1.5} size={24} color="white" />
+            <Plus size={24} color="white" />
           </TouchableOpacity>
           </View>
           
@@ -632,7 +632,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               onPress={decrementWeightSmall}
               disabled={isUpdatingWeight || currentWeight === undefined || currentWeight <= 0.01}
             >
-              <Minus strokeWidth={1.5} size={14} color={theme.theme.colors.primary} />
+              <Minus size={14} color={theme.theme.colors.primary} />
             </TouchableOpacity>
             
             <Text style={{
@@ -656,7 +656,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               onPress={incrementWeightSmall}
               disabled={isUpdatingWeight || currentWeight === undefined}
             >
-              <Plus strokeWidth={1.5} size={14} color={theme.theme.colors.primary} />
+              <Plus size={14} color={theme.theme.colors.primary} />
             </TouchableOpacity>
           </View>
         </View>

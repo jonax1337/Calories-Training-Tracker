@@ -108,22 +108,21 @@ function CustomTabBar({ state, navigation }: any) {
   // Mit Lucide arbeiten wir mit Komponenten statt Namen
   const getTabIcon = (routeName: string, isFocused: boolean) => {
     const color = isFocused ? theme.colors.primary : theme.colors.disabled;
-    const strokeWidth = 1.5;
     const size = theme.typography.fontSize.xxl;
     
     switch (routeName) {
       case 'Home':
-        return <House size={size} color={color} strokeWidth={strokeWidth} />;
+        return <House size={size} color={color} />;
       case 'Food':
-        return <Apple size={size} color={color} strokeWidth={strokeWidth} />;
+        return <Apple size={size} color={color} />;
       case 'Training':
-        return <BicepsFlexed size={size} color={color} strokeWidth={strokeWidth} />;
+        return <BicepsFlexed size={size} color={color} />;
       case 'Profile':
-        return <UserRound size={size} color={color} strokeWidth={strokeWidth} />;
+        return <UserRound size={size} color={color} />;
       case 'Settings':
-        return <Settings size={size} color={color} strokeWidth={strokeWidth} />;
+        return <Settings size={size} color={color} />;
       default:
-        return <House size={size} color={color} strokeWidth={strokeWidth} />;
+        return <House size={size} color={color} />;
     }
   };
   

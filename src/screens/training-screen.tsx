@@ -62,7 +62,7 @@ function TrainingScreen({ navigation }: TrainingTabScreenProps) {
               style={[styles.startTimerButton, { backgroundColor: theme.colors.primary, marginTop: 20 }]}
               onPress={() => navigation.getParent()?.navigate('HIITTimerSettings')}
             >
-              <AlarmClock strokeWidth={1.5} size={theme.typography.fontSize.m} color="white" style={{ marginRight: 8 }} />
+              <AlarmClock size={theme.typography.fontSize.m} color="white" style={{ marginRight: 8 }} />
               <Text style={[styles.startTimerButtonText, { color: 'white', fontFamily: theme.typography.fontFamily.bold }]}>
                 HIIT Timer starten
               </Text>

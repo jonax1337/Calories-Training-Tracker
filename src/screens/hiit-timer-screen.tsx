@@ -436,9 +436,9 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
               onPress={timerState.status === 'running' ? pauseTimer : startTimer}
             >
               {timerState.status === 'running' ? (
-                <Pause size={24} color={theme.colors.text} strokeWidth={1.5} />
+                <Pause size={24} color={theme.colors.text} />
               ) : (
-                <Play size={24} color={theme.colors.text} strokeWidth={1.5} />
+                <Play size={24} color={theme.colors.text} />
               )}
             </TouchableOpacity>
             
@@ -447,14 +447,14 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
               onPress={skipToNextPhase}
               disabled={timerState.phase === 'completed'}
             >
-              <SkipForward size={24} color={theme.colors.text} strokeWidth={1.5} />
+              <SkipForward size={24} color={theme.colors.text} />
             </TouchableOpacity>
             
             <TouchableOpacity
               style={[styles.controlButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
               onPress={resetTimer}
             >
-              <RefreshCcw size={24} color={theme.colors.text} strokeWidth={1.5} />
+              <RefreshCcw size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
         )}

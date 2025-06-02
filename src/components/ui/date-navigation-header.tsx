@@ -54,7 +54,6 @@ function DateNavigationHeader({
         <ChevronLeft 
           size={theme.typography.fontSize.xxl} 
           color={theme.colors.primary} 
-          strokeWidth={1.5}
         />
       </TouchableOpacity>
       
@@ -78,7 +77,7 @@ function DateNavigationHeader({
         onPress={goToNextDay}
         hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
       >
-        <ChevronRight size={theme.typography.fontSize.xxl} color={theme.colors.primary} strokeWidth={1.5} />
+        <ChevronRight size={theme.typography.fontSize.xxl} color={theme.colors.primary}/>
       </TouchableOpacity>
     </View>
   );

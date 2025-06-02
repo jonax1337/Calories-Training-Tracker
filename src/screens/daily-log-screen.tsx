@@ -44,9 +44,9 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       </Text>
       {/* Akkordeon-Icon */}
       {expandedMeals[mealType] ? (
-        <CircleChevronUp size={24} color={theme.colors.primary} strokeWidth={1.5} />
+        <CircleChevronUp size={24} color={theme.colors.primary} />
       ) : (
-        <CircleChevronDown size={24} color={theme.colors.primary} strokeWidth={1.5} />
+        <CircleChevronDown size={24} color={theme.colors.primary} />
       )}
     </TouchableOpacity>
   );
@@ -171,7 +171,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                           alignItems: 'center',
                         }}
                       >
-                        <Trash2 size={24} color="white" strokeWidth={1.5} />
+                        <Trash2 size={24} color="white" />
                         <Text style={{ color: 'white', fontSize: 12, fontFamily: theme.typography.fontFamily.medium, marginTop: 4 }}>
                           Löschen
                         </Text>
@@ -226,7 +226,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                           alignItems: 'center',
                         }}
                       >
-                        <Edit2 size={24} color="white" strokeWidth={1.5} />
+                        <Edit2 size={24} color="white" />
                         <Text style={{ color: 'white', fontSize: 12, fontFamily: theme.typography.fontFamily.medium, marginTop: 4 }}>
                           Bearbeiten
                         </Text>

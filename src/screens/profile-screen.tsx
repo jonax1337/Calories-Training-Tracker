@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, View, ScrollView, TextInput, TouchableOpacity, Alert, Modal, Platform, ActivityIndicator, StatusBar } from 'react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
-import { Award, Bed, BedDouble, BicepsFlexed, Bike, ChevronDown, ChevronUp, Dumbbell, Footprints, Star, X } from 'lucide-react-native';
+import { ArrowBigDown, ArrowBigDownDash, ArrowBigUpDash, ArrowDown, ArrowDownWideNarrow, ArrowUp, ArrowUpWideNarrow, Award, Bed, BedDouble, BicepsFlexed, Bike, ChevronDown, ChevronsDown, ChevronsUp, ChevronUp, Cog, Dumbbell, Footprints, Scale, Star, TrendingDown, TrendingUp, X } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
@@ -1100,11 +1100,11 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                 
                 // Ziele definieren
                 const goals = [
-                  { id: 'gain', title: 'Gesunde Gewichtszunahme', description: 'Für Personen mit Untergewicht oder Muskelaufbau-Ziel.' },
-                  { id: 'maintain', title: 'Gewicht halten', description: 'Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.' },
-                  { id: 'lose_moderate', title: 'Moderate Gewichtsreduktion', description: 'Für leichtes Übergewicht, langsamer aber nachhaltiger Gewichtsverlust.' },
-                  { id: 'lose_fast', title: 'Gesunde Gewichtsreduktion', description: 'Für stärkeres Übergewicht, schnellerer Gewichtsverlust.' },
-                  { id: 'custom', title: 'Benutzerdefiniert', description: 'Eigene Ziele manuell festlegen.' },
+                  { id: 'gain', icon: <ChevronsUp size={theme.typography.fontSize.xxl} color={theme.colors.primary} style={{ marginRight: theme.spacing.xs }} />, title: 'Gesunde Gewichtszunahme', description: 'Für Personen mit Untergewicht oder Muskelaufbau-Ziel.' },
+                  { id: 'maintain', icon: <Scale size={theme.typography.fontSize.xxl} color={theme.colors.primary} style={{ marginRight: theme.spacing.s }} />, title: 'Gewicht halten', description: 'Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.' },
+                  { id: 'lose_moderate', icon: <ArrowBigDown size={theme.typography.fontSize.xxl} color={theme.colors.primary} style={{ marginRight: theme.spacing.xs }} />, title: 'Moderate Gewichtsreduktion', description: 'Für leichtes Übergewicht, langsamer aber nachhaltiger Gewichtsverlust.' },
+                  { id: 'lose_fast', icon: <ChevronsDown size={theme.typography.fontSize.xxl} color={theme.colors.primary} style={{ marginRight: theme.spacing.xs }} />, title: 'Schneller Gewichtsverlust', description: 'Für stärkeres Übergewicht, schnellerer Gewichtsverlust.' },
+                  { id: 'custom', icon: <Cog size={theme.typography.fontSize.xxl} color={theme.colors.primary} style={{ marginRight: theme.spacing.s }} />, title: 'Benutzerdefiniert', description: 'Eigene Ziele manuell festlegen.' },
                 ];
                 
                 // Das empfohlene Ziel finden
@@ -1125,6 +1125,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                       marginBottom: theme.spacing.m
                     }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: theme.spacing.xs }}>
+                      {activeGoal.icon}
                         <Text style={{
                           fontFamily: theme.typography.fontFamily.bold,
                           fontSize: theme.typography.fontSize.m,
@@ -1142,7 +1143,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                             flexDirection: 'row',
                             alignItems: 'center',
                           }}>
-                            <Star size={12} strokeWidth={1.5} color={theme.colors.primary} style={{ marginRight: 3 }} />
+                            <Star size={12} color={theme.colors.primary} style={{ marginRight: 3 }} />
                             <Text style={{
                               fontSize: theme.typography.fontSize.xs,
                               color: theme.colors.primary,
@@ -1365,9 +1366,9 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                       }}>
                         {/* Akkordeon-Icon */}
                         {goalsExpanded ? (
-                          <ChevronUp size={theme.typography.fontSize.xxl} color={theme.colors.primary} strokeWidth={1.5} />
+                          <ChevronUp size={theme.typography.fontSize.xxl} color={theme.colors.primary} />
                         ) : (
-                          <ChevronDown size={theme.typography.fontSize.xxl} color={theme.colors.primary} strokeWidth={1.5} />
+                          <ChevronDown size={theme.typography.fontSize.xxl} color={theme.colors.primary} />
                         )}
                       </Text>
                     </TouchableOpacity>
@@ -1506,6 +1507,26 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                             }}
                           >
                             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+                              {/* Icon für das jeweilige Ziel anzeigen */}
+                              {(() => {
+                                // Icon basierend auf goal.id auswählen (gleiche wie oben definiert)
+                                const getIconForGoal = (goalId: string) => {
+                                  const size = theme.typography.fontSize.xl;
+                                  const color = theme.colors.primary;
+                                  const style = { marginRight: theme.spacing.xs };
+                                  
+                                  switch(goalId) {
+                                    case 'gain': return <ChevronsUp size={size} color={color} style={style} />;
+                                    case 'maintain': return <Scale size={size} color={color} style={style} />;
+                                    case 'lose_moderate': return <ArrowBigDown size={size} color={color} style={style} />;
+                                    case 'lose_fast': return <ChevronsDown size={size} color={color} style={style} />;
+                                    case 'custom': return <Cog size={size} color={color} style={style} />;
+                                    default: return null;
+                                  }
+                                };
+                                  
+                                return getIconForGoal(goal.id);
+                              })()}
                               <Text style={{
                                 fontFamily: theme.typography.fontFamily.medium,
                                 fontSize: theme.typography.fontSize.s,
@@ -1523,7 +1544,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                                   flexDirection: 'row',
                                   alignItems: 'center',
                                 }}>
-                                  <Star size={12} strokeWidth={1.5} color={theme.colors.primary} style={{ marginRight: 3 }} />
+                                  <Star size={12} color={theme.colors.primary} style={{ marginRight: 3 }} />
                                   <Text style={{
                                     fontSize: theme.typography.fontSize.xs,
                                     color: theme.colors.primary,
