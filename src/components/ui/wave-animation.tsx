@@ -18,15 +18,24 @@ const STATIC_HTML_CONTENT = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts für Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            pointer-events: none !important;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
         }
         
@@ -299,21 +308,24 @@ const STATIC_HTML_CONTENT = `
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            display: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10;
             pointer-events: none;
+            z-index: 10;
+            display: none;
         }
         
         .text {
             font-size: 24px;
-            font-weight: bold;
+            font-weight: 600;
+            color: #2196F3;
             text-align: center;
-            color: #000;
-            text-shadow: 0 1px 2px rgba(255,255,255,0.6);
+            margin-bottom: 5px;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: -0.2px;
         }
         
         @media (max-width: 768px) {
@@ -535,6 +547,7 @@ const WaveAnimation = ({
   }, [color, webViewLoaded]);
 
   // Update text wenn sich der Text oder die Textfarbe ändert
+// Update text wenn sich der Text oder die Textfarbe ändert
 useEffect(() => {
   if (webViewRef.current && webViewLoaded) {
     const script = `
@@ -545,8 +558,14 @@ useEffect(() => {
         if ('${text}' && '${text}' !== 'undefined') {
           contentOverlay.style.display = 'flex';
           textElement.textContent = '${text || ''}';
-          // Setze die Textfarbe
+          
+          // Setze die Textformatierung
           textElement.style.color = '${textColor}';
+          textElement.style.fontFamily = "'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+          textElement.style.fontWeight = '600';  // Semi-Bold für bessere Lesbarkeit
+          textElement.style.fontSize = '24px';
+          textElement.style.letterSpacing = '-0.2px'; // Typisch für moderne App-Designs
+          
           // Passe den Schatten an - heller/dunkler je nach Theme
           const isLightText = '${textColor}'.toLowerCase().includes('fff') || 
                               '${textColor}'.toLowerCase().includes('white');
@@ -561,7 +580,7 @@ useEffect(() => {
     `;
     webViewRef.current.postMessage(script);
   }
-}, [text, textColor, webViewLoaded]); // textColor zu den Dependencies hinzufügen
+}, [text, textColor, webViewLoaded]);
 
   // Update text wenn sich der Text ändert
   useEffect(() => {

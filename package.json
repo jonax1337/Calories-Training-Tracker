@@ -12,6 +12,7 @@
     "@expo-google-fonts/space-grotesk": "^0.3.0",
     "@expo/metro-runtime": "~5.0.4",
     "@expo/react-native-action-sheet": "^4.1.1",
+    "@expo/ui": "~0.1.1-alpha.7",
     "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "^8.3.0",
@@ -35,6 +36,7 @@
     "expo-health-kit": "^1.0.8",
     "expo-linear-gradient": "^14.1.4",
     "expo-location": "^18.1.5",
+    "expo-mesh-gradient": "^0.3.4",
     "expo-sensors": "^14.1.4",
     "expo-status-bar": "~2.2.3",
     "expo-tone-generator": "^0.2.1",
@@ -59,8 +61,7 @@
     "tone": "^15.1.22",
     "use-sound": "^5.0.0",
     "uuid": "^11.1.0",
-    "vision-camera-code-scanner": "^0.2.0",
-    "@expo/ui": "~0.1.1-alpha.7"
+    "vision-camera-code-scanner": "^0.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

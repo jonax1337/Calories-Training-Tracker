@@ -417,6 +417,7 @@ const HIITTimerScreen: React.FC<HIITTimerScreenProps> = ({ navigation, route }) 
         status={timerState.phase}
         currentCycle={timerState.currentCycle}
         totalCycles={settings.cycles}
+        isPaused={timerState.status === 'paused'}
       />
       
       <View style={styles.timerControls}>

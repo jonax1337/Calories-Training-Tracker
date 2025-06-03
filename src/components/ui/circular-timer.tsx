@@ -11,6 +11,7 @@ interface CircularTimerProps {
   status: 'work' | 'rest' | 'prepare' | 'completed';
   currentCycle?: number;
   totalCycles?: number;
+  isPaused?: boolean; // Hinzugefügt, um den Pausenstatus zu übermitteln
 }
 
 const CircularTimer: React.FC<CircularTimerProps> = ({
@@ -21,6 +22,7 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
   status,
   currentCycle = 0,
   totalCycles = 0,
+  isPaused = false,
 }) => {
   const { theme } = useTheme();
   
@@ -127,6 +129,15 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
       fillAnimationRef.current.stop();
     }
     
+    // Pausenstatus verarbeiten
+    if (isPaused) {
+      // Pausiere die Rotationsanimation, wenn der Timer pausiert ist
+      if (rotationAnimationRef.current) {
+        rotationAnimationRef.current.stop();
+      }
+      return; // Keine weiteren Animationsupdates während der Pause
+    }
+    
     if (status === 'completed') {
       // Bei 'completed' direkter voller Kreis
       stopRotationAnimation();
@@ -176,7 +187,7 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
         fillAnimationRef.current.stop();
       }
     };
-  }, [status, remainingTime, duration, fillAnimation, rotationAnimation]);
+  }, [status, remainingTime, duration, fillAnimation, rotationAnimation, isPaused]);
 
   // Cleanup beim Unmount
   useEffect(() => {

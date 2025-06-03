@@ -72,6 +72,7 @@ const LoginScreen = () => {
       >
         <View style={{ alignItems: 'center', marginBottom: theme.spacing.xl }}>
           <Flame
+            strokeWidth={1.5}
             size={150} 
             color={theme.colors.primary} 
           />

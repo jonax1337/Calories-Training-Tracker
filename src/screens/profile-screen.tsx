@@ -15,6 +15,7 @@ import { formatToLocalISODate, formatDateForDisplay, getLocalDateComponents } fr
 import { createProfileStyles } from '../styles/screens/profile-styles';
 import * as Haptics from 'expo-haptics';
 import { DatePicker } from '../components/ui/date-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   // Get theme from context
@@ -672,7 +673,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           marginVertical: theme.spacing.m,
           position: 'relative' // Wichtig für absolute Positionierung des Markers
         }}>
-          {/* BMI Farbskala mit Verlauf */}
+          {/* BMI Farbskala mit Verlauf - Expo Mesh Gradient */}
           <View style={{
             position: 'absolute',
             top: 10, // Marker hat 28px Höhe, positioniere die Skala entsprechend
@@ -682,37 +683,44 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderRadius: theme.borderRadius.small,
             overflow: 'hidden'
           }}>
-            {/* Linearer Farbverlauf aus CSS für Web */}
-            {Platform.OS === 'web' ? (
-              <div 
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(to right, #2196F3 0%, #42A5F5 14%, #4CAF50 15%, #8BC34A 39%, #FFEB3B 40%, #FFC107 50%, #FF9800 70%, #F44336 100%)',
-                  borderRadius: theme.borderRadius.small + 'px',
-                }}
-              />
-            ) : (
-              // Für react-native: Vereinfachter Verlauf mit mehreren Blöcken
-              <View style={{flexDirection: 'row', height: '100%', width: '100%'}}>
-                {/* Mehrere kleine Blöcke erzeugen einen Verlaufseffekt - von Untergewicht bis Adipositas */}
-                {/* Blau - Untergewicht (<18,5) */}
-                <View style={{flex: 1.5, backgroundColor: '#2196F3'}} />
-                <View style={{flex: 1, backgroundColor: '#42A5F5'}} />
-                {/* Grün - Normalgewicht (18,5-24,9) */}
-                <View style={{flex: 1.4, backgroundColor: '#4CAF50'}} />
-                <View style={{flex: 1.5, backgroundColor: '#8BC34A'}} />
-                {/* Gelb - Grenzbereich (exakt bei 25) */}
-                <View style={{flex: 0.2, backgroundColor: '#E4E436'}} />
-                {/* Orange/Gelb - Übergewicht (25,1-30) */}
-                <View style={{flex: 1.3, backgroundColor: '#FFEB3B'}} />
-                <View style={{flex: 1.3, backgroundColor: '#FFC107'}} />
-                <View style={{flex: 1.4, backgroundColor: '#FF9800'}} />
-                {/* Rot - Adipositas (>30) */}
-                <View style={{flex: 1, backgroundColor: '#FF5722'}} />
-                <View style={{flex: 1, backgroundColor: '#F44336'}} />
-              </View>
-            )}
+            <LinearGradient
+              colors={[
+                '#3F51B5', // Dunkelblau - sehr starkes Untergewicht (BMI < 16)
+                '#2196F3', // Blau - starkes Untergewicht (BMI 16-17)
+                '#03A9F4', // Hellblau - leichtes Untergewicht (BMI 17-18.5)
+                '#4CAF50', // Grün - Normalgewicht optimal (BMI 18.5-22)
+                '#8BC34A', // Hellgrün - Normalgewicht oberer Bereich (BMI 22-25)
+                '#CDDC39', // Gelbgrün - Übergang zu Übergewicht (BMI 25-27)
+                '#FFEB3B', // Gelb - leichtes Übergewicht (BMI 27-30)
+                '#FFC107', // Gelb-Orange - Adipositas Klasse I (BMI 30-35)
+                '#FF9800', // Orange - Adipositas Klasse II (BMI 35-40)
+                '#FF5722', // Dunkelorange - Übergang zu schwerer Adipositas
+                '#F44336', // Rot - schwere Adipositas (BMI > 40)
+                '#D32F2F'  // Dunkelrot - sehr schwere Adipositas (BMI > 45)
+              ]}
+              // Positionierung basierend auf den offiziellen BMI-Kategorien nach WHO
+              locations={[
+                0.00, // BMI < 16 (sehr starkes Untergewicht)
+                0.07, // BMI 16-17 (starkes Untergewicht)
+                0.14, // BMI 17-18.5 (leichtes Untergewicht)
+                0.20, // BMI 18.5-22 (optimaler Bereich)
+                0.33, // BMI 22-25 (normaler Bereich, oberer Teil)
+                0.40, // BMI 25-27 (leicht übergewichtig)
+                0.50, // BMI 27-30 (übergewichtig)
+                0.60, // BMI 30-35 (Adipositas Klasse I)
+                0.75, // BMI 35-40 (Adipositas Klasse II)
+                0.85, // BMI 40-45 (schwere Adipositas)
+                0.92, // BMI > 45 (sehr schwere Adipositas)
+                1.00  // BMI > 50 (extrem schwere Adipositas)
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: theme.borderRadius.small
+              }}
+            />
           </View>
           
           {/* BMI-Marker - mit verbesserter Skalierung */}

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HIITSettings, RootStackParamList } from '../navigation';
+import SliderWithInput from '../components/ui/slider-with-input';
 
 // Navigation Types
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -25,11 +26,10 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
   const [settings, setSettings] = useState<HIITSettings>(initialSettings);
 
   // Handle settings input changes
-  const updateSetting = (key: keyof HIITSettings, value: string) => {
-    const numValue = parseInt(value, 10) || 0;
+  const updateSetting = (key: keyof HIITSettings, value: number) => {
     setSettings((prev: HIITSettings) => ({
       ...prev,
-      [key]: numValue,
+      [key]: value,
     }));
   };
 
@@ -42,13 +42,13 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
-      paddingTop: theme.spacing.xs,
     },
     scrollContent: {
       flex: 1,
     },
     settingsContainer: {
       padding: theme.spacing.m,
+      paddingBottom: Math.max(theme.spacing.xxl, insets.bottom + theme.spacing.l),
     },
     headerText: {
       fontSize: theme.typography.fontSize.xl,
@@ -57,29 +57,14 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
       fontFamily: theme.typography.fontFamily.bold,
       color: theme.colors.primary,
     },
-    settingRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+    settingContainer: {
       marginBottom: theme.spacing.m,
     },
     settingLabel: {
       fontSize: theme.typography.fontSize.m,
-      flex: 1,
+      marginBottom: theme.spacing.xs,
       fontFamily: theme.typography.fontFamily.medium,
       color: theme.colors.text,
-    },
-    settingInput: {
-      width: 80,
-      height: 45,
-      textAlign: 'center',
-      borderWidth: 1,
-      borderRadius: theme.borderRadius.medium,
-      fontSize: theme.typography.fontSize.m,
-      borderColor: theme.colors.border,
-      backgroundColor: theme.colors.surface,
-      color: theme.colors.text,
-      fontFamily: theme.typography.fontFamily.medium,
     },
     actionButton: {
       paddingVertical: theme.spacing.m,
@@ -111,57 +96,53 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
       <ScrollView style={styles.scrollContent}>
         <View style={styles.settingsContainer}>
           
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>
-              Arbeit (Sekunden)
-            </Text>
-            <TextInput
-              style={styles.settingInput}
-              value={settings.workDuration.toString()}
-              onChangeText={(text) => updateSetting('workDuration', text)}
-              keyboardType="numeric"
-              maxLength={3}
+          <SliderWithInput
+            label="Arbeit"
+              minValue={1}
+              maxValue={180}
+              middleValue={60}
+              step={1}
+              value={settings.workDuration}
+              onValueChange={(value) => updateSetting('workDuration', value)}
+              allowDecimals={false}
+              unit="Sekunden"
             />
-          </View>
           
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>
-              Pause (Sekunden)
-            </Text>
-            <TextInput
-              style={styles.settingInput}
-              value={settings.restDuration.toString()}
-              onChangeText={(text) => updateSetting('restDuration', text)}
-              keyboardType="numeric"
-              maxLength={3}
+          <SliderWithInput
+            label="Pause"
+              minValue={1}
+              maxValue={120}
+              middleValue={60}
+              step={1}
+              value={settings.restDuration}
+              onValueChange={(value) => updateSetting('restDuration', value)}
+              allowDecimals={false}
+              unit="Sekunden"
             />
-          </View>
           
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>
-              Vorbereitung (Sekunden)
-            </Text>
-            <TextInput
-              style={styles.settingInput}
-              value={settings.prepareDuration.toString()}
-              onChangeText={(text) => updateSetting('prepareDuration', text)}
-              keyboardType="numeric"
-              maxLength={3}
+          <SliderWithInput
+            label="Vorbereitung"
+              minValue={1}
+              maxValue={30}
+              middleValue={15}
+              step={1}
+              value={settings.prepareDuration}
+              onValueChange={(value) => updateSetting('prepareDuration', value)}
+              allowDecimals={false}
+              unit="Sekunden"
             />
-          </View>
           
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>
-              Anzahl der Zyklen
-            </Text>
-            <TextInput
-              style={styles.settingInput}
-              value={settings.cycles.toString()}
-              onChangeText={(text) => updateSetting('cycles', text)}
-              keyboardType="numeric"
-              maxLength={2}
+          <SliderWithInput
+            label="Anzahl der Zyklen"
+              minValue={1}
+              middleValue={10}
+              maxValue={20}
+              step={1}
+              value={settings.cycles}
+              onValueChange={(value) => updateSetting('cycles', value)}
+              allowDecimals={false}
+              unit="Zyklen"
             />
-          </View>
           
           <TouchableOpacity
             style={styles.actionButton}
