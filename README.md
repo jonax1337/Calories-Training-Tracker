@@ -62,8 +62,8 @@ Users receive comprehensive daily, weekly, and monthly progress summaries throug
 
 1. **Clone Repository:**
    ```bash
-   git clone https://github.com/jonax1337/calories_training_tracker.git
-   cd calories_training_tracker
+   git clone https://github.com/jonax1337/calories-training-tracker.git
+   cd calories-training-tracker
    ```
 
 2. **Install Frontend Dependencies:**
@@ -161,8 +161,7 @@ For technical inquiries, support requests, or business partnerships:
 
 **Developer:** Jonas Laux  
 **Email:** jonas.laux@hotmail.com  
-**GitHub:** [jonax1337](https://github.com/jonax1337)  
-**LinkedIn:** [Jonas Laux](https://linkedin.com/in/jonaslaux)
+**GitHub:** [jonax1337](https://github.com/jonax1337)
 
 ---
 
