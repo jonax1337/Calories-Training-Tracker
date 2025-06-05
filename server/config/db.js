@@ -14,8 +14,6 @@ const pool = mysql.createPool({
   enableKeepAlive: true, // Enable keep-alive packets
   keepAliveInitialDelay: 10000, // Send keep-alive packet after 10 seconds of inactivity
   connectTimeout: 60000, // Increase connection timeout to 60 seconds
-  acquireTimeout: 60000, // Increase acquire timeout to 60 seconds
-  timeout: 60000, // Increase query timeout to 60 seconds
   // Handle connection errors by automatically reconnecting
   multipleStatements: false, // Security best practice
   typeCast: function (field, next) {
