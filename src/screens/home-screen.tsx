@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator, TextInput } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { View, Text, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { HomeTabScreenProps } from '../types/navigation-types';
 import { useFocusEffect } from '@react-navigation/native';
 import { getDailyLogByDate, saveUserProfile, saveDailyLog } from '../services/storage-service';
@@ -11,12 +10,12 @@ import WaveAnimation from '../components/ui/wave-animation';
 import { DailyLog, HealthData, UserProfile, UserGoal, UserGoals } from '../types';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatToLocalISODate, getTodayFormatted } from '../utils/date-utils';
 import { useDateContext } from '../context/date-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
-import { ChevronLeft, ChevronRight, Minus, Plus, UserRound, X, PlusCircle, ChevronUpCircle, ChevronDownCircle } from 'lucide-react-native';
+import { Minus, Plus, BarChart2 } from 'lucide-react-native';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
+import NutritionReportComponent from '../components/reports/nutrition-report-component';
 
 // Helper function to check if user profile is complete with minimum required data
 function isProfileComplete(profile: UserProfile | null): boolean {
@@ -534,6 +533,62 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         </View>
       </View>
       
+      {/* Nutrition Report Section */}
+      {userProfile && activeGoalTargets && (
+        <View style={[
+          styles.summaryCard, 
+          { 
+            backgroundColor: theme.theme.colors.card,
+            borderRadius: theme.theme.borderRadius.large,
+            marginBottom: 16,
+            shadowColor: theme.theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.2,
+            shadowRadius: 1.5,
+            elevation: 2,
+          }
+        ]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={[
+              styles.cardTitle, 
+              { 
+                fontFamily: theme.theme.typography.fontFamily.bold,
+                color: theme.theme.colors.text
+              }
+            ]}>Ernährungsbericht</Text>
+            
+            <TouchableOpacity 
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: theme.theme.colors.primary,
+                borderRadius: theme.theme.borderRadius.medium,
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                marginTop: -theme.theme.spacing.m,
+              }}
+              onPress={() => navigation.getParent()?.navigate('NutritionReport', { days: 30 })}
+            >
+              <BarChart2 size={theme.theme.typography.fontSize.s} color="white" style={{ marginRight: 4 }} />
+              <Text style={{ 
+                fontFamily: theme.theme.typography.fontFamily.medium, 
+                fontSize: theme.theme.typography.fontSize.xs,
+                color: 'white'
+              }}>
+                Details
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <NutritionReportComponent 
+            userProfile={userProfile}
+            userGoals={activeGoalTargets}
+            days={14}
+            compact={true}
+          />
+        </View>
+      )}
+
       {/* Weight tracking section */}
       <View style={[
         styles.summaryCard, 

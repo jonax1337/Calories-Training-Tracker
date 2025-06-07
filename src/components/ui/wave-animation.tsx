@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../../theme/theme-context';
 
@@ -603,6 +603,28 @@ useEffect(() => {
     }
   }, [text, webViewLoaded]);
 
+  // Je nach Plattform unterschiedliche Implementierung verwenden
+  if (Platform.OS === 'web') {
+    // Direkt das HTML für Web-Browser einbetten
+    return (
+      <View style={styles.container}>
+        <WebWaveAnimation 
+          fillPercentage={actualFillPercentage} 
+          color={color} 
+          text={text} 
+          textColor={textColor} 
+        />
+        {/* Icon overlay falls vorhanden */}
+        {icon && (
+          <View style={styles.iconOverlay}>
+            {icon}
+          </View>
+        )}
+      </View>
+    );
+  }
+  
+  // Mobile Implementierung mit WebView
   return (
     <View style={styles.container}>
       <WebView
@@ -662,5 +684,265 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
 });
+
+// Web-spezifische Implementierung der Wave-Animation
+interface WebWaveAnimationProps {
+  fillPercentage: number;
+  color?: string;
+  text?: string;
+  textColor?: string;
+}
+
+const WebWaveAnimation = ({ fillPercentage, color = '#2196F3', text, textColor = '#2196F3' }: WebWaveAnimationProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Container mit dem HTML füllen
+    const container = containerRef.current;
+    container.innerHTML = '';
+    
+    // Hero-Bereich erstellen
+    const heroArea = document.createElement('div');
+    heroArea.className = 'hero_area';
+    heroArea.style.cssText = `
+      position: relative;
+      width: 100%;
+      height: 160px;
+      background: linear-gradient(135deg, ${color}20, ${color}10);
+      border-radius: 8px;
+      overflow: hidden;
+    `;
+    
+    // Wasser-Level
+    const waterLevel = document.createElement('div');
+    waterLevel.className = 'water-level';
+    waterLevel.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: ${fillPercentage}%;
+      background-color: ${color};
+      transition: height 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+      overflow: hidden;
+    `;
+    
+    // Bubbles container
+    const bubbles = document.createElement('div');
+    bubbles.className = 'bubbles';
+    bubbles.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    `;
+    
+    // Bubble-Animationen per CSS - jetzt mit korrekter Animation für Web
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes bubbleUp {
+        0% { transform: translateY(0); opacity: 0; }
+        20% { opacity: 0.8; }
+        80% { opacity: 0.6; }
+        100% { transform: translateY(-120%); opacity: 0; }
+      }
+      
+      .bubble {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        animation: bubbleUp linear infinite;
+        bottom: 0;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Bubbles hinzufügen - mehr Blasen für besseren visuellen Effekt
+    const bubbleCount = Math.max(5, Math.floor(fillPercentage / 8)); // Mindestens 5 Blasen
+    for (let i = 0; i < bubbleCount; i++) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      const size = Math.random() * 4 + 2;
+      const left = Math.random() * 90 + 5;
+      const animDuration = Math.random() * 3 + 2;
+      const delay = Math.random() * 2;
+      
+      bubble.style.cssText = `
+        left: ${left}%;
+        width: ${size}px;
+        height: ${size}px;
+        animation-duration: ${animDuration}s;
+        animation-delay: ${delay}s;
+        opacity: 0.8;
+        will-change: transform;
+        transform: translateZ(0);
+      `;
+      
+      bubbles.appendChild(bubble);
+    }
+    
+    // SVG für die Wellen
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("class", "waves");
+    svg.setAttribute("xmlns", svgNS);
+    svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+    svg.setAttribute("viewBox", "0 24 150 28");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("shape-rendering", "auto");
+    svg.style.cssText = `
+      position: absolute;
+      bottom: ${fillPercentage + 9}%;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      z-index: 5;
+    `;
+    
+    // SVG Defs
+    const defs = document.createElementNS(svgNS, "defs");
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("id", "gentle-wave");
+    path.setAttribute("d", "M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z");
+    defs.appendChild(path);
+    
+    // SVG Parallax Group
+    const g = document.createElementNS(svgNS, "g");
+    g.setAttribute("class", "parallax");
+    
+    // 4 Wellenebenen mit unterschiedlicher Transparenz
+    const use1 = document.createElementNS(svgNS, "use");
+    use1.setAttribute("xlink:href", "#gentle-wave");
+    use1.setAttribute("x", "48");
+    use1.setAttribute("y", "0");
+    use1.setAttribute("fill", `${color}70`);
+    
+    const use2 = document.createElementNS(svgNS, "use");
+    use2.setAttribute("xlink:href", "#gentle-wave");
+    use2.setAttribute("x", "48");
+    use2.setAttribute("y", "3");
+    use2.setAttribute("fill", `${color}50`);
+    
+    const use3 = document.createElementNS(svgNS, "use");
+    use3.setAttribute("xlink:href", "#gentle-wave");
+    use3.setAttribute("x", "48");
+    use3.setAttribute("y", "5");
+    use3.setAttribute("fill", `${color}30`);
+    
+    const use4 = document.createElementNS(svgNS, "use");
+    use4.setAttribute("xlink:href", "#gentle-wave");
+    use4.setAttribute("x", "48");
+    use4.setAttribute("y", "7");
+    use4.setAttribute("fill", color);
+    
+    // Wellen hinzufügen
+    g.appendChild(use1);
+    g.appendChild(use2);
+    g.appendChild(use3);
+    g.appendChild(use4);
+    
+    svg.appendChild(defs);
+    svg.appendChild(g);
+    
+    // CSS-Animationen für die Wellen - Optimiert für Web-Browser
+    const waveStyle = document.createElement('style');
+    waveStyle.textContent = `
+      @keyframes wave-move-forever {
+        0% { transform: translate3d(-90px, 0, 0); }
+        100% { transform: translate3d(85px, 0, 0); }
+      }
+      
+      .parallax > use {
+        animation: wave-move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+        will-change: transform;
+      }
+      .parallax > use:nth-child(1) {
+        animation-delay: -2s;
+        animation-duration: 7s;
+      }
+      .parallax > use:nth-child(2) {
+        animation-delay: -3s;
+        animation-duration: 10s;
+      }
+      .parallax > use:nth-child(3) {
+        animation-delay: -4s;
+        animation-duration: 13s;
+      }
+      .parallax > use:nth-child(4) {
+        animation-delay: -5s;
+        animation-duration: 20s;
+      }
+    `;
+    document.head.appendChild(waveStyle);
+    
+    // Content Overlay für Text
+    const contentOverlay = document.createElement('div');
+    contentOverlay.className = 'content-overlay';
+    contentOverlay.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    `;
+    
+    // Text Element
+    if (text) {
+      const textElement = document.createElement('div');
+      textElement.className = 'text';
+      textElement.textContent = text;
+      textElement.style.cssText = `
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 600;
+        font-size: 24px;
+        color: ${textColor};
+        letter-spacing: -0.2px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      `;
+      contentOverlay.appendChild(textElement);
+    } else {
+      contentOverlay.style.display = 'none';
+    }
+    
+    // Alles zusammenfügen
+    waterLevel.appendChild(bubbles);
+    heroArea.appendChild(waterLevel);
+    heroArea.appendChild(svg);
+    heroArea.appendChild(contentOverlay);
+    
+    // In den Container einfügen
+    container.appendChild(heroArea);
+    
+    // Sofort Animationen starten
+    requestAnimationFrame(() => {
+      // Force repaint für bessere Animation-Performance
+      heroArea.style.opacity = '0.99';
+      setTimeout(() => {
+        heroArea.style.opacity = '1';
+      }, 10);
+    });
+  }, [fillPercentage, color, text, textColor]);
+  
+  return (
+    <div 
+      ref={containerRef} 
+      style={{
+        width: '100%',
+        height: 160,
+        borderRadius: 8,
+        overflow: 'hidden',
+      }} 
+    />
+  );
+};
 
 export default WaveAnimation;

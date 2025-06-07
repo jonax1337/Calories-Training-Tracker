@@ -23,6 +23,7 @@ import TrainingScreen from './screens/training-screen';
 import HIITTimerScreen from './screens/hiit-timer-screen';
 import HIITTimerSettingsScreen from './screens/hiit-timer-settings-screen';
 import ManualFoodEntryScreen from './screens/manual-food-entry-screen';
+import NutritionReportScreen from './screens/nutrition-report-screen';
 
 // Types for HIIT Timer
 export interface HIITSettings {
@@ -75,6 +76,7 @@ export type RootStackParamList = {
   Settings: undefined;
   HIITTimer: { settings?: HIITSettings };
   HIITTimerSettings: { settings?: HIITSettings };
+  NutritionReport: { days?: number };
   // Tab screens (for backwards compatibility)
   Home: undefined;
   Profile: undefined;
@@ -423,6 +425,15 @@ function AppStack() {
           title: 'Profil einrichten',
           headerShown: false, // Header ausblenden für besseres Onboarding-Erlebnis
           animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen 
+        name="NutritionReport" 
+        component={NutritionReportScreen} 
+        options={{
+          title: 'Ernährungsbericht',
+          animation: 'slide_from_bottom',
+          headerBackTitle: 'Zurück'
         }}
       />
     </Stack.Navigator>

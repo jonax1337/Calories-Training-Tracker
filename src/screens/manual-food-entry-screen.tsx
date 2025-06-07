@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Text, View, TextInput, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
-import Slider from '@react-native-community/slider';
+import SliderWithInput from '../components/ui/slider-with-input';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { FoodItem, MealType, FoodEntry } from '../types';
@@ -372,142 +372,25 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
           </View>
         </View>
 
-        {/* Servings input */}
-        {/* Mengeneingabe mit Slider - identisch zum Food Detail Screen */}
-        <View style={{
-          flexDirection: 'column', 
-          width: '100%',          
-          padding: theme.spacing.xs,
-          marginTop: theme.spacing.s,
-          marginBottom: theme.spacing.s,
-          borderRadius: theme.borderRadius.medium,
-          backgroundColor: theme.colors.card,
-          borderWidth: 1,
-          borderColor: theme.colors.border
-        }}>
-          {/* Überschrift */}
-          <View style={{
-            width: '100%'      
-          }}>
-            <Text style={{ 
-              fontFamily: theme.typography.fontFamily.medium, 
-              color: theme.colors.text,
-              marginTop: theme.spacing.xs,
-              marginLeft: theme.spacing.xs,
-              fontSize: theme.typography.fontSize.m
-            }}>
-              Menge
-            </Text>
-          </View>
-          
-          {/* Wertanzeige - Klickbare/Editierbare Grammzahl */}
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
-            paddingHorizontal: theme.spacing.xs,
-            marginBottom: theme.spacing.xs
-          }}>
-            <Text style={{
-              fontFamily: theme.typography.fontFamily.medium,
-              fontSize: theme.typography.fontSize.s,
-              color: theme.colors.textLight
-            }}>
-              Gramm
-            </Text>
-            <TextInput
-              style={{
-                color: theme.colors.primary,
-                fontFamily: theme.typography.fontFamily.bold,
-                fontSize: theme.typography.fontSize.l,
-                textAlign: 'center',
-                minWidth: 80,
-                padding: theme.spacing.xs,
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.borderRadius.small,
-                borderWidth: 1,
-                borderColor: theme.colors.primary,
-                elevation: 2,
-                shadowColor: theme.colors.shadow,
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.2,
-                shadowRadius: 1
-              }}
-              value={servings}
-              placeholder="100"
-              selectTextOnFocus={true}
-              onChangeText={(text) => {
-                // Validiere und formatiere die Eingabe
-                const validText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
-                setServings(validText);
-                
-                // Aktualisiere auch den Slider, falls der Wert im gültigen Bereich liegt
-                const numValue = parseFloat(validText);
-                if (!isNaN(numValue)) {
-                  if (numValue > 500) {
-                    // Bei höheren Werten, setze Slider auf Maximum
-                    setSliderValue(500);
-                  } else if (numValue < 1) {
-                    // Bei niedrigeren Werten, setze Slider auf Minimum
-                    setSliderValue(1);
-                  } else {
-                    // Bei Werten im gültigen Bereich, setze exakten Wert
-                    setSliderValue(Math.round(numValue));
-                  }
-                }
-              }}
-              keyboardType={Platform.OS === 'ios' ? "decimal-pad" : "numeric"}
-            />
-          </View>
-          
-          {/* Slider */}
-          <View style={{
-            width: '100%',        
-            marginBottom: theme.spacing.xs,
-            paddingHorizontal: theme.spacing.xs
-          }}>
-            <Slider
-              style={{ width: '100%', height: 30 }}
-              minimumValue={1}
-              maximumValue={500}
-              step={1}
-              value={Math.min(Math.max(sliderValue, 1), 500)}
-              minimumTrackTintColor={theme.colors.primary}
-              maximumTrackTintColor={theme.colors.border}
-              thumbTintColor={theme.colors.primary}
-              onValueChange={(value: number) => {
-                // Runde auf ganze Zahlen für bessere Anzeige
-                const roundedValue = Math.round(value);
-                setSliderValue(roundedValue);
-                setServings(roundedValue.toString());
-              }}
-            />
-          </View>
-            
-          {/* Slider-Beschriftungen */}
-          <View style={{
-            width: '100%',         
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            paddingHorizontal: theme.spacing.xs,
-            marginBottom: theme.spacing.xs
-          }}>
-            <Text style={{
-              color: theme.colors.textLight,
-              fontSize: theme.typography.fontSize.xs
-            }}>1</Text>
-            <Text style={{
-              color: theme.colors.textLight,
-              fontSize: theme.typography.fontSize.xs
-            }}>250</Text>
-            <Text style={{
-              color: theme.colors.textLight,
-              fontSize: theme.typography.fontSize.xs
-            }}>500</Text>
-          </View>
-        </View>
-
+        {/* Mengeneingabe mit wiederverwendbarem SliderWithInput */}
+        <SliderWithInput
+          minValue={1}
+          maxValue={1000}
+          middleValue={500}
+          step={0.01}
+          decimalPlaces={2}
+          allowDecimals={true}
+          value={parseFloat(servings) || 100}
+          onValueChange={(value: number) => {
+            setServings(value.toFixed(2));  // Formatiere mit 2 Nachkommastellen
+            // Wir brauchen sliderValue für die Konsistenz im bestehenden Code
+            setSliderValue(value);
+          }}
+          label="Menge"
+          unit="Gramm / Mililiter"
+          placeholder="100"
+        />
+        
         {/* Preview Nutritional Info */}
         {(parseFloat(calories) > 0 || parseFloat(protein) > 0 || parseFloat(carbs) > 0 || parseFloat(fat) > 0) && (
           <View style={{ marginBottom: theme.spacing.m }}>

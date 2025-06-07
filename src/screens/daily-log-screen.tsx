@@ -268,7 +268,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                       {entry.foodItem.name}
                     </Text>
                     <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
-                      {entry.servingAmount}g
+                      {entry.servingAmount}{entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('ml') || entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
                     </Text>
                   </View>
                   <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }}>

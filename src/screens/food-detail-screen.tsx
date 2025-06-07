@@ -57,6 +57,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   
   // Flag to indicate if we're editing an existing entry
   const isEditing = Boolean(existingEntryId);
+  
+  // Bestimme die Einheit basierend auf servingSize (ml oder g)
+  const [servingUnit, setServingUnit] = useState<string>("Gramm");
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
@@ -100,11 +103,21 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         setFoodItem(passedFoodItem);
         setCustomName(passedFoodItem.name);
         
+        // Setze die Einheit basierend auf der servingSize
+        if (passedFoodItem.nutrition && passedFoodItem.nutrition.servingSize) {
+          const servingSizeStr = passedFoodItem.nutrition.servingSize.toLowerCase();
+          if (servingSizeStr.includes('ml') || servingSizeStr.includes('l')) {
+            setServingUnit("Milliliter");
+          } else {
+            setServingUnit("Gramm");
+          }
+        }
+        
         // Setze die Portionsgröße NUR, wenn wir KEINEN existierenden Eintrag bearbeiten
         // Ansonsten verwenden wir die Menge aus dem Food Entry!
         if (!isEditing && passedFoodItem.nutrition && passedFoodItem.nutrition.servingSizeGrams) {
           const productSize = passedFoodItem.nutrition.servingSizeGrams;
-          console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}g`);
+          console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}${servingUnit === "Milliliter" ? "ml" : "g"}`);
           setServings(productSize.toFixed(2));
           setSliderValue(productSize);
         }
@@ -127,10 +140,20 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             setFoodItem(foodWithoutImage);
             setCustomName(data.name);
             
+            // Setze die Einheit basierend auf der servingSize
+            if (data.nutrition && data.nutrition.servingSize) {
+              const servingSizeStr = data.nutrition.servingSize.toLowerCase();
+              if (servingSizeStr.includes('ml') || servingSizeStr.includes('l')) {
+                setServingUnit("Milliliter");
+              } else {
+                setServingUnit("Gramm");
+              }
+            }
+            
             // Setze die Portionsgröße auf die tatsächliche Füllmenge des Produkts
             if (data.nutrition && data.nutrition.servingSizeGrams) {
               const productSize = data.nutrition.servingSizeGrams;
-              console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}g`);
+              console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}${servingUnit === "Milliliter" ? "ml" : "g"}`);
               setServings(productSize.toFixed(2));
               setSliderValue(productSize);
             }
@@ -370,7 +393,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 setSliderValue(value);
               }}
               label="Menge"
-              unit="Gramm"
+              unit={servingUnit}
               placeholder="100"
             />
             

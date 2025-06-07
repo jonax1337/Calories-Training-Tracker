@@ -180,11 +180,13 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
     try {
       // Erste Variante: Über Parent-Navigator - mit vollständigem FoodItem-Objekt
       const parent = navigation.getParent();
+
       if (parent) {
         parent.navigate("FoodDetail", { 
           foodId: item.id, 
           mealType,
-          foodItem: item // Übergebe das vollständige FoodItem-Objekt
+          foodItem: item, // Übergebe das vollständige FoodItem-Objekt
+          selectedDate: selectedDate // Übergebe das ausgewählte Datum aus dem DateContext
         });
         console.log("Navigation zum FoodDetail mit vollständigem FoodItem:", item.name);
         return;
@@ -195,7 +197,8 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
       navigation.navigate("FoodDetail", { 
         foodId: item.id, 
         mealType,
-        foodItem: item // Übergebe das vollständige FoodItem-Objekt
+        foodItem: item, // Übergebe das vollständige FoodItem-Objekt
+        selectedDate: selectedDate // Übergebe das ausgewählte Datum aus dem DateContext
       });
       console.log("Direkte Navigation zum FoodDetail mit vollständigem FoodItem:", item.name);
     } catch (e) {
@@ -334,7 +337,7 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
                 <Text style={{ fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }}>{item.name}</Text>
                 {item.brand && <Text style={{ color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}>{item.brand}</Text>}
                 <Text style={{ color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}>
-                  {Math.round(item.nutrition.calories)} kcal/100g
+                  {Math.round(item.nutrition.calories)} kcal/100{item.nutrition.servingSize?.toLowerCase().includes('ml') || item.nutrition.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
                 </Text>
               </TouchableOpacity>
             )}
