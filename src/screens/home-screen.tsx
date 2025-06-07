@@ -12,7 +12,7 @@ import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDateContext } from '../context/date-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
-import { Minus, Plus, BarChart2 } from 'lucide-react-native';
+import { Minus, Plus, BarChart2, ChartSpline, ChartLine } from 'lucide-react-native';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
 import NutritionReportComponent from '../components/reports/nutrition-report-component';
@@ -567,9 +567,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                 paddingHorizontal: 12,
                 marginTop: -theme.theme.spacing.m,
               }}
-              onPress={() => navigation.getParent()?.navigate('NutritionReport', { days: 30 })}
+              onPress={() => navigation.getParent()?.navigate('NutritionReport', { days: 14 })}
             >
-              <BarChart2 size={theme.theme.typography.fontSize.s} color="white" style={{ marginRight: 4 }} />
+              <ChartLine size={theme.theme.typography.fontSize.m} color="white" style={{ marginRight: 4 }} />
               <Text style={{ 
                 fontFamily: theme.theme.typography.fontFamily.medium, 
                 fontSize: theme.theme.typography.fontSize.xs,
@@ -585,6 +585,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             userGoals={activeGoalTargets}
             days={14}
             compact={true}
+            selectedDate={selectedDate} // Datum aus DateContext übergeben
           />
         </View>
       )}

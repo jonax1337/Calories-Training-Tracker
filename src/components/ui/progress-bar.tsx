@@ -24,21 +24,24 @@ function ProgressBar({
   // Prüfen, ob der aktuelle Wert das Ziel überschreitet
   const isOverTarget = current > target;
   
-  // Calculate percentage (capped at 100%)
-  const percentage = Math.min(Math.round((current / target) * 100), 100);
+  // Calculate actual percentage (not capped at 100%)
+  const percentage = Math.round((current / target) * 100);
   
   // Animierter Wert für die Breite des Fortschrittsbalkens
   const widthAnim = useRef(new Animated.Value(0)).current;
   
   // Effekt, um den Balken zu animieren, wenn sich der Prozentsatz ändert
+  // Balkenbreite auf maximal 100% beschränken, auch wenn der Prozentsatz höher ist
+  const displayPercentage = Math.min(percentage, 100);
+  
   useEffect(() => {
     Animated.timing(widthAnim, {
-      toValue: percentage,
+      toValue: displayPercentage, // Für die Animation beschränken wir auf 100%
       duration: 800, // Längere Animation für einen sanfteren Effekt
       useNativeDriver: false, // Breite kann nicht mit dem Native Driver animiert werden
       easing: Easing.out(Easing.ease) // Sanfte Beschleunigung/Verzögerung
     }).start();
-  }, [percentage, widthAnim]);
+  }, [displayPercentage, widthAnim]);
 
   // Bildschirmbreite in Prozent für die Animation
   const widthInterpolated = widthAnim.interpolate({

@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
-import { LineChart, BarChart } from 'react-native-chart-kit';
+import { 
+  VictoryChart, 
+  VictoryLine, 
+  VictoryScatter,
+  VictoryTheme, 
+  VictoryAxis, 
+  VictoryContainer
+} from 'victory-native';
 import { DailyLog, UserProfile, UserGoals } from '../../types';
 import { useTheme } from '../../theme/theme-context';
+import { useDateContext } from '../../context/date-context';
 import { getDailyLogs } from '../../services/storage-service';
+import { getTodayFormatted } from '../../utils/date-utils';
 
 interface NutritionReportProps {
   userProfile: UserProfile | null;
   userGoals: UserGoals;
   days?: number; // Anzahl der Tage für den Rückblick, Standard 30
   compact?: boolean; // Kompakte Ansicht für Home-Screen
+  selectedDate?: string; // Optional: Übergebenes Datum als Bezugspunkt
 }
 
 interface NutritionTotals {
@@ -48,46 +58,87 @@ const calculateDailyTotals = (log: DailyLog): NutritionTotals => {
 };
 
 // Hauptkomponente
-const NutritionReportComponent = ({ userProfile, userGoals, days = 30, compact = false }: NutritionReportProps) => {
+const NutritionReportComponent = ({ 
+  userGoals, 
+  days = 30, 
+  compact = false, 
+  selectedDate: propSelectedDate, 
+}: NutritionReportProps) => {
   const theme = useTheme();
   const styles = createStyles(theme.theme);
+  const { selectedDate: contextSelectedDate } = useDateContext();
+  
+  // Verwende das übergebene Datum oder das Datum aus dem Context, oder als Fallback das heutige Datum
+  const selectedDate = propSelectedDate || contextSelectedDate || getTodayFormatted();
+  
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<NutritionTotals[]>([]);
   const [averages, setAverages] = useState<NutritionTotals | null>(null);
   const [goalAchievement, setGoalAchievement] = useState<{[key: string]: number}>({});
-  const screenWidth = Dimensions.get('window').width - 32; // 16px Padding auf jeder Seite
+  // Breite abhängig von Verwendung berechnen
+  const isInScreen = !compact; // Wenn nicht compact, wird es in einem Screen verwendet
+  const screenWidth = isInScreen 
+    ? Dimensions.get('window').width - (theme.theme.spacing.m * 2) // Nur Screen-Padding
+    : Dimensions.get('window').width - (theme.theme.spacing.m * 4); // Screen + Card Padding
 
-  // Laden der Log-Daten für die letzten X Tage
+  // Laden der Log-Daten für die letzten X Tage, ausgehend vom ausgewählten Datum
   useEffect(() => {
+    console.log(`Lade Ernährungsbericht mit Bezugsdatum: ${selectedDate}`);
     async function loadNutritionData() {
       setIsLoading(true);
       try {
         // Hole alle täglichen Logs
         const allLogs = await getDailyLogs();
         
-        // Sortiere nach Datum (neueste zuerst) und beschränke auf die angegebene Anzahl von Tagen
-        const sortedLogs = allLogs
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, days);
+        // Referenzdatum erstellen aus dem ausgewählten Datum
+        const referenceDate = new Date(selectedDate);
         
-        // Berechne Nährwert-Totals für jeden Tag
-        const totals = sortedLogs.map(log => calculateDailyTotals(log));
+        // Erstelle ALLE angeforderten Tage (auch ohne Daten)
+        const allRequestedDays: NutritionTotals[] = [];
         
-        // Sortiere wieder nach Datum (älteste zuerst) für die Charts
-        totals.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        for (let i = days - 1; i >= 0; i--) {
+          const currentDate = new Date(referenceDate);
+          currentDate.setDate(currentDate.getDate() - i);
+          const dateString = currentDate.toISOString().split('T')[0];
+          
+          // Suche nach vorhandenem Log für diesen Tag
+          const existingLog = allLogs.find(log => log.date === dateString);
+          
+          if (existingLog) {
+            // Verwende vorhandene Daten
+            allRequestedDays.push(calculateDailyTotals(existingLog));
+          } else {
+            // Erstelle leeren Tag
+            allRequestedDays.push({
+              calories: 0,
+              protein: 0,
+              carbs: 0,
+              fat: 0,
+              water: 0,
+              date: dateString
+            });
+          }
+        }
         
-        setReportData(totals);
+        // Sortiere nach Datum (älteste zuerst) für die Charts
+        allRequestedDays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         
-        // Berechne Durchschnitte
-        if (totals.length > 0) {
+        setReportData(allRequestedDays);
+        
+        // Berechne Durchschnitte - nur für Tage mit tatsächlichen Einträgen (> 0)
+        const daysWithData = allRequestedDays.filter(day => day.calories > 0);
+        
+        if (daysWithData.length > 0) {
           const avgTotals = {
-            calories: totals.reduce((sum, day) => sum + day.calories, 0) / totals.length,
-            protein: totals.reduce((sum, day) => sum + day.protein, 0) / totals.length,
-            carbs: totals.reduce((sum, day) => sum + day.carbs, 0) / totals.length,
-            fat: totals.reduce((sum, day) => sum + day.fat, 0) / totals.length,
-            water: totals.reduce((sum, day) => sum + day.water, 0) / totals.length,
+            calories: daysWithData.reduce((sum, day) => sum + day.calories, 0) / daysWithData.length,
+            protein: daysWithData.reduce((sum, day) => sum + day.protein, 0) / daysWithData.length,
+            carbs: daysWithData.reduce((sum, day) => sum + day.carbs, 0) / daysWithData.length,
+            fat: daysWithData.reduce((sum, day) => sum + day.fat, 0) / daysWithData.length,
+            water: daysWithData.reduce((sum, day) => sum + day.water, 0) / daysWithData.length,
             date: 'average'
           };
+          
+          console.log(`Durchschnitte berechnet - Tage mit Daten: ${daysWithData.length}/${allRequestedDays.length}`);
           setAverages(avgTotals);
           
           // Berechne Zielerreichung in Prozent
@@ -98,6 +149,23 @@ const NutritionReportComponent = ({ userProfile, userGoals, days = 30, compact =
             fat: userGoals.dailyFat ? (avgTotals.fat / userGoals.dailyFat) * 100 : 0,
             water: userGoals.dailyWater ? (avgTotals.water / userGoals.dailyWater) * 100 : 0
           });
+        } else {
+          // Keine Daten vorhanden - setze alles auf 0
+          setAverages({
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+            water: 0,
+            date: 'average'
+          });
+          setGoalAchievement({
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+            water: 0
+          });
         }
       } catch (error) {
         console.error('Fehler beim Laden der Ernährungsdaten:', error);
@@ -107,17 +175,7 @@ const NutritionReportComponent = ({ userProfile, userGoals, days = 30, compact =
     }
     
     loadNutritionData();
-  }, [days, userGoals]);
-
-  // Wenn noch geladen wird oder keine Daten verfügbar sind
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.theme.colors.primary} />
-        <Text style={styles.loadingText}>Ernährungsdaten werden geladen...</Text>
-      </View>
-    );
-  }
+  }, [days, userGoals, selectedDate]);
 
   if (reportData.length === 0) {
     return (
@@ -127,45 +185,32 @@ const NutritionReportComponent = ({ userProfile, userGoals, days = 30, compact =
     );
   }
 
-  // Daten für Kalorien-Chart vorbereiten
-  const caloriesChartData = {
-    labels: reportData.map(day => {
-      // Formatiere das Datum als Tag.Monat
-      const date = new Date(day.date);
-      return `${date.getDate()}.${date.getMonth() + 1}`;
-    }).slice(-7), // Beschränke auf die letzten 7 Tage für bessere Lesbarkeit
-    datasets: [
-      {
-        data: reportData.map(day => day.calories).slice(-7),
-        color: (opacity = 1) => theme.theme.colors.nutrition.calories + opacity.toString().substring(1),
-        strokeWidth: 2
-      },
-      {
-        data: Array(Math.min(reportData.length, 7)).fill(userGoals.dailyCalories),
-        color: (opacity = 1) => theme.theme.colors.success + opacity.toString().substring(1),
-        strokeWidth: 2,
-        strokeDashArray: [5, 5] // Gestrichelte Linie
-      }
-    ],
-    legend: ["Kalorien", "Ziel"]
+  // Victory Chart Daten vorbereiten - für alle 30 Tage
+  const prepareNutritionData = () => {
+    // Verwende alle verfügbaren Daten, nicht nur die letzten 7
+    return reportData.map((day, index) => ({
+      x: index + 1,
+      calories: day.calories,
+      protein: day.protein,
+      carbs: day.carbs,
+      fat: day.fat,
+      date: day.date,
+      dateLabel: new Date(day.date).getDate() + '.' + (new Date(day.date).getMonth() + 1) + '.'
+    }));
   };
 
-  // Daten für Nährstoff-Verteilung (Protein, Kohlenhydrate, Fett)
-  const macrosData = {
-    labels: ["Protein", "Kohlenhydrate", "Fett"],
-    datasets: [{
-      data: [
-        averages?.protein || 0,
-        averages?.carbs || 0,
-        averages?.fat || 0
-      ]
-    }],
-    barColors: [
-      theme.theme.colors.nutrition.protein,
-      theme.theme.colors.nutrition.carbs,
-      theme.theme.colors.nutrition.fat
-    ]
-  };
+  // Safety check: Wenn keine Durchschnittsdaten vorhanden sind, erstelle leere Defaults
+  if (!averages) {
+    console.log('Keine Durchschnittsdaten vorhanden, erstelle Default-Werte');
+    setAverages({
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      water: 0,
+      date: 'average'
+    });
+  }
 
   // Kompakte Ansicht für den Home-Screen
   if (compact) {
@@ -173,181 +218,264 @@ const NutritionReportComponent = ({ userProfile, userGoals, days = 30, compact =
       <View style={styles.compactContainer}>        
         <View style={styles.summaryRow}>
           <View style={styles.summaryItemLeft}>
-            <Text style={[styles.summaryLabel, { textAlign: 'left' }]}>Kalorien Ø</Text>
-            <Text style={[styles.summaryValue, { textAlign: 'left' }]}>{averages?.calories.toFixed(0)} kcal</Text>
+            <Text style={[styles.summaryLabel, { textAlign: 'center' }]}>Kalorien Ø</Text>
+            <Text style={[styles.summaryValue, { textAlign: 'center' }]}>{averages && !isNaN(averages.calories) ? averages.calories.toFixed(0) : '0'} kcal</Text>
           </View>
 
           <View style={styles.summaryItemCenter}>
             <Text style={[styles.summaryLabel, { textAlign: 'center' }]}>Protein Ø</Text>
-            <Text style={[styles.summaryValue, { textAlign: 'center' }]}>{averages?.protein.toFixed(2)} g</Text>
+            <Text style={[styles.summaryValue, { textAlign: 'center' }]}>{averages && !isNaN(averages.protein) ? averages.protein.toFixed(1) : '0'} g</Text>
           </View>
           
           <View style={styles.summaryItemRight}>
-            <Text style={[styles.summaryLabel, { textAlign: 'right' }]}>Wasser Ø</Text>
-            <Text style={[styles.summaryValue, { textAlign: 'right' }]}>{((averages?.water || 0) / 1000).toFixed(2)} L</Text>
+            <Text style={[styles.summaryLabel, { textAlign: 'center' }]}>Wasser Ø</Text>
+            <Text style={[styles.summaryValue, { textAlign: 'center' }]}>{Math.round((averages && !isNaN(averages.water)) ? averages.water : 0)} ml</Text>
           </View>
         </View>
       </View>
     );
   }
 
-  // Vollständige Ansicht für den Report-Screen
+  // Vollständige Ansicht für den Report-Screen (Schritt 3)
+  const nutritionData = prepareNutritionData();
+
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Ernährungsbericht der letzten {days} Tage</Text>
-      
+      {/* Hauptchart mit Kalorienverlauf */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Kalorienverlauf (letzte 7 Tage)</Text>
-        <LineChart
-          data={caloriesChartData}
-          width={screenWidth}
-          height={220}
-          chartConfig={{
-            backgroundColor: theme.theme.colors.card,
-            backgroundGradientFrom: theme.theme.colors.card,
-            backgroundGradientTo: theme.theme.colors.card,
-            decimalPlaces: 2,
-            color: (opacity = 1) => theme.theme.colors.nutrition.calories + opacity.toString().substring(1),
-            labelColor: (opacity = 1) => theme.theme.colors.text,
-            style: {
-              borderRadius: theme.theme.borderRadius.medium
-            },
-            propsForDots: {
-              r: "6",
-              strokeWidth: "2",
-              stroke: theme.theme.colors.primary
-            }
-          }}
-          bezier
-          style={styles.chart}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Makronährstoffe (Durchschnitt)</Text>
-        <BarChart
-          data={macrosData}
-          width={screenWidth}
-          height={220}
-          yAxisLabel=""
-          yAxisSuffix="g"
-          chartConfig={{
-            backgroundColor: theme.theme.colors.card,
-            backgroundGradientFrom: theme.theme.colors.card,
-            backgroundGradientTo: theme.theme.colors.card,
-            decimalPlaces: 2,
-            color: (opacity = 1) => theme.theme.colors.text + opacity.toString().substring(1),
-            labelColor: (opacity = 1) => theme.theme.colors.text,
-            style: {
-              borderRadius: theme.theme.borderRadius.medium
-            },
-            barPercentage: 0.8,
-          }}
-          style={styles.chart}
-          showValuesOnTopOfBars
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Zielerreichung (Durchschnitt)</Text>
-        
-        <View style={styles.goalItem}>
-          <Text style={styles.goalLabel}>Kalorien:</Text>
-          <View style={styles.goalBarContainer}>
-            <View 
-              style={[
-                styles.goalBar, 
-                {width: `${Math.min(goalAchievement.calories, 150)}%`},
-                goalAchievement.calories < 90 ? styles.belowGoalBar : 
-                goalAchievement.calories > 110 ? styles.aboveGoalBar : 
-                styles.onTargetBar
-              ]} 
+        <Text style={styles.sectionTitle}>Kalorien der letzten {days} Tage</Text>
+        <View style={styles.chartContainer}>
+          <VictoryChart
+            theme={VictoryTheme.grayscale}
+            width={screenWidth}
+            height={250}
+            padding={{ 
+              top: theme.theme.spacing.s,
+              bottom: theme.theme.spacing.xl, 
+              left: theme.theme.spacing.xl + theme.theme.spacing.s, 
+              right: theme.theme.spacing.xl 
+            }}
+            containerComponent={<VictoryContainer responsive={true} />}
+          >
+            {/* Y-Achse */}
+            <VictoryAxis 
+              dependentAxis
+              tickFormat={(t) => `${Math.round(t)}`}
+              style={{
+                axis: { stroke: theme.theme.colors.border },
+                tickLabels: { 
+                  fill: theme.theme.colors.textLight,
+                  fontSize: theme.theme.typography.fontSize.xs
+                },
+                grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.1 }
+              }}
             />
-            <Text style={styles.goalText}>
-              {averages?.calories.toFixed(2)} / {userGoals.dailyCalories} kcal ({goalAchievement.calories.toFixed(2)}%)
-            </Text>
+            
+            {/* X-Achse - ALLE Tage explizit */}
+            <VictoryAxis
+              dependentAxis={false}
+              tickFormat={(x) => {
+                const dataPoint = nutritionData[x - 1];
+                return dataPoint ? dataPoint.dateLabel : '';
+              }}
+              tickValues={nutritionData.map(d => d.x)} // ALLE x-Werte explizit
+              style={{
+                axis: { stroke: theme.theme.colors.border },
+                tickLabels: { 
+                  fill: theme.theme.colors.textLight,
+                  fontSize: theme.theme.typography.fontSize.xs,
+                  angle: -45
+                }
+              }}
+            />
+            
+            {/* Kalorien LINIE - steifer */}
+            <VictoryLine
+              data={nutritionData}
+              x="x"
+              y="calories"
+              interpolation="linear"
+              style={{
+                data: { 
+                  stroke: theme.theme.colors.nutrition.calories,
+                  strokeWidth: 3
+                }
+              }}
+            />
+            
+            {/* Punkte für Kalorien */}
+            <VictoryScatter
+              data={nutritionData}
+              x="x"
+              y="calories"
+              size={4}
+              style={{
+                data: { 
+                  fill: theme.theme.colors.nutrition.calories,
+                  stroke: theme.theme.colors.background,
+                  strokeWidth: 2,
+                  color: theme.theme.colors.text
+                }
+              }}
+            />
+          </VictoryChart>
+        </View>
+      </View>
+
+      {/* Hauptchart mit Nährwerten */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Nährwerte der letzten {days} Tage</Text>
+        <View style={styles.chartContainer}>
+          <VictoryChart
+            theme={VictoryTheme.grayscale}
+            width={screenWidth}
+            height={250}
+            padding={{ 
+              top: theme.theme.spacing.s,
+              bottom: theme.theme.spacing.xl, 
+              left: theme.theme.spacing.xl + theme.theme.spacing.s, 
+              right: theme.theme.spacing.xl 
+            }}
+            containerComponent={<VictoryContainer responsive={true} />}
+          >
+            {/* Y-Achse */}
+            <VictoryAxis 
+              dependentAxis
+              tickFormat={(t) => `${Math.round(t)}`}
+              style={{
+                axis: { stroke: theme.theme.colors.border },
+                tickLabels: { 
+                  fill: theme.theme.colors.textLight,
+                  fontSize: theme.theme.typography.fontSize.xs
+                },
+                grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.1 }
+              }}
+            />
+            
+            {/* X-Achse - ALLE Tage explizit */}
+            <VictoryAxis
+              dependentAxis={false}
+              tickFormat={(x) => {
+                const dataPoint = nutritionData[x - 1];
+                return dataPoint ? dataPoint.dateLabel : '';
+              }}
+              tickValues={nutritionData.map(d => d.x)} // ALLE x-Werte explizit
+              style={{
+                axis: { stroke: theme.theme.colors.border },
+                tickLabels: { 
+                  fill: theme.theme.colors.textLight,
+                  fontSize: theme.theme.typography.fontSize.xs,
+                  angle: -45
+                }
+              }}
+            />
+            
+            {/* Protein LINIE - steifer */}
+            <VictoryLine
+              data={nutritionData}
+              x="x"
+              y="protein"
+              interpolation="linear"
+              style={{
+                data: { 
+                  stroke: theme.theme.colors.nutrition.protein,
+                  strokeWidth: 3
+                }
+              }}
+            />
+            
+            {/* Kohlenhydrate LINIE - steifer */}
+            <VictoryLine
+              data={nutritionData}
+              x="x"
+              y="carbs"
+              interpolation="linear"
+              style={{
+                data: { 
+                  stroke: theme.theme.colors.nutrition.carbs,
+                  strokeWidth: 3
+                }
+              }}
+            />
+            
+            {/* Fett LINIE - steifer */}
+            <VictoryLine
+              data={nutritionData}
+              x="x"
+              y="fat"
+              interpolation="linear"
+              style={{
+                data: { 
+                  stroke: theme.theme.colors.nutrition.fat,
+                  strokeWidth: 3
+                }
+              }}
+            />
+            
+            {/* Punkte für Protein */}
+            <VictoryScatter
+              data={nutritionData}
+              x="x"
+              y="protein"
+              size={4}
+              style={{
+                data: { 
+                  fill: theme.theme.colors.nutrition.protein,
+                  stroke: theme.theme.colors.background,
+                  strokeWidth: 2
+                }
+              }}
+            />
+            
+            {/* Punkte für Carbs */}
+            <VictoryScatter
+              data={nutritionData}
+              x="x"
+              y="carbs"
+              size={4}
+              style={{
+                data: { 
+                  fill: theme.theme.colors.nutrition.carbs,
+                  stroke: theme.theme.colors.background,
+                  strokeWidth: 2
+                }
+              }}
+            />
+            
+            {/* Punkte für Fett */}
+            <VictoryScatter
+              data={nutritionData}
+              x="x"
+              y="fat"
+              size={4}
+              style={{
+                data: { 
+                  fill: theme.theme.colors.nutrition.fat,
+                  stroke: theme.theme.colors.background,
+                  strokeWidth: 2
+                }
+              }}
+            />
+          </VictoryChart>
+        </View>
+        
+        {/* Saubere Legende */}
+        <View style={styles.legendContainer}>
+          <View style={styles.legendRow}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: theme.theme.colors.nutrition.protein }]} />
+              <Text style={styles.legendText}>Protein</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: theme.theme.colors.nutrition.carbs }]} />
+              <Text style={styles.legendText}>Kohlenhydrate</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: theme.theme.colors.nutrition.fat }]} />
+              <Text style={styles.legendText}>Fett</Text>
+            </View>
           </View>
         </View>
-
-        {userGoals.dailyProtein && (
-          <View style={styles.goalItem}>
-            <Text style={styles.goalLabel}>Protein:</Text>
-            <View style={styles.goalBarContainer}>
-              <View 
-                style={[
-                  styles.goalBar, 
-                  {width: `${Math.min(goalAchievement.protein, 150)}%`},
-                  goalAchievement.protein < 90 ? styles.belowGoalBar : 
-                  goalAchievement.protein > 110 ? styles.aboveGoalBar : 
-                  styles.onTargetBar
-                ]} 
-              />
-              <Text style={styles.goalText}>
-                {averages?.protein.toFixed(2)} / {userGoals.dailyProtein} g ({goalAchievement.protein.toFixed(2)}%)
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {userGoals.dailyCarbs && (
-          <View style={styles.goalItem}>
-            <Text style={styles.goalLabel}>Kohlenhydrate:</Text>
-            <View style={styles.goalBarContainer}>
-              <View 
-                style={[
-                  styles.goalBar, 
-                  {width: `${Math.min(goalAchievement.carbs, 150)}%`},
-                  goalAchievement.carbs < 90 ? styles.belowGoalBar : 
-                  goalAchievement.carbs > 110 ? styles.aboveGoalBar : 
-                  styles.onTargetBar
-                ]} 
-              />
-              <Text style={styles.goalText}>
-                {averages?.carbs.toFixed(2)} / {userGoals.dailyCarbs} g ({goalAchievement.carbs.toFixed(2)}%)
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {userGoals.dailyFat && (
-          <View style={styles.goalItem}>
-            <Text style={styles.goalLabel}>Fett:</Text>
-            <View style={styles.goalBarContainer}>
-              <View 
-                style={[
-                  styles.goalBar, 
-                  {width: `${Math.min(goalAchievement.fat, 150)}%`},
-                  goalAchievement.fat < 90 ? styles.belowGoalBar : 
-                  goalAchievement.fat > 110 ? styles.aboveGoalBar : 
-                  styles.onTargetBar
-                ]} 
-              />
-              <Text style={styles.goalText}>
-                {averages?.fat.toFixed(2)} / {userGoals.dailyFat} g ({goalAchievement.fat.toFixed(2)}%)
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {userGoals.dailyWater && (
-          <View style={styles.goalItem}>
-            <Text style={styles.goalLabel}>Wasser:</Text>
-            <View style={styles.goalBarContainer}>
-              <View 
-                style={[
-                  styles.goalBar, 
-                  {width: `${Math.min(goalAchievement.water, 150)}%`},
-                  goalAchievement.water < 90 ? styles.belowGoalBar : 
-                  goalAchievement.water > 110 ? styles.aboveGoalBar : 
-                  styles.onTargetBar
-                ]} 
-              />
-              <Text style={styles.goalText}>
-                {((averages?.water || 0) / 1000).toFixed(2)} / {(userGoals.dailyWater / 1000).toFixed(2)} L ({goalAchievement.water.toFixed(2)}%)
-              </Text>
-            </View>
-          </View>
-        )}
       </View>
     </ScrollView>
   );
@@ -357,58 +485,117 @@ const NutritionReportComponent = ({ userProfile, userGoals, days = 30, compact =
 const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: theme.colors.background,
+    // Kein Padding hier - wird vom Screen bereitgestellt
   },
   compactContainer: {
     backgroundColor: theme.colors.card,
     borderRadius: theme.borderRadius.medium,
     marginBottom: theme.spacing.m,
     width: '100%',
+    elevation: 5,
   },
   loadingContainer: {
-    padding: 20,
+    padding: theme.spacing.l,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.medium,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: theme.spacing.xs / 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: theme.spacing.xs,
+    elevation: 2,
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
+    marginTop: theme.spacing.s,
+    fontSize: theme.typography.fontSize.m,
+    fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text,
   },
   emptyContainer: {
-    padding: 20,
+    padding: theme.spacing.l,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.medium,
+    elevation: 2,
   },
   emptyText: {
-    fontSize: 16,
-    color: theme.colors.text,
+    fontSize: theme.typography.fontSize.m,
+    fontFamily: theme.typography.fontFamily.regular,
+    color: theme.colors.textLight,
     textAlign: 'center',
   },
   title: {
-    fontSize: theme.typography.fontSize.l,
+    fontSize: theme.typography.fontSize.xl,
     fontFamily: theme.typography.fontFamily.bold,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.l,
     color: theme.colors.text,
+    textAlign: 'center',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.l,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.large,
+    elevation: 3,
+    overflow: 'hidden', // Wichtig für Charts
   },
   sectionTitle: {
-    fontSize: theme.typography.fontSize.m,
+    fontSize: theme.typography.fontSize.l,
     fontFamily: theme.typography.fontFamily.bold,
     marginBottom: theme.spacing.s,
     color: theme.colors.text,
+    paddingHorizontal: theme.spacing.m,
+    paddingTop: theme.spacing.m,
   },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 16,
+  chartContainer: {
+    marginBottom: theme.spacing.s,
+    alignItems: 'center', // Zentriert die Charts
+  },
+  legendContainer: {
+    paddingHorizontal: theme.spacing.m,
+    paddingBottom: theme.spacing.s,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.xs,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: theme.spacing.xs,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    marginRight: theme.spacing.xs,
+  },
+  legendDash: {
+    width: 12,
+    height: 2,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginRight: theme.spacing.xs,
+  },
+  legendText: {
+    fontSize: theme.typography.fontSize.xs,
+    fontFamily: theme.typography.fontFamily.medium,
+    color: theme.colors.textLight,
+  },
+  goalSection: {
+    paddingHorizontal: theme.spacing.m,
+    paddingBottom: theme.spacing.m,
   },
   goalItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.m,
+    paddingVertical: theme.spacing.xs,
   },
   goalLabel: {
     width: 110,
@@ -418,25 +605,31 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   goalBarContainer: {
     flex: 1,
-    height: 25,
-    backgroundColor: theme.colors.border,
-    borderRadius: 4,
+    height: 28,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: theme.borderRadius.small,
     overflow: 'hidden',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   goalBar: {
     height: '100%',
     position: 'absolute',
     left: 0,
     top: 0,
+    borderRadius: theme.borderRadius.small,
   },
   goalText: {
     position: 'absolute',
     left: theme.spacing.s,
-    top: 4,
+    top: 6,
     fontSize: theme.typography.fontSize.xs,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.background,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   belowGoalBar: {
     backgroundColor: theme.colors.warning,
@@ -451,48 +644,37 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    alignItems: 'center',
   },
   summaryItemLeft: {
     flex: 1,
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.xs,
   },
   summaryItemCenter: {
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xs,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: theme.colors.border,
   },
   summaryItemRight: {
     flex: 1,
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.xs,
   },
   summaryLabel: {
-    fontSize: theme.typography.fontSize.xs,
-    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.fontSize.s,
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.textLight,
-    marginBottom: 4,
-    width: '100%', // Damit die Labels die volle Breite des Containers nutzen
+    marginBottom: theme.spacing.xs,
+    width: '100%',
   },
   summaryValue: {
     fontSize: theme.typography.fontSize.l,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text,
-  },
-  percentText: {
-    fontSize: theme.typography.fontSize.xs,
-    fontFamily: theme.typography.fontFamily.regular,
-    marginTop: 2,
-    width: '100%', // Damit die Prozenttexte die volle Breite des Containers nutzen
-  },
-  belowGoal: {
-    color: theme.colors.warning,
-  },
-  onTarget: {
-    color: theme.colors.success,
-  },
-  aboveGoal: {
-    color: theme.colors.error,
   },
 });
 
