@@ -59,7 +59,7 @@ const NutritionReportScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={{ flex: 1 }}>
-        <View style={{ padding: 16 }}>
+        <View style={{ paddingHorizontal: theme.theme.spacing.m, paddingVertical: theme.theme.spacing.s }}>
           {!isLoading && (
             <View>
               <NutritionReportComponent 

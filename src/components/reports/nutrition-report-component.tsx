@@ -221,10 +221,19 @@ const NutritionReportComponent = ({
     loadNutritionData();
   }, [days, userGoals, selectedDate]);
 
+  // Berechne die verfügbare Höhe basierend auf der Bildschirmgröße
+  const screenHeight = Dimensions.get('window').height;
+  
   if (reportData.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Keine Ernährungsdaten für die letzten {days} Tage verfügbar.</Text>
+      <View style={{ 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: screenHeight * 0.7, // 70% der Bildschirmhöhe
+        width: '100%',
+        paddingVertical: theme.theme.spacing.xl
+      }}>
+        <ActivityIndicator size="large" color={theme.theme.colors.primary} />
       </View>
     );
   }
@@ -328,7 +337,7 @@ const NutritionReportComponent = ({
     <ScrollView style={styles.container}>
       {/* Hauptchart mit Kalorienverlauf - Neue modulare Komponente */}
       <LineChartCard 
-        title={`Kalorienverlauf`}
+        title={`Kalorien`}
         data={nutritionData}
         lines={[
           {
@@ -341,6 +350,9 @@ const NutritionReportComponent = ({
             interpolation: "linear"
           }
         ]}
+        yAxis={{
+          unit: "Kilokalorien"
+        }}
         height={200}
         width={screenWidth}
         style={{
@@ -351,18 +363,9 @@ const NutritionReportComponent = ({
 
       {/* Hauptchart mit Nährwerten - Neue modulare Komponente */}
       <LineChartCard 
-        title={`Nährwerte`}
+        title={`Kohlenhydrate im Detail`}
         data={nutritionData}
         lines={[
-          {
-            dataKey: "protein",
-            color: theme.theme.colors.nutrition.protein,
-            label: "Protein",
-            showGoal: true,
-            goalValue: userGoals.dailyProtein,
-            showScatter: true,
-            interpolation: "linear"
-          },
           {
             dataKey: "carbs",
             color: theme.theme.colors.nutrition.carbs,
@@ -372,52 +375,6 @@ const NutritionReportComponent = ({
             showScatter: true,
             interpolation: "linear"
           },
-          {
-            dataKey: "fat",
-            color: theme.theme.colors.nutrition.fat,
-            label: "Fett",
-            showGoal: true,
-            goalValue: userGoals.dailyFat,
-            showScatter: true,
-            interpolation: "linear"
-          }
-        ]}
-        height={200}
-        width={screenWidth}
-        style={{
-          container: styles.section,
-          title: styles.sectionTitle
-        }}
-      />
-
-      {/* Wasseraufnahme Chart */}
-      <LineChartCard 
-        title={`Wasseraufnahme`}
-        data={nutritionData}
-        lines={[
-          {
-            dataKey: "water",
-            color: theme.theme.colors.primary,
-            label: "Wasser",
-            showGoal: userGoals.dailyWater != null,
-            goalValue: userGoals.dailyWater,
-            showScatter: true,
-            interpolation: "linear"
-          }
-        ]}
-        height={200}
-        width={screenWidth}
-        style={{
-          container: styles.section,
-          title: styles.sectionTitle
-        }}
-      />
-
-      {/* Zucker und Ballaststoffe Chart */}
-      <LineChartCard 
-        title={`Zucker und Ballaststoffe`}
-        data={nutritionData}
-        lines={[
           {
             dataKey: "sugar",
             color: theme.theme.colors.warning,  // Akzentfarbe für Zucker
@@ -431,9 +388,73 @@ const NutritionReportComponent = ({
             label: "Ballaststoffe",
             showScatter: true,
             interpolation: "linear"
+          },
+        ]}
+        yAxis={{
+          unit: "Gramm"
+        }}
+        height={200}
+        width={screenWidth}
+        style={{
+          container: styles.section,
+          title: styles.sectionTitle
+        }}
+      />
+
+      {/* Zucker und Ballaststoffe Chart */}
+      <LineChartCard 
+        title={`Protein & Fett`}
+        data={nutritionData}
+        lines={[
+          {
+            dataKey: "protein",
+            color: theme.theme.colors.nutrition.protein,
+            label: "Protein",
+            showGoal: true,
+            goalValue: userGoals.dailyProtein,
+            showScatter: true,
+            interpolation: "linear"
+          },
+          {
+            dataKey: "fat",
+            color: theme.theme.colors.nutrition.fat,
+            label: "Fett",
+            showGoal: true,
+            goalValue: userGoals.dailyFat,
+            showScatter: true,
+            interpolation: "linear"
+          },
+        ]}
+        yAxis={{
+          unit: "Gramm"
+        }}
+        height={200}
+        width={screenWidth}
+        style={{
+          container: styles.section,
+          title: styles.sectionTitle
+        }}
+      />
+
+      {/* Wasseraufnahme Chart */}
+      <LineChartCard 
+        title={`Wasser`}
+        data={nutritionData}
+        lines={[
+          {
+            dataKey: "water",
+            color: theme.theme.colors.primary,
+            label: "Wasser",
+            showGoal: userGoals.dailyWater != null,
+            goalValue: userGoals.dailyWater,
+            showScatter: true,
+            interpolation: "linear"
           }
         ]}
-        height={150}
+        yAxis={{
+          unit: "Mililiter"
+        }}
+        height={200}
         width={screenWidth}
         style={{
           container: styles.section,
@@ -443,7 +464,7 @@ const NutritionReportComponent = ({
 
       {/* Natrium Chart */}
       <LineChartCard 
-        title={`Natrium und Kalium`}
+        title={`Elektrolyte`}
         data={nutritionData}
         lines={[
           {
@@ -461,14 +482,15 @@ const NutritionReportComponent = ({
             interpolation: "linear"
           }
         ]}
-        height={150}
+        yAxis={{
+          unit: "Miligramm",
+          tickFormat: (t) => `${t && !isNaN(t) ? t.toFixed(1) : '0'}`
+        }}
+        height={200}
         width={screenWidth}
         style={{
           container: styles.section,
           title: styles.sectionTitle
-        }}
-        yAxis={{ 
-          tickFormat: (t) => `${t && !isNaN(t) ? t.toFixed(1) : '0'}`
         }}
       />
     </ScrollView>

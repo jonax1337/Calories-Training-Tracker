@@ -6,8 +6,7 @@ import {
   VictoryScatter,
   VictoryTheme, 
   VictoryAxis, 
-  VictoryContainer,
-  VictoryLegend
+  VictoryContainer
 } from 'victory-native';
 import { useTheme } from '../../theme/theme-context';
 
@@ -35,14 +34,14 @@ interface LineChartCardProps {
   height?: number;    // Höhe des Charts
   width?: number;     // Breite des Charts
   showLegend?: boolean; // Legende anzeigen?
-  legendPosition?: 'top' | 'bottom'; // Position der Legende
   xAxis?: {
     label?: string;
     tickFormat?: (value: any) => string;
     tickCount?: number;
   };
   yAxis?: {
-    label?: string;
+    label?: string;     // Label für die Y-Achse (links)
+    unit?: string;      // Einheit für die Y-Achse (rechts)
     tickFormat?: (value: any) => string;
   };
   style?: any; // Zusätzliche Styling-Optionen
@@ -55,7 +54,6 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
   height = 200,
   width,
   showLegend = true,
-  legendPosition = 'bottom',
   xAxis,
   yAxis,
   style
@@ -67,13 +65,15 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
   // Generiere Daten für Ziellinien
   const generateGoalData = (goalValue: number) => {
     return data.map((_, index) => ({
-      x: index + 1.2,
+      x: index + 1,
       y: goalValue
     }));
   };
   
-  // Berechne Tick-Intervall basierend auf Datenmenge
-  const tickInterval = data.length > 14 ? Math.ceil(data.length / 7) : 2;
+  // Berechne Label-Intervall basierend auf Datenmenge
+  // Unter 14 Tagen: jedes Label anzeigen (Intervall 1)
+  // Ab 14 Tagen: nur jedes zweite Label anzeigen (Intervall 2)
+  const labelInterval = data.length > 14 ? 2 : 1;
   
   // Formatiere X-Achsen Beschriftung
   const formatXTick = (x: number) => {
@@ -109,7 +109,7 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
             top: theme.theme.spacing.m,
             bottom: theme.theme.spacing.xl, 
             left: theme.theme.spacing.xl + theme.theme.spacing.m, 
-            right: theme.theme.spacing.m 
+            right: theme.theme.spacing.xl 
           }}
           containerComponent={
             <VictoryContainer
@@ -120,13 +120,13 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
             />
           }
         >
-          {/* Y-Achse */}
+          {/* Y-Achse mit Werten (links) */}
           <VictoryAxis 
             dependentAxis
             label={yAxis?.label}
             tickFormat={yAxis?.tickFormat || ((t) => `${Math.round(t)}`)}
             style={{
-              axis: { stroke: theme.theme.colors.border},
+              axis: { stroke: theme.theme.colors.border },
               axisLabel: { padding: 35, fontSize: theme.theme.typography.fontSize.s, fontFamily: theme.theme.typography.fontFamily.regular },
               tickLabels: { 
                 fill: theme.theme.colors.textLight,
@@ -136,8 +136,30 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
               grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.25 }
             }}
           />
+
+          {/* Einheit auf der rechten Seite, falls vorhanden */}
+          {yAxis?.unit && (
+            <VictoryAxis 
+              dependentAxis
+              orientation="right"
+              label={yAxis.unit}
+              tickFormat={() => ""} // Keine Tick-Labels anzeigen
+              style={{
+                axis: { stroke: theme.theme.colors.border },
+                axisLabel: { 
+                  fill: theme.theme.colors.textLight,
+                  fontSize: theme.theme.typography.fontSize.xs, 
+                  fontFamily: theme.theme.typography.fontFamily.regular,
+                  padding: theme.theme.spacing.s // Näher an die Achse rücken
+                },
+                tickLabels: { fill: "transparent" },
+                ticks: { stroke: "transparent" }, // Keine Tick-Markierungen anzeigen
+                grid: { stroke: "transparent" } // Keine Gitterlinien anzeigen
+              }}
+            />
+          )}
           
-          {/* X-Achse */}
+          {/* X-Achse mit Gitterlinien für jeden Tag */}
           <VictoryAxis
             label={xAxis?.label}
             tickFormat={xAxis?.tickFormat || formatXTick}
@@ -153,18 +175,35 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                       return Math.ceil(1 + (data.length - 1) * (i / (count - 1)));
                     });
                   })()
-                : data.filter((_, i) => i % tickInterval === 0).map((d, i) => i * tickInterval + 1).filter(x => x <= data.length)
+                : (() => {
+                    // Alle Tage für Gitterlinien
+                    const allDays = Array.from({ length: data.length }, (_, i) => i + 1);
+                    
+                    // Für Labels nur jeden labelInterval-ten Tag nehmen
+                    return allDays.filter(day => (day - 1) % labelInterval === 0);
+                  })()
             }
             style={{
               axis: { stroke: theme.theme.colors.border },
-              axisLabel: { fontSize: theme.theme.typography.fontSize.s, },
+              axisLabel: { fontSize: theme.theme.typography.fontSize.xs, },
               tickLabels: { 
                 fill: theme.theme.colors.textLight,
-                fontSize: theme.theme.typography.fontSize.xs,
+                fontSize: theme.theme.typography.fontSize.xs * 0.8,
                 fontFamily: theme.theme.typography.fontFamily.regular,
                 angle: -45
               },
               grid: { stroke: theme.theme.colors.border}
+            }}
+          />
+          
+          {/* Zusätzliche X-Achse nur für Gitterlinien (ohne Labels) */}
+          <VictoryAxis
+            tickValues={Array.from({ length: data.length }, (_, i) => i + 1)}
+            tickFormat={() => ""} // Keine Labels anzeigen
+            style={{
+              axis: { stroke: "transparent" }, // Achsenlinie unsichtbar
+              ticks: { stroke: "transparent" }, // Tick-Striche unsichtbar
+              grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.25 }
             }}
           />
           
