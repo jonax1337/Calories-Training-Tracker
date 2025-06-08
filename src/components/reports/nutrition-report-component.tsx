@@ -8,6 +8,7 @@ import {
   VictoryAxis, 
   VictoryContainer
 } from 'victory-native';
+import LineChartCard from '../charts/line-chart-card';
 import { DailyLog, UserProfile, UserGoals } from '../../types';
 import { useTheme } from '../../theme/theme-context';
 import { useDateContext } from '../../context/date-context';
@@ -27,6 +28,10 @@ interface NutritionTotals {
   protein: number;
   carbs: number;
   fat: number;
+  sugar: number;
+  fiber: number;
+  sodium: number;
+  potassium: number;
   water: number;
   date: string;
 }
@@ -34,7 +39,18 @@ interface NutritionTotals {
 // Hilfsfunktion zum Berechnen der Nährwerte eines Tages
 const calculateDailyTotals = (log: DailyLog): NutritionTotals => {
   if (!log || !log.foodEntries || log.foodEntries.length === 0) {
-    return { calories: 0, protein: 0, carbs: 0, fat: 0, water: log?.waterIntake || 0, date: log?.date || '' };
+    return { 
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      sugar: 0,
+      fiber: 0,
+      sodium: 0,
+      potassium: 0,
+      water: log?.waterIntake || 0, 
+      date: log?.date || '' 
+    };
   }
 
   const totals = log.foodEntries.reduce(
@@ -43,15 +59,31 @@ const calculateDailyTotals = (log: DailyLog): NutritionTotals => {
       const multiplier = entry.servingAmount;
 
       return {
-        calories: acc.calories + nutrition.calories * (multiplier / 100),
-        protein: acc.protein + nutrition.protein * (multiplier / 100),
-        carbs: acc.carbs + nutrition.carbs * (multiplier / 100),
-        fat: acc.fat + nutrition.fat * (multiplier / 100),
+        calories: acc.calories + (nutrition?.calories || 0) * (multiplier / 100),
+        protein: acc.protein + (nutrition?.protein || 0) * (multiplier / 100),
+        carbs: acc.carbs + (nutrition?.carbs || 0) * (multiplier / 100),
+        fat: acc.fat + (nutrition?.fat || 0) * (multiplier / 100),
+        sugar: acc.sugar + (nutrition?.sugar || 0) * (multiplier / 100),
+        fiber: acc.fiber + (nutrition?.fiber || 0) * (multiplier / 100),
+        sodium: acc.sodium + (nutrition?.sodium || 0) * (multiplier / 100),
+        // NaN-Sicherheit für Kalium hinzugefügt
+        potassium: acc.potassium + (nutrition?.potassium !== undefined && !isNaN(nutrition.potassium) ? nutrition.potassium : 0) * (multiplier / 100),
         water: acc.water,
         date: acc.date,
       };
     },
-    { calories: 0, protein: 0, carbs: 0, fat: 0, water: log.waterIntake || 0, date: log.date }
+    { 
+      calories: 0, 
+      protein: 0, 
+      carbs: 0, 
+      fat: 0, 
+      sugar: 0,
+      fiber: 0,
+      sodium: 0,
+      potassium: 0,
+      water: log.waterIntake || 0, 
+      date: log.date 
+    }
   );
 
   return totals;
@@ -114,6 +146,10 @@ const NutritionReportComponent = ({
               protein: 0,
               carbs: 0,
               fat: 0,
+              sugar: 0,
+              fiber: 0,
+              sodium: 0,
+              potassium: 0,
               water: 0,
               date: dateString
             });
@@ -134,6 +170,10 @@ const NutritionReportComponent = ({
             protein: daysWithData.reduce((sum, day) => sum + day.protein, 0) / daysWithData.length,
             carbs: daysWithData.reduce((sum, day) => sum + day.carbs, 0) / daysWithData.length,
             fat: daysWithData.reduce((sum, day) => sum + day.fat, 0) / daysWithData.length,
+            sugar: daysWithData.reduce((sum, day) => sum + day.sugar, 0) / daysWithData.length,
+            fiber: daysWithData.reduce((sum, day) => sum + day.fiber, 0) / daysWithData.length,
+            sodium: daysWithData.reduce((sum, day) => sum + day.sodium, 0) / daysWithData.length,
+            potassium: daysWithData.reduce((sum, day) => sum + day.potassium, 0) / daysWithData.length,
             water: daysWithData.reduce((sum, day) => sum + day.water, 0) / daysWithData.length,
             date: 'average'
           };
@@ -156,6 +196,10 @@ const NutritionReportComponent = ({
             protein: 0,
             carbs: 0,
             fat: 0,
+            sugar: 0,
+            fiber: 0,
+            sodium: 0,
+            potassium: 0,
             water: 0,
             date: 'average'
           });
@@ -185,17 +229,54 @@ const NutritionReportComponent = ({
     );
   }
 
-  // Victory Chart Daten vorbereiten - für alle 30 Tage
-  const prepareNutritionData = () => {
-    // Verwende alle verfügbaren Daten, nicht nur die letzten 7
-    return reportData.map((day, index) => ({
+  // Funktion zur Vorbereitung der Grafik-Daten mit Datenvalidierung
+  function prepareNutritionData() {
+    const data = reportData.map((day, index) => ({
       x: index + 1,
-      calories: day.calories,
-      protein: day.protein,
-      carbs: day.carbs,
-      fat: day.fat,
+      calories: day.calories || 0,
+      protein: day.protein || 0,
+      carbs: day.carbs || 0,
+      fat: day.fat || 0,
+      sugar: day.sugar || 0,
+      fiber: day.fiber || 0,
+      sodium: day.sodium || 0,
+      potassium: day.potassium || 0,
+      water: day.water || 0,
       date: day.date,
       dateLabel: new Date(day.date).getDate() + '.' + (new Date(day.date).getMonth() + 1) + '.'
+    }));
+    
+    return data;
+  };
+  
+  // Ziellinie für das Kaloriendiagramm
+  const prepareCalorieGoalData = () => {
+    // Flache Linie bei einem konstanten y-Wert (Kalorienziel)
+    return reportData.map((_, index) => ({
+      x: index + 1,
+      y: userGoals.dailyCalories || 0
+    }));
+  };
+  
+  // Ziellinien für die Makronährstoffe
+  const prepareProteinGoalData = () => {
+    return reportData.map((_, index) => ({
+      x: index + 1,
+      y: userGoals.dailyProtein || 0
+    }));
+  };
+  
+  const prepareCarbohydrateGoalData = () => {
+    return reportData.map((_, index) => ({
+      x: index + 1,
+      y: userGoals.dailyCarbs || 0
+    }));
+  };
+  
+  const prepareFatGoalData = () => {
+    return reportData.map((_, index) => ({
+      x: index + 1,
+      y: userGoals.dailyFat || 0
     }));
   };
 
@@ -207,6 +288,10 @@ const NutritionReportComponent = ({
       protein: 0,
       carbs: 0,
       fat: 0,
+      sugar: 0,
+      fiber: 0,
+      sodium: 0,
+      potassium: 0,
       water: 0,
       date: 'average'
     });
@@ -241,242 +326,151 @@ const NutritionReportComponent = ({
 
   return (
     <ScrollView style={styles.container}>
-      {/* Hauptchart mit Kalorienverlauf */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Kalorien der letzten {days} Tage</Text>
-        <View style={styles.chartContainer}>
-          <VictoryChart
-            theme={VictoryTheme.grayscale}
-            width={screenWidth}
-            height={250}
-            padding={{ 
-              top: theme.theme.spacing.s,
-              bottom: theme.theme.spacing.xl, 
-              left: theme.theme.spacing.xl + theme.theme.spacing.s, 
-              right: theme.theme.spacing.xl 
-            }}
-            containerComponent={<VictoryContainer responsive={true} />}
-          >
-            {/* Y-Achse */}
-            <VictoryAxis 
-              dependentAxis
-              tickFormat={(t) => `${Math.round(t)}`}
-              style={{
-                axis: { stroke: theme.theme.colors.border },
-                tickLabels: { 
-                  fill: theme.theme.colors.textLight,
-                  fontSize: theme.theme.typography.fontSize.xs
-                },
-                grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.1 }
-              }}
-            />
-            
-            {/* X-Achse - ALLE Tage explizit */}
-            <VictoryAxis
-              dependentAxis={false}
-              tickFormat={(x) => {
-                const dataPoint = nutritionData[x - 1];
-                return dataPoint ? dataPoint.dateLabel : '';
-              }}
-              tickValues={nutritionData.map(d => d.x)} // ALLE x-Werte explizit
-              style={{
-                axis: { stroke: theme.theme.colors.border },
-                tickLabels: { 
-                  fill: theme.theme.colors.textLight,
-                  fontSize: theme.theme.typography.fontSize.xs,
-                  angle: -45
-                }
-              }}
-            />
-            
-            {/* Kalorien LINIE - steifer */}
-            <VictoryLine
-              data={nutritionData}
-              x="x"
-              y="calories"
-              interpolation="linear"
-              style={{
-                data: { 
-                  stroke: theme.theme.colors.nutrition.calories,
-                  strokeWidth: 3
-                }
-              }}
-            />
-            
-            {/* Punkte für Kalorien */}
-            <VictoryScatter
-              data={nutritionData}
-              x="x"
-              y="calories"
-              size={4}
-              style={{
-                data: { 
-                  fill: theme.theme.colors.nutrition.calories,
-                  stroke: theme.theme.colors.background,
-                  strokeWidth: 2,
-                  color: theme.theme.colors.text
-                }
-              }}
-            />
-          </VictoryChart>
-        </View>
-      </View>
+      {/* Hauptchart mit Kalorienverlauf - Neue modulare Komponente */}
+      <LineChartCard 
+        title={`Kalorienverlauf`}
+        data={nutritionData}
+        lines={[
+          {
+            dataKey: "calories",
+            color: theme.theme.colors.nutrition.calories,
+            label: "Kalorien",
+            showGoal: true,
+            goalValue: userGoals.dailyCalories,
+            showScatter: true,
+            interpolation: "linear"
+          }
+        ]}
+        height={200}
+        width={screenWidth}
+        style={{
+          container: styles.section,
+          title: styles.sectionTitle
+        }}
+      />
 
-      {/* Hauptchart mit Nährwerten */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Nährwerte der letzten {days} Tage</Text>
-        <View style={styles.chartContainer}>
-          <VictoryChart
-            theme={VictoryTheme.grayscale}
-            width={screenWidth}
-            height={250}
-            padding={{ 
-              top: theme.theme.spacing.s,
-              bottom: theme.theme.spacing.xl, 
-              left: theme.theme.spacing.xl + theme.theme.spacing.s, 
-              right: theme.theme.spacing.xl 
-            }}
-            containerComponent={<VictoryContainer responsive={true} />}
-          >
-            {/* Y-Achse */}
-            <VictoryAxis 
-              dependentAxis
-              tickFormat={(t) => `${Math.round(t)}`}
-              style={{
-                axis: { stroke: theme.theme.colors.border },
-                tickLabels: { 
-                  fill: theme.theme.colors.textLight,
-                  fontSize: theme.theme.typography.fontSize.xs
-                },
-                grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.1 }
-              }}
-            />
-            
-            {/* X-Achse - ALLE Tage explizit */}
-            <VictoryAxis
-              dependentAxis={false}
-              tickFormat={(x) => {
-                const dataPoint = nutritionData[x - 1];
-                return dataPoint ? dataPoint.dateLabel : '';
-              }}
-              tickValues={nutritionData.map(d => d.x)} // ALLE x-Werte explizit
-              style={{
-                axis: { stroke: theme.theme.colors.border },
-                tickLabels: { 
-                  fill: theme.theme.colors.textLight,
-                  fontSize: theme.theme.typography.fontSize.xs,
-                  angle: -45
-                }
-              }}
-            />
-            
-            {/* Protein LINIE - steifer */}
-            <VictoryLine
-              data={nutritionData}
-              x="x"
-              y="protein"
-              interpolation="linear"
-              style={{
-                data: { 
-                  stroke: theme.theme.colors.nutrition.protein,
-                  strokeWidth: 3
-                }
-              }}
-            />
-            
-            {/* Kohlenhydrate LINIE - steifer */}
-            <VictoryLine
-              data={nutritionData}
-              x="x"
-              y="carbs"
-              interpolation="linear"
-              style={{
-                data: { 
-                  stroke: theme.theme.colors.nutrition.carbs,
-                  strokeWidth: 3
-                }
-              }}
-            />
-            
-            {/* Fett LINIE - steifer */}
-            <VictoryLine
-              data={nutritionData}
-              x="x"
-              y="fat"
-              interpolation="linear"
-              style={{
-                data: { 
-                  stroke: theme.theme.colors.nutrition.fat,
-                  strokeWidth: 3
-                }
-              }}
-            />
-            
-            {/* Punkte für Protein */}
-            <VictoryScatter
-              data={nutritionData}
-              x="x"
-              y="protein"
-              size={4}
-              style={{
-                data: { 
-                  fill: theme.theme.colors.nutrition.protein,
-                  stroke: theme.theme.colors.background,
-                  strokeWidth: 2
-                }
-              }}
-            />
-            
-            {/* Punkte für Carbs */}
-            <VictoryScatter
-              data={nutritionData}
-              x="x"
-              y="carbs"
-              size={4}
-              style={{
-                data: { 
-                  fill: theme.theme.colors.nutrition.carbs,
-                  stroke: theme.theme.colors.background,
-                  strokeWidth: 2
-                }
-              }}
-            />
-            
-            {/* Punkte für Fett */}
-            <VictoryScatter
-              data={nutritionData}
-              x="x"
-              y="fat"
-              size={4}
-              style={{
-                data: { 
-                  fill: theme.theme.colors.nutrition.fat,
-                  stroke: theme.theme.colors.background,
-                  strokeWidth: 2
-                }
-              }}
-            />
-          </VictoryChart>
-        </View>
-        
-        {/* Saubere Legende */}
-        <View style={styles.legendContainer}>
-          <View style={styles.legendRow}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: theme.theme.colors.nutrition.protein }]} />
-              <Text style={styles.legendText}>Protein</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: theme.theme.colors.nutrition.carbs }]} />
-              <Text style={styles.legendText}>Kohlenhydrate</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: theme.theme.colors.nutrition.fat }]} />
-              <Text style={styles.legendText}>Fett</Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      {/* Hauptchart mit Nährwerten - Neue modulare Komponente */}
+      <LineChartCard 
+        title={`Nährwerte`}
+        data={nutritionData}
+        lines={[
+          {
+            dataKey: "protein",
+            color: theme.theme.colors.nutrition.protein,
+            label: "Protein",
+            showGoal: true,
+            goalValue: userGoals.dailyProtein,
+            showScatter: true,
+            interpolation: "linear"
+          },
+          {
+            dataKey: "carbs",
+            color: theme.theme.colors.nutrition.carbs,
+            label: "Kohlenhydrate",
+            showGoal: true,
+            goalValue: userGoals.dailyCarbs,
+            showScatter: true,
+            interpolation: "linear"
+          },
+          {
+            dataKey: "fat",
+            color: theme.theme.colors.nutrition.fat,
+            label: "Fett",
+            showGoal: true,
+            goalValue: userGoals.dailyFat,
+            showScatter: true,
+            interpolation: "linear"
+          }
+        ]}
+        height={200}
+        width={screenWidth}
+        style={{
+          container: styles.section,
+          title: styles.sectionTitle
+        }}
+      />
+
+      {/* Wasseraufnahme Chart */}
+      <LineChartCard 
+        title={`Wasseraufnahme`}
+        data={nutritionData}
+        lines={[
+          {
+            dataKey: "water",
+            color: theme.theme.colors.primary,
+            label: "Wasser",
+            showGoal: userGoals.dailyWater != null,
+            goalValue: userGoals.dailyWater,
+            showScatter: true,
+            interpolation: "linear"
+          }
+        ]}
+        height={200}
+        width={screenWidth}
+        style={{
+          container: styles.section,
+          title: styles.sectionTitle
+        }}
+      />
+
+      {/* Zucker und Ballaststoffe Chart */}
+      <LineChartCard 
+        title={`Zucker und Ballaststoffe`}
+        data={nutritionData}
+        lines={[
+          {
+            dataKey: "sugar",
+            color: theme.theme.colors.warning,  // Akzentfarbe für Zucker
+            label: "Zucker",
+            showScatter: true,
+            interpolation: "linear"
+          },
+          {
+            dataKey: "fiber",
+            color: theme.theme.colors.success,  // Erfolgsfarbe für Ballaststoffe
+            label: "Ballaststoffe",
+            showScatter: true,
+            interpolation: "linear"
+          }
+        ]}
+        height={150}
+        width={screenWidth}
+        style={{
+          container: styles.section,
+          title: styles.sectionTitle
+        }}
+      />
+
+      {/* Natrium Chart */}
+      <LineChartCard 
+        title={`Natrium und Kalium`}
+        data={nutritionData}
+        lines={[
+          {
+            dataKey: "sodium",
+            color: theme.theme.colors.error,  // Sekundärfarbe für Natrium
+            label: "Natrium",
+            showScatter: true,
+            interpolation: "linear"
+          },
+          {
+            dataKey: "potassium",
+            color: theme.theme.colors.info,  // Info-Farbe für Kalium
+            label: "Kalium",
+            showScatter: true,
+            interpolation: "linear"
+          }
+        ]}
+        height={150}
+        width={screenWidth}
+        style={{
+          container: styles.section,
+          title: styles.sectionTitle
+        }}
+        yAxis={{ 
+          tickFormat: (t) => `${t && !isNaN(t) ? t.toFixed(1) : '0'}`
+        }}
+      />
     </ScrollView>
   );
 };
@@ -486,14 +480,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    // Kein Padding hier - wird vom Screen bereitgestellt
   },
   compactContainer: {
     backgroundColor: theme.colors.card,
     borderRadius: theme.borderRadius.medium,
     marginBottom: theme.spacing.m,
     width: '100%',
-    elevation: 5,
   },
   loadingContainer: {
     padding: theme.spacing.l,
@@ -501,14 +493,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.card,
     borderRadius: theme.borderRadius.medium,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: theme.spacing.xs / 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: theme.spacing.xs,
-    elevation: 2,
   },
   loadingText: {
     marginTop: theme.spacing.s,
@@ -538,7 +522,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     textAlign: 'center',
   },
   section: {
-    marginBottom: theme.spacing.l,
     backgroundColor: theme.colors.card,
     borderRadius: theme.borderRadius.large,
     elevation: 3,

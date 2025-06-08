@@ -43,6 +43,7 @@ exports.getDailyLogs = async (req, res) => {
             sugar: entry.sugar,
             fiber: entry.fiber,
             sodium: entry.sodium,
+            potassium: entry.potassium,
             servingSize: entry.serving_size,
             servingSizeGrams: entry.serving_size_grams
           },
@@ -58,6 +59,7 @@ exports.getDailyLogs = async (req, res) => {
         date: dateUtils.formatToLocalISODate(log.date),
         foodEntries: foodEntries,
         waterIntake: log.water_intake,
+        weight: log.weight || null,
         dailyNotes: log.daily_notes
       };
     }));
@@ -96,7 +98,7 @@ exports.getDailyLogByDate = async (req, res) => {
     const [entries] = await pool.query(
       `SELECT fe.id as entry_id, fe.daily_log_id, fe.food_item_id, fe.serving_amount, fe.meal_type, fe.time_consumed,
               fi.id as food_id, fi.name, fi.brand, fi.barcode, fi.calories, fi.protein, fi.carbs, fi.fat, 
-              fi.sugar, fi.fiber, fi.sodium, fi.serving_size, fi.serving_size_grams, fi.image
+              fi.sugar, fi.fiber, fi.sodium, fi.potassium, fi.serving_size, fi.serving_size_grams, fi.image
        FROM food_entries fe 
        JOIN food_items fi ON fe.food_item_id = fi.id 
        WHERE fe.daily_log_id = ? 
@@ -125,6 +127,7 @@ exports.getDailyLogByDate = async (req, res) => {
           sugar: entry.sugar,
           fiber: entry.fiber,
           sodium: entry.sodium,
+          potassium: entry.potassium,
           servingSize: entry.serving_size,
           servingSizeGrams: entry.serving_size_grams
         },
@@ -136,14 +139,13 @@ exports.getDailyLogByDate = async (req, res) => {
     }));
     
     // Return the daily log with its entries
-    const dailyLog = {
+    return res.status(200).json({
       date: dateUtils.formatToLocalISODate(log.date),
       foodEntries: foodEntries,
       waterIntake: log.water_intake,
+      weight: log.weight || null,
       dailyNotes: log.daily_notes
-    };
-    
-    res.status(200).json(dailyLog);
+    });
   } catch (error) {
     console.error('Error getting daily log:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -157,12 +159,12 @@ exports.saveDailyLog = async (req, res) => {
   try {
     await connection.beginTransaction();
     
-    const { date, foodEntries, waterIntake, dailyNotes, userId } = req.body;
+    const { date, foodEntries, waterIntake, weight, dailyNotes, userId } = req.body;
     
     // Enhanced logging for debugging the date mismatch issue
     console.log('-------- DAILY LOG SAVING ---------');
     console.log('Full request body:', JSON.stringify(req.body, null, 2));
-    console.log('Saving daily log with water intake:', waterIntake);
+    console.log('Saving daily log with water intake:', waterIntake, 'and weight:', weight);
     console.log('Date received from client:', date);
     
     if (date) {
@@ -205,8 +207,8 @@ exports.saveDailyLog = async (req, res) => {
       // Update existing log
       logId = existingLogs[0].id;
       await connection.query(
-        'UPDATE daily_logs SET water_intake = ?, daily_notes = ? WHERE id = ?',
-        [sanitizedWaterIntake, dailyNotes, logId]
+        'UPDATE daily_logs SET water_intake = ?, weight = ?, daily_notes = ? WHERE id = ?',
+        [sanitizedWaterIntake, weight, dailyNotes, logId]
       );
       
       console.log(`Updated daily log ${logId} with water intake: ${sanitizedWaterIntake}ml`);
@@ -219,8 +221,8 @@ exports.saveDailyLog = async (req, res) => {
     } else {
       // Create new log
       const [result] = await connection.query(
-        'INSERT INTO daily_logs (date, user_id, water_intake, daily_notes) VALUES (?, ?, ?, ?)',
-        [normalizedDate, userId, sanitizedWaterIntake, dailyNotes]
+        'INSERT INTO daily_logs (date, user_id, water_intake, weight, daily_notes) VALUES (?, ?, ?, ?, ?)',
+        [normalizedDate, userId, sanitizedWaterIntake, weight, dailyNotes]
       );
       
       console.log(`Created new daily log for date ${normalizedDate} with water intake: ${sanitizedWaterIntake}ml`);

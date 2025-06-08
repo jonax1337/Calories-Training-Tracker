@@ -337,7 +337,7 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
                 <Text style={{ fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }}>{item.name}</Text>
                 {item.brand && <Text style={{ color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}>{item.brand}</Text>}
                 <Text style={{ color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }}>
-                  {Math.round(item.nutrition.calories)} kcal/100{item.nutrition.servingSize?.toLowerCase().includes('ml') || item.nutrition.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
+                  {Math.round(item.nutrition?.calories || 0)} kcal/100{item.nutrition?.servingSize?.toLowerCase().includes('ml') || item.nutrition?.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
                 </Text>
               </TouchableOpacity>
             )}

@@ -132,10 +132,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         const multiplier = entry.servingAmount;
 
         return {
-          calories: totals.calories + nutrition.calories * (multiplier / 100),
-          protein: totals.protein + nutrition.protein * (multiplier / 100),
-          carbs: totals.carbs + nutrition.carbs * (multiplier / 100),
-          fat: totals.fat + nutrition.fat * (multiplier / 100),
+          calories: totals.calories + (nutrition?.calories || 0) * (multiplier / 100),
+          protein: totals.protein + (nutrition?.protein || 0) * (multiplier / 100),
+          carbs: totals.carbs + (nutrition?.carbs || 0) * (multiplier / 100),
+          fat: totals.fat + (nutrition?.fat || 0) * (multiplier / 100),
           water: totals.water,
         };
       },

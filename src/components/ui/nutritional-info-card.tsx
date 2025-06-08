@@ -12,6 +12,14 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
   // Get theme for styling
   const { theme } = useTheme();
   
+  // Debug-Log für Nutrition-Objekt
+  console.log('NutritionalInfoCard erhält:', nutrition);
+  console.log('NutritionalInfoCard kalium-Wert:', nutrition.potassium);
+  
+  // Weitere Debug-Info für Kalium-Anzeige
+  const hasPotassium = nutrition.potassium !== undefined;
+  console.log('Kalium-Wert verfügbar?', hasPotassium, nutrition.potassium);
+  
   // Calculate nutrition values based on serving multiplier
   const calculateValue = (value: number) => {
     return Math.round(value * servingMultiplier * 10) / 10;
@@ -31,6 +39,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
         marginBottom: theme.spacing.m
       }]}>Nährwertangaben</Text>
       
+      {nutrition.calories !== undefined && (
       <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
         <Text style={[styles.nutrientName, { 
           color: theme.colors.text,
@@ -43,7 +52,9 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
           fontSize: theme.typography.fontSize.m
         }]}>{calculateValue(nutrition.calories)} kcal</Text>
       </View>
+      )}
       
+      {nutrition.protein !== undefined && nutrition.protein > 0 && (
       <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
         <Text style={[styles.nutrientName, { 
           color: theme.colors.text,
@@ -56,7 +67,9 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
           fontSize: theme.typography.fontSize.m
         }]}>{calculateValue(nutrition.protein)}g</Text>
       </View>
+      )}
       
+      {nutrition.carbs !== undefined && nutrition.carbs > 0 && (
       <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
         <Text style={[styles.nutrientName, { 
           color: theme.colors.text,
@@ -69,7 +82,9 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
           fontSize: theme.typography.fontSize.m
         }]}>{calculateValue(nutrition.carbs)}g</Text>
       </View>
+      )}
       
+      {nutrition.fat !== undefined && nutrition.fat > 0 && (
       <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
         <Text style={[styles.nutrientName, { 
           color: theme.colors.text,
@@ -82,8 +97,9 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
           fontSize: theme.typography.fontSize.m
         }]}>{calculateValue(nutrition.fat)}g</Text>
       </View>
+      )}
       
-      {nutrition.sugar !== undefined && (
+      {nutrition.sugar !== undefined && nutrition.sugar > 0 && (
         <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
           <Text style={[styles.nutrientName, { 
             color: theme.colors.text,
@@ -98,7 +114,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
         </View>
       )}
       
-      {nutrition.fiber !== undefined && (
+      {nutrition.fiber !== undefined && nutrition.fiber > 0 && (
         <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
           <Text style={[styles.nutrientName, { 
             color: theme.colors.text,
@@ -113,7 +129,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
         </View>
       )}
       
-      {nutrition.sodium !== undefined && (
+      {nutrition.sodium !== undefined && nutrition.sodium > 0 && (
         <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
           <Text style={[styles.nutrientName, { 
             color: theme.colors.text,
@@ -125,6 +141,22 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
             fontFamily: theme.typography.fontFamily.medium,
             fontSize: theme.typography.fontSize.m
           }]}>{calculateValue(nutrition.sodium)}mg</Text>
+        </View>
+      )}
+      
+      {/* Kalium-Bereich */}
+      {nutrition.potassium !== undefined && nutrition.potassium > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Kalium</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.potassium)}mg</Text>
         </View>
       )}
     </View>

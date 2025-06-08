@@ -1,12 +1,13 @@
 // Food and nutrition related types
 export interface NutritionInfo {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
   sugar?: number;
   fiber?: number;
   sodium?: number;
+  potassium?: number;
   servingSize: string;
   servingSizeGrams: number;
 }
@@ -25,6 +26,7 @@ export interface DailyLog {
   date: string; // ISO string format
   foodEntries: FoodEntry[];
   waterIntake: number; // in ml
+  weight?: number; // in kg
   dailyNotes?: string;
 }
 
@@ -118,6 +120,7 @@ export interface BarcodeApiResponse {
       sugars_100g?: number;
       fiber_100g?: number;
       sodium_100g?: number;
+      potassium_100g?: number;
     };
     quantity?: string;
     image_url?: string;

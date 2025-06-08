@@ -211,6 +211,7 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
     fontSize: theme.typography.fontSize.l,
     fontFamily: theme.typography.fontFamily.bold,
     marginBottom: theme.spacing.s,
+    color: theme.colors.text,
   },
   mealTypeContainer: {
     flexDirection: 'row',

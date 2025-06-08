@@ -19,6 +19,7 @@ exports.getFoodItems = async (req, res) => {
         sugar: item.sugar,
         fiber: item.fiber,
         sodium: item.sodium,
+        potassium: item.potassium,
         servingSize: item.serving_size,
         servingSizeGrams: item.serving_size_grams
       },
@@ -60,6 +61,7 @@ exports.getFoodItemById = async (req, res) => {
         sugar: item.sugar,
         fiber: item.fiber,
         sodium: item.sodium,
+        potassium: item.potassium,
         servingSize: item.serving_size,
         servingSizeGrams: item.serving_size_grams
       },
@@ -90,13 +92,13 @@ exports.saveFoodItem = async (req, res) => {
         `UPDATE food_items SET 
          name = ?, brand = ?, barcode = ?, calories = ?, 
          protein = ?, carbs = ?, fat = ?, sugar = ?, 
-         fiber = ?, sodium = ?, serving_size = ?, 
+         fiber = ?, sodium = ?, potassium = ?, serving_size = ?, 
          serving_size_grams = ?, image = ? 
          WHERE id = ?`,
         [
           name, brand, barcode, nutrition.calories,
           nutrition.protein, nutrition.carbs, nutrition.fat, nutrition.sugar,
-          nutrition.fiber, nutrition.sodium, nutrition.servingSize,
+          nutrition.fiber, nutrition.sodium, nutrition.potassium, nutrition.servingSize,
           nutrition.servingSizeGrams, image, id
         ]
       );
@@ -107,13 +109,13 @@ exports.saveFoodItem = async (req, res) => {
       await pool.query(
         `INSERT INTO food_items (
           id, name, brand, barcode, calories, protein, 
-          carbs, fat, sugar, fiber, sodium, serving_size, 
+          carbs, fat, sugar, fiber, sodium, potassium, serving_size, 
           serving_size_grams, image
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id, name, brand, barcode, nutrition.calories,
           nutrition.protein, nutrition.carbs, nutrition.fat, nutrition.sugar,
-          nutrition.fiber, nutrition.sodium, nutrition.servingSize,
+          nutrition.fiber, nutrition.sodium, nutrition.potassium, nutrition.servingSize,
           nutrition.servingSizeGrams, image
         ]
       );

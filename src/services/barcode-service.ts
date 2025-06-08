@@ -62,17 +62,31 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
         }
       }
       
+      // Debug-Log für gefundene Nährwerte
+      console.log('Nutriments von API:', product.nutriments);
+      console.log('Kalium-Wert von API:', product.nutriments?.potassium_100g);
+      
+      // Kalium kann in verschiedenen Formaten in der API vorkommen
+      // Wir müssen any verwenden, da die API-Struktur nicht fest definiert ist
+      const nutriments = product.nutriments as any;
+      const potassiumValue = nutriments?.potassium_100g || nutriments?.['k_100g'] || undefined;
+      console.log('Gefundener Kalium-Wert:', potassiumValue);
+      
       const nutrition: NutritionInfo = {
         calories: product.nutriments?.['energy-kcal_100g'] || 0,
-        protein: product.nutriments?.proteins_100g || 0,
-        carbs: product.nutriments?.carbohydrates_100g || 0,
-        fat: product.nutriments?.fat_100g || 0,
+        protein: product.nutriments?.proteins_100g,
+        carbs: product.nutriments?.carbohydrates_100g,
+        fat: product.nutriments?.fat_100g,
         sugar: product.nutriments?.sugars_100g,
         fiber: product.nutriments?.fiber_100g,
         sodium: product.nutriments?.sodium_100g,
+        potassium: potassiumValue,
         servingSize: product.quantity || '100g',
         servingSizeGrams: servingSizeGrams
       };
+      
+      // Debug-Log für das erstellte Nutrition-Objekt
+      console.log('Erstelltes Nutrition-Objekt:', nutrition);
       
       // Create and return a FoodItem object from the API data
       const foodItem: FoodItem = {
@@ -136,7 +150,8 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         'nutriments.fat_100g',
         'nutriments.sugars_100g',
         'nutriments.fiber_100g',
-        'nutriments.sodium_100g'
+        'nutriments.sodium_100g',
+        'nutriments.potassium_100g'
       ].join(',')
     });
     
@@ -182,6 +197,16 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
           }
         }
         
+        // Debug-Log für gefundene Nährwerte
+        console.log('Nutriments von API (Suche):', product.nutriments);
+        console.log('Kalium-Wert von API (Suche):', product.nutriments?.potassium_100g);
+        
+        // Kalium kann in verschiedenen Formaten in der API vorkommen
+        // Wir müssen any verwenden, da die API-Struktur nicht fest definiert ist
+        const nutriments = product.nutriments as any;
+        const potassiumValue = nutriments?.potassium_100g || nutriments?.['k_100g'] || undefined;
+        console.log('Gefundener Kalium-Wert (Suche):', potassiumValue);
+        
         const nutrition: NutritionInfo = {
           calories: product.nutriments?.['energy-kcal_100g'] || 0,
           protein: product.nutriments?.proteins_100g || 0,
@@ -190,9 +215,13 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
           sugar: product.nutriments?.sugars_100g,
           fiber: product.nutriments?.fiber_100g,
           sodium: product.nutriments?.sodium_100g,
+          potassium: potassiumValue,
           servingSize: product.quantity || '100g',
           servingSizeGrams: servingSizeGrams
         };
+        
+        // Debug-Log für das erstellte Nutrition-Objekt
+        console.log('Erstelltes Nutrition-Objekt (Suche):', nutrition);
         
         // Create a FoodItem object
         return {
