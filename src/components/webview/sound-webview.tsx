@@ -17,6 +17,7 @@ export type SoundCommand =
   | { type: 'playWorkSound'; }
   | { type: 'playRestSound'; }
   | { type: 'playCompleteSound'; }
+  | { type: 'playSuccessPing'; }  // Neuer kurzer Erfolgssound
   | { type: 'playCountdownBeep'; };
 
 // Eine statische Referenz zur WebView-Instanz
@@ -116,6 +117,12 @@ const htmlContent = `
       setTimeout(() => playBeep(784, 400, 1.0), 500);
     }
     
+    // Kurzer Erfolgs-Ping (schnell und knapp)
+    function playSuccessPing() {
+      // D6 (1175Hz) mit kurzer Dauer und etwas leiserer Lautstärke
+      playBeep(1175, 80, 0.4);
+    }
+    
     // Countdown-Beep
     function playCountdownBeep() {
       playBeep(1000, 100, 0.5);
@@ -137,6 +144,9 @@ const htmlContent = `
           break;
         case 'playCompleteSound':
           playCompleteSound();
+          break;
+        case 'playSuccessPing':
+          playSuccessPing();
           break;
         case 'playCountdownBeep':
           playCountdownBeep();

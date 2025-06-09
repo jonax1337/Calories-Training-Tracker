@@ -14,6 +14,7 @@ export interface DataPoint {
   x: number;
   [key: string]: any; // Erlaubt beliebige Y-Werte mit unterschiedlichen Namen
   dateLabel?: string; // Optionales Label für Datum
+  isCheatDay?: boolean; // Markierung für Cheat Days
 }
 
 export interface LineConfig {
@@ -25,6 +26,7 @@ export interface LineConfig {
   showGoal?: boolean;  // Optional: Soll Ziellinie angezeigt werden?
   goalValue?: number;  // Optional: Wert für Ziellinie
   showScatter?: boolean; // Optional: Punkte auf der Linie anzeigen?
+  ignoreCheatDay?: boolean; // Wenn true, wird die Cheat Day Markierung ignoriert
 }
 
 interface LineChartCardProps {
@@ -58,6 +60,8 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
   yAxis,
   style
 }) => {
+  // Prüfe, ob Cheat Days in den Daten vorhanden sind
+  const hasCheatDays = data.some(item => item.isCheatDay);
   const theme = useTheme();
   const styles = createStyles(theme);
   const screenWidth = width || Dimensions.get('window').width - 2 * theme.theme.spacing.m;
@@ -192,7 +196,18 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                 fontFamily: theme.theme.typography.fontFamily.regular,
                 angle: -45
               },
-              grid: { stroke: theme.theme.colors.border}
+              // Dynamische Grid-Farbe basierend auf Cheat Day Status
+              grid: {
+                stroke: ({ tick }) => {
+                  // Finde den Datenpunkt für den aktuellen Tick
+                  const dataPoint = data.find(d => d.x === tick);
+                  if (dataPoint && dataPoint.isCheatDay) {
+                    // Fehlerfarbe für Cheat Days
+                    return theme.theme.colors.errorLight;
+                  }
+                  return theme.theme.colors.border;
+                }
+              }
             }}
           />
           
@@ -253,7 +268,18 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                 size={4}
                 style={{
                   data: { 
-                    fill: line.color,
+                    fill: ({ datum }) => {
+                      // Prüfe, ob dieser Datenpunkt von einem Cheat Day stammt
+                      const isCheatDay = Boolean(datum.isCheatDay);
+                      const hasGoal = line.showGoal && line.goalValue !== undefined;
+                      const ignoreCheatDay = line.ignoreCheatDay === true;
+                      
+                      // Bei ignoreCheatDay wird die Cheat Day Markierung nicht angezeigt
+                      if (isCheatDay && hasGoal && !ignoreCheatDay) {
+                        return theme.theme.colors.errorLight;
+                      }
+                      return line.color;
+                    },
                     stroke: theme.theme.colors.card,
                     strokeWidth: 2,
                   }

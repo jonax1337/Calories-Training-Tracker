@@ -159,6 +159,7 @@ function createEmptyDailyLog(date: string, userId: string): DailyLog {
     foodEntries: [], 
     waterIntake: 0,
     dailyNotes: '',
+    isCheatDay: false, // Initialisiere Cheat Day mit 'false'
     // These additional properties may be needed by your API but aren't in the interface
     // We'll cast to any to add them without TypeScript errors
     ...({

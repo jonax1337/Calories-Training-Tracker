@@ -9,6 +9,7 @@ interface ProgressBarProps {
   color?: string;
   height?: number;
   showPercentage?: boolean;
+  isCheatDay?: boolean; // Neue Option für Cheat Days
 }
 
 function ProgressBar({
@@ -17,12 +18,14 @@ function ProgressBar({
   label,
   color = '#4CAF50',
   height = 12,
-  showPercentage = true
+  showPercentage = true,
+  isCheatDay = false // Standardmäßig kein Cheat Day
 }: ProgressBarProps) {
   const theme = useTheme();
   
   // Prüfen, ob der aktuelle Wert das Ziel überschreitet
-  const isOverTarget = current > target;
+  // Bei Cheat Days ignorieren wir die Überschreitung
+  const isOverTarget = current > target && !isCheatDay;
   
   // Calculate actual percentage (not capped at 100%)
   const percentage = Math.round((current / target) * 100);

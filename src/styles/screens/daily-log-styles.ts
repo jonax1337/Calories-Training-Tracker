@@ -95,7 +95,7 @@ export const createDailyLogStyles = (theme: Theme): DailyLogStyles => StyleSheet
     elevation: 1,
   },
   summaryTitle: {
-    fontSize: theme.typography.fontSize.m,
+    fontSize: theme.typography.fontSize.l,
     marginBottom: theme.spacing.s,
     fontFamily: theme.typography.fontFamily.medium,
     color: theme.colors.text,

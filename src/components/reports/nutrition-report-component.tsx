@@ -34,6 +34,7 @@ interface NutritionTotals {
   potassium: number;
   water: number;
   date: string;
+  isCheatDay?: boolean; // Cheat Day Status
 }
 
 // Hilfsfunktion zum Berechnen der Nährwerte eines Tages
@@ -49,27 +50,28 @@ const calculateDailyTotals = (log: DailyLog): NutritionTotals => {
       sodium: 0,
       potassium: 0,
       water: log?.waterIntake || 0, 
-      date: log?.date || '' 
+      date: log?.date || '',
+      isCheatDay: log?.isCheatDay || false // Cheat Day Status übernehmen
     };
   }
 
-  const totals = log.foodEntries.reduce(
+  const totals = log.foodEntries.reduce<NutritionTotals>(
     (acc, entry) => {
       const { nutrition } = entry.foodItem;
       const multiplier = entry.servingAmount;
 
       return {
-        calories: acc.calories + (nutrition?.calories || 0) * (multiplier / 100),
-        protein: acc.protein + (nutrition?.protein || 0) * (multiplier / 100),
-        carbs: acc.carbs + (nutrition?.carbs || 0) * (multiplier / 100),
-        fat: acc.fat + (nutrition?.fat || 0) * (multiplier / 100),
-        sugar: acc.sugar + (nutrition?.sugar || 0) * (multiplier / 100),
-        fiber: acc.fiber + (nutrition?.fiber || 0) * (multiplier / 100),
-        sodium: acc.sodium + (nutrition?.sodium || 0) * (multiplier / 100),
-        // NaN-Sicherheit für Kalium hinzugefügt
-        potassium: acc.potassium + (nutrition?.potassium !== undefined && !isNaN(nutrition.potassium) ? nutrition.potassium : 0) * (multiplier / 100),
+        calories: acc.calories + ((nutrition?.calories || 0) * (multiplier / 100)),
+        protein: acc.protein + ((nutrition?.protein || 0) * (multiplier / 100)),
+        carbs: acc.carbs + ((nutrition?.carbs || 0) * (multiplier / 100)),
+        fat: acc.fat + ((nutrition?.fat || 0) * (multiplier / 100)),
+        sugar: acc.sugar + ((nutrition?.sugar || 0) * (multiplier / 100)),
+        fiber: acc.fiber + ((nutrition?.fiber || 0) * (multiplier / 100)),
+        sodium: acc.sodium + ((nutrition?.sodium !== undefined && !isNaN(nutrition.sodium) ? nutrition.sodium : 0) * (multiplier / 100)),
+        potassium: acc.potassium + ((nutrition?.potassium !== undefined && !isNaN(nutrition.potassium) ? nutrition.potassium : 0) * (multiplier / 100)),
         water: acc.water,
         date: acc.date,
+        isCheatDay: acc.isCheatDay // Cheat Day Status übernehmen
       };
     },
     { 
@@ -82,7 +84,8 @@ const calculateDailyTotals = (log: DailyLog): NutritionTotals => {
       sodium: 0,
       potassium: 0,
       water: log.waterIntake || 0, 
-      date: log.date 
+      date: log.date,
+      isCheatDay: log.isCheatDay || false
     }
   );
 
@@ -115,7 +118,6 @@ const NutritionReportComponent = ({
 
   // Laden der Log-Daten für die letzten X Tage, ausgehend vom ausgewählten Datum
   useEffect(() => {
-    console.log(`Lade Ernährungsbericht mit Bezugsdatum: ${selectedDate}`);
     async function loadNutritionData() {
       setIsLoading(true);
       try {
@@ -162,7 +164,22 @@ const NutritionReportComponent = ({
         setReportData(allRequestedDays);
         
         // Berechne Durchschnitte - nur für Tage mit tatsächlichen Einträgen (> 0)
-        const daysWithData = allRequestedDays.filter(day => day.calories > 0);
+        // Sammle Tage mit Daten und Tage mit Wasserdaten separat
+        const daysWithData = allRequestedDays.filter(day => {
+          // Filtere Tage mit Daten
+          const hasData = day.calories > 0;
+          
+          // Im Compact-Modus ignorieren wir Cheat Days für Durchschnittswerte von Nährstoffen
+          // aber nicht für Wasser
+          if (compact && day.isCheatDay) {
+            return false;
+          }
+          
+          return hasData;
+        });
+        
+        // Sammle alle Tage mit Wasserdaten, einschließlich Cheat Days
+        const daysWithWaterData = allRequestedDays.filter(day => day.water > 0);
         
         if (daysWithData.length > 0) {
           const avgTotals = {
@@ -174,11 +191,11 @@ const NutritionReportComponent = ({
             fiber: daysWithData.reduce((sum, day) => sum + day.fiber, 0) / daysWithData.length,
             sodium: daysWithData.reduce((sum, day) => sum + day.sodium, 0) / daysWithData.length,
             potassium: daysWithData.reduce((sum, day) => sum + day.potassium, 0) / daysWithData.length,
-            water: daysWithData.reduce((sum, day) => sum + day.water, 0) / daysWithData.length,
+            // Wasser wird auch für Cheat Days gezählt
+            water: daysWithWaterData.length > 0 ? daysWithWaterData.reduce((sum, day) => sum + day.water, 0) / daysWithWaterData.length : 0,
             date: 'average'
           };
           
-          console.log(`Durchschnitte berechnet - Tage mit Daten: ${daysWithData.length}/${allRequestedDays.length}`);
           setAverages(avgTotals);
           
           // Berechne Zielerreichung in Prozent
@@ -252,7 +269,8 @@ const NutritionReportComponent = ({
       potassium: day.potassium || 0,
       water: day.water || 0,
       date: day.date,
-      dateLabel: new Date(day.date).getDate() + '.' + (new Date(day.date).getMonth() + 1) + '.'
+      dateLabel: new Date(day.date).getDate() + '.' + (new Date(day.date).getMonth() + 1) + '.',
+      isCheatDay: day.isCheatDay || false // Übertrage die Cheat Day Information
     }));
     
     return data;
@@ -291,7 +309,6 @@ const NutritionReportComponent = ({
 
   // Safety check: Wenn keine Durchschnittsdaten vorhanden sind, erstelle leere Defaults
   if (!averages) {
-    console.log('Keine Durchschnittsdaten vorhanden, erstelle Default-Werte');
     setAverages({
       calories: 0,
       protein: 0,
@@ -448,7 +465,8 @@ const NutritionReportComponent = ({
             showGoal: userGoals.dailyWater != null,
             goalValue: userGoals.dailyWater,
             showScatter: true,
-            interpolation: "linear"
+            interpolation: "linear",
+            ignoreCheatDay: true // Wasser zählt immer, auch an Cheat Days
           }
         ]}
         yAxis={{

@@ -220,13 +220,13 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
         {/* Row: Product name and brand */}
         <View style={{ flexDirection: 'row', marginBottom: theme.spacing.m }}>
           {/* Food name input */}
-          <View style={[styles.inputContainer, { flex: 5, marginRight: theme.spacing.m }]}>
+          <View style={[styles.inputContainer, { width: '100%' }]}>
             <Text style={[styles.inputLabel, { 
               color: theme.colors.text,
               fontFamily: theme.typography.fontFamily.medium,
               marginTop: theme.spacing.m,
               marginBottom: theme.spacing.s
-            }]}>Produktname *</Text>
+            }]}>Produkt *</Text>
             <TextInput
               style={[styles.textInput, { 
                 backgroundColor: theme.colors.surface,
@@ -239,30 +239,6 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
               value={productName}
               onChangeText={setProductName}
               placeholder="Produktname eingeben"
-              placeholderTextColor={theme.colors.placeholder}
-            />
-          </View>
-
-          {/* Brand Input */}
-          <View style={[styles.inputContainer, { flex: 3 }]}>
-            <Text style={[styles.inputLabel, { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.medium,
-              marginTop: theme.spacing.m,
-              marginBottom: theme.spacing.s
-            }]}>Marke</Text>
-            <TextInput
-              style={[styles.textInput, { 
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                borderRadius: theme.borderRadius.small,
-                color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.regular,
-                padding: theme.spacing.m
-              }]}
-              value={productBrand}
-              onChangeText={setProductBrand}
-              placeholder="z.B. Ehrmann"
               placeholderTextColor={theme.colors.placeholder}
             />
           </View>

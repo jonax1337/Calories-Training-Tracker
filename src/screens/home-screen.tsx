@@ -12,7 +12,8 @@ import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDateContext } from '../context/date-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
-import { Minus, Plus, BarChart2, ChartSpline, ChartLine } from 'lucide-react-native';
+import { Minus, Plus, BarChart2, ChartSpline, ChartLine, ShieldCheck, ShieldOff } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
 import NutritionReportComponent from '../components/reports/nutrition-report-component';
@@ -49,6 +50,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
   const [isUpdatingWater, setIsUpdatingWater] = useState(false);
   const [lastWaterUpdateTime, setLastWaterUpdateTime] = useState(0);
+  const [isUpdatingCheatDay, setIsUpdatingCheatDay] = useState(false);
   const [showWaterModal, setShowWaterModal] = useState(false);
   const [manualWaterAmount, setManualWaterAmount] = useState('');
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -310,6 +312,38 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     }
   };
 
+  // Funktion zum Umschalten des Cheat Day Status
+  const handleToggleCheatDay = async () => {
+    if (!todayLog) return;
+    
+    try {
+      setIsUpdatingCheatDay(true);
+      
+      // Haptisches Feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Neuen Status festlegen (umkehren des aktuellen Status)
+      const updatedLog = {
+        ...todayLog,
+        isCheatDay: !todayLog.isCheatDay
+      };
+      
+      // Log im State aktualisieren für sofortiges UI-Feedback
+      setTodayLog(updatedLog);
+      
+      // In der Datenbank speichern
+      await saveDailyLog(updatedLog);
+      
+      // Log-Eintrag für Debugging
+      console.log(`Cheat Day für ${updatedLog.date} ${updatedLog.isCheatDay ? 'aktiviert' : 'deaktiviert'}`);
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren des Cheat Day Status:', error);
+      Alert.alert('Fehler', 'Der Status konnte nicht aktualisiert werden.');
+    } finally {
+      setIsUpdatingCheatDay(false);
+    }
+  };
+
   // Funktion zum Öffnen des Modals mit aktuellem Wasserstand
   const openWaterModal = () => {
     if (todayLog) {
@@ -415,19 +449,52 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           shadowColor: theme.theme.colors.shadow
         }
       ]}>
-        <Text style={[
-          styles.cardTitle, 
-          { 
-            fontFamily: theme.theme.typography.fontFamily.bold,
-            color: theme.theme.colors.text
-          }
-        ]}>Heutige Nährwerte</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.theme.spacing.xs }}>
+          <Text style={[
+            styles.cardTitle, 
+            { 
+              fontFamily: theme.theme.typography.fontFamily.bold,
+              color: theme.theme.colors.text
+            }
+          ]}>Heutige Nährwerte</Text>
+          
+          {/* Cheat Day Button */}
+          <TouchableOpacity 
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: todayLog?.isCheatDay ? theme.theme.colors.primary : 'transparent',
+              borderRadius: theme.theme.borderRadius.medium,
+              borderColor: theme.theme.colors.primary,
+              borderWidth: 1,
+              paddingVertical: theme.theme.spacing.xs,
+              paddingHorizontal: theme.theme.spacing.s,
+              marginTop: -theme.theme.spacing.m,
+            }}
+            onPress={handleToggleCheatDay}
+            disabled={isUpdatingCheatDay}
+          >
+            {todayLog?.isCheatDay ? (
+              <ShieldOff size={theme.theme.typography.fontSize.s} color="white" style={{ marginRight: theme.theme.spacing.xs }} />
+            ) : (
+              <ShieldCheck size={theme.theme.typography.fontSize.m} color={theme.theme.colors.primary} style={{ marginRight: theme.theme.spacing.xs }} />
+            )}
+            <Text style={{
+              color: todayLog?.isCheatDay ? 'white' : theme.theme.colors.primary,
+              fontFamily: theme.theme.typography.fontFamily.medium,
+              fontSize: theme.theme.typography.fontSize.xs
+            }}>
+              {todayLog?.isCheatDay ? 'Cheat Day' : 'Normaler Tag'}
+            </Text>
+          </TouchableOpacity>
+        </View>
         
         <ProgressBar 
           label="🔥 Kalorien"
           current={Math.round(totals.calories)}
           target={goals.dailyCalories}
           color={theme.theme.colors.nutrition.calories}
+          isCheatDay={todayLog?.isCheatDay || false}
         />
         
         <ProgressBar 
@@ -435,6 +502,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           current={Math.round(totals.protein)}
           target={goals.dailyProtein || 50}
           color={theme.theme.colors.nutrition.protein}
+          isCheatDay={todayLog?.isCheatDay || false}
         />
         
         <ProgressBar 
@@ -442,13 +510,15 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           current={Math.round(totals.carbs)}
           target={goals.dailyCarbs || 250}
           color={theme.theme.colors.nutrition.carbs}
+          isCheatDay={todayLog?.isCheatDay || false}
         />
         
         <ProgressBar 
-          label="🧈 Fette"
+          label="🧈 Fett"
           current={Math.round(totals.fat)}
-          target={goals.dailyFat || 70}
+          target={goals.dailyFat || 65}
           color={theme.theme.colors.nutrition.fat}
+          isCheatDay={todayLog?.isCheatDay || false}
         />
       </View>
 

@@ -29,6 +29,7 @@ export interface DailyLog {
   waterIntake: number; // in ml
   weight?: number; // in kg
   dailyNotes?: string;
+  isCheatDay?: boolean; // Flag für "Cheat Day"
 }
 
 export interface FoodEntry {

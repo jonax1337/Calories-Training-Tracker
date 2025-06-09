@@ -59,6 +59,7 @@ async function initializeDatabase() {
         user_id VARCHAR(36) NOT NULL,
         water_intake FLOAT NOT NULL DEFAULT 0,
         daily_notes TEXT,
+        is_cheat_day TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

@@ -60,7 +60,8 @@ exports.getDailyLogs = async (req, res) => {
         foodEntries: foodEntries,
         waterIntake: log.water_intake,
         weight: log.weight || null,
-        dailyNotes: log.daily_notes
+        dailyNotes: log.daily_notes,
+        isCheatDay: log.is_cheat_day === 1 || false // Konvertiere DB-Boolean (0/1) zu JavaScript-Boolean
       };
     }));
     
@@ -141,7 +142,8 @@ exports.getDailyLogByDate = async (req, res) => {
       foodEntries: foodEntries,
       waterIntake: log.water_intake,
       weight: log.weight || null,
-      dailyNotes: log.daily_notes
+      dailyNotes: log.daily_notes,
+      isCheatDay: log.is_cheat_day === 1 // Konvertiere DB-Boolean (0/1) zu JavaScript-Boolean
     });
   } catch (error) {
     console.error('Error getting daily log:', error);
@@ -156,7 +158,10 @@ exports.saveDailyLog = async (req, res) => {
   try {
     await connection.beginTransaction();
     
-    const { date, foodEntries, waterIntake, weight, dailyNotes, userId } = req.body;
+    const { date, foodEntries, waterIntake, weight, dailyNotes, userId, isCheatDay } = req.body;
+    
+    // Log für Debugging-Zwecke
+    console.log('Received isCheatDay flag:', isCheatDay);
     
     if (date) {
       const currentDate = new Date();
@@ -195,8 +200,8 @@ exports.saveDailyLog = async (req, res) => {
       // Update existing log
       logId = existingLogs[0].id;
       await connection.query(
-        'UPDATE daily_logs SET water_intake = ?, weight = ?, daily_notes = ? WHERE id = ?',
-        [sanitizedWaterIntake, weight, dailyNotes, logId]
+        'UPDATE daily_logs SET water_intake = ?, weight = ?, daily_notes = ?, is_cheat_day = ? WHERE id = ?',
+        [sanitizedWaterIntake, weight, dailyNotes, isCheatDay ? 1 : 0, logId]
       );
       
       console.log(`Updated daily log ${logId} with water intake: ${sanitizedWaterIntake}ml`);
@@ -209,8 +214,8 @@ exports.saveDailyLog = async (req, res) => {
     } else {
       // Create new log
       const [result] = await connection.query(
-        'INSERT INTO daily_logs (date, user_id, water_intake, weight, daily_notes) VALUES (?, ?, ?, ?, ?)',
-        [normalizedDate, userId, sanitizedWaterIntake, weight, dailyNotes]
+        'INSERT INTO daily_logs (date, user_id, water_intake, weight, daily_notes, is_cheat_day) VALUES (?, ?, ?, ?, ?, ?)',
+        [normalizedDate, userId, sanitizedWaterIntake, weight, dailyNotes, isCheatDay ? 1 : 0]
       );
       
       console.log(`Created new daily log for date ${normalizedDate} with water intake: ${sanitizedWaterIntake}ml`);

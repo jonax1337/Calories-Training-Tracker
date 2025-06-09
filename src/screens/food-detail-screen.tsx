@@ -13,6 +13,7 @@ import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createFoodDetailStyles } from '../styles/screens/food-detail-styles';
 import * as Haptics from 'expo-haptics';
+import { sendSoundCommand } from '../components/webview/sound-webview';
 
 type FoodDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'FoodDetail'>;
 
@@ -27,14 +28,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Get parameters from navigation
   const { barcode, foodId, mealType, foodItem: passedFoodItem, selectedDate: passedDate, existingEntryId, servingAmount: passedServingAmount } = route.params || {};
   
-  // Debug-Log, um zu sehen, welcher Wert übergeben wird
-  console.log('Food Detail Screen: Empfangene servingAmount:', passedServingAmount);
-  
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
   
-  // Verwende die tatsächliche Portionsgröße aus dem FoodItem anstelle von 100g, wenn verfügbar
-  // Priorität: 1. Übergebener Servingwert, 2. Portionsgröße aus API, 3. Default 100g
   const initialServingSize = 
     typeof passedServingAmount === 'number' ? passedServingAmount : 
     (passedFoodItem?.nutrition?.servingSizeGrams || 100);
@@ -86,20 +82,13 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Load food data when component mounts or create empty food item for manual entry
   useEffect(() => {
     const loadFoodData = async () => {
-      // WICHTIG: Prüfe zuerst, ob wir einen existierenden Eintrag bearbeiten
-      // und hole die richtige Portionsgröße aus dem food entry
       if (isEditing && existingEntryId && passedServingAmount) {
-        console.log(`Bearbeite existierenden Eintrag mit ID ${existingEntryId}, Menge: ${passedServingAmount}g`);
-        
-        // Hier verwenden wir die übergebene Portionsgröße aus dem Food Entry
-        // NICHT die Standardgröße des Produkts!
         setServings(passedServingAmount.toFixed(2));
         setSliderValue(passedServingAmount);
       }
       
       // Wenn ein FoodItem direkt übergeben wurde, verwende dieses
       if (passedFoodItem) {
-        console.log('Verwende direkt übergebenes FoodItem:', passedFoodItem.id);
         setFoodItem(passedFoodItem);
         setCustomName(passedFoodItem.name);
         
@@ -126,7 +115,6 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           // Verwende die Portionsgröße in Gramm, wenn diese aus der API extrahiert wurde
           if (passedFoodItem.nutrition.servingSizeGrams) {
             portionSize = passedFoodItem.nutrition.servingSizeGrams;
-            console.log(`Verwende Portionsgröße aus API: ${portionSize}${servingUnit === "Milliliter" ? "ml" : "g"}`);
           }
           
           // Setze den Slider-Wert auf die Portionsgröße
@@ -165,7 +153,6 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             // Setze die Portionsgröße auf die tatsächliche Füllmenge des Produkts
             if (data.nutrition && data.nutrition.servingSizeGrams) {
               const productSize = data.nutrition.servingSizeGrams;
-              console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}${servingUnit === "Milliliter" ? "ml" : "g"}`);
               setServings(productSize.toFixed(2));
               setSliderValue(productSize);
             }
@@ -195,14 +182,10 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         name: customName || foodItem.name,
       };
 
-      console.log('Saving food item before adding to log:', JSON.stringify(updatedFoodItem));
       
-      // STEP 1: Save the food item to storage - this is where errors happen
       try {
         await saveFoodItem(updatedFoodItem);
-        console.log('Food item saved successfully');
       } catch (saveError) {
-        console.error('Failed to save food item:', saveError);
         Alert.alert('Fehler beim Speichern', 'Das Lebensmittel konnte nicht in der Datenbank gespeichert werden.');
         // Haptics
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
@@ -211,20 +194,16 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       }
 
       // Use the selected date instead of today for the daily log
-      console.log(`Using selected date for daily log: ${selectedDate}`);
       
       // Format the entry time for MySQL compatibility
       const now = new Date();
       const mysqlCompatibleTime = dateToMySQLDateTime(now);
-      console.log(`Operation time: ${mysqlCompatibleTime} (local time)`);
       
-      // STEP 2: Get the daily log for the selected date
+      // Get the daily log for the selected date
       let dailyLog;
       try {
         dailyLog = await getDailyLogByDate(selectedDate);
-        console.log('Daily log retrieved for selected date:', dailyLog ? 'found' : 'not found');
       } catch (logError) {
-        console.error('Error getting daily log:', logError);
         // Create a default log if one doesn't exist
         dailyLog = {
           date: selectedDate,
@@ -232,12 +211,10 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           waterIntake: 0,
           dailyNotes: ''
         };
-        console.log('Created default daily log');
       }
       
       if (isEditing && existingEntryId) {
-        // EDITING MODE: Update existing entry
-        console.log(`Updating existing entry with ID: ${existingEntryId}`);
+        // Update existing entry
         
         // Find index of entry to update
         const entryIndex = dailyLog.foodEntries.findIndex(entry => entry.id === existingEntryId);
@@ -254,9 +231,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           
           // Replace the entry in the array
           dailyLog.foodEntries[entryIndex] = updatedEntry;
-          console.log(`Updated food entry at index ${entryIndex}`);
         } else {
-          console.error(`Entry with ID ${existingEntryId} not found in daily log`);
           Alert.alert('Fehler', 'Der zu aktualisierende Eintrag wurde nicht gefunden');
           return;
         }
@@ -272,15 +247,12 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         
         // Add the new entry to the daily log
         dailyLog.foodEntries.push(entry);
-        console.log(`Added new food entry ${entry.id} to daily log, now has ${dailyLog.foodEntries.length} entries`);
       }
       
       // STEP 3: Save the updated log
       try {
         await saveDailyLog(dailyLog);
-        console.log('Daily log saved successfully');
       } catch (saveLogError) {
-        console.error('Error saving daily log:', saveLogError);
         Alert.alert('Fehler beim Speichern', 'Der Tageseintrag konnte nicht gespeichert werden');
         // Haptics
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
@@ -291,6 +263,14 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       // Success Haptics
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      
+      // Kurzen Erfolgssound abspielen (falls Gerät nicht stumm ist)
+      try {
+        // Kurzen Ping für erfolgreiches Hinzufügen abspielen
+        sendSoundCommand({ type: 'playSuccessPing' });
+      } catch (soundError) {
+        console.warn('Could not play success sound:', soundError);
+      }
 
       Vibration.vibrate([0, 100, 0, 100]);
       // Zurück zum vorherigen Screen

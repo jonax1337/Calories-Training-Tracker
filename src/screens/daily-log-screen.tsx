@@ -5,7 +5,7 @@ import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-nat
 import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
-import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react-native';
+import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2, Plus, ShieldOff, ShieldCheck, PlusCircle } from 'lucide-react-native';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
@@ -22,6 +22,60 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   // State für aktuelle Animation
   const [animatingMealType, setAnimatingMealType] = useState<string | null>(null);
   
+  // Typdefinition für eine Mahlzeiten-Kategorie
+  type MealCategoryProps = {
+    mealType: string;
+    emoji: string;
+    title: string;
+    calories: number;
+    isLast?: boolean;
+  };
+
+  // Wiederverwendbare Komponente für eine komplette Mahlzeiten-Kategorie
+  const MealCategory = ({ mealType, emoji, title, calories, isLast = false }: MealCategoryProps) => {
+    return (
+      <View style={{ marginBottom: expandedMeals[mealType] ? 0 : theme.spacing.m }}>
+        {/* Header-Bereich - klickbar für Scanner */}
+        <TouchableOpacity 
+          style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
+            borderBottomLeftRadius: expandedMeals[mealType] ? 0 : theme.borderRadius.medium,
+            borderBottomRightRadius: expandedMeals[mealType] ? 0 : theme.borderRadius.medium,
+            marginBottom: expandedMeals[mealType] ? 0 : undefined,
+          }]}
+        >
+          <View style={styles.mealCategoryContent}>
+            {/* Linke Seite - Mahlzeiteninfo mit Plus-Icon */}
+            <TouchableOpacity 
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+              onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType })}
+            >
+              <View>
+                <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+                  {emoji} {title}
+                </Text>
+                {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === mealType).length > 0 ? (
+                  <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                    {dailyLog.foodEntries.filter(entry => entry.mealType === mealType).length} Einträge
+                  </Text>
+                ) : (
+                  <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                    Noch keine Einträge
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+            
+            {/* Rechte Seite - Kalorien + Akkordeon-Button */}
+            <MealAccordionButton mealType={mealType} calories={calories} />
+          </View>
+        </TouchableOpacity>
+        
+        {/* Ausklappbarer Bereich für die Einträge */}
+        <MealAccordionContent mealType={mealType} isLast={isLast} />
+      </View>
+    );
+  };
+
   // Wiederverwendbare Komponente für den Kalorien-Anzeige und Akkordeon-Button Bereich
   const MealAccordionButton = ({ mealType, calories }: { mealType: string, calories: number }) => (
     <TouchableOpacity
@@ -31,7 +85,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         // Animation auslösen und Timer für Reset setzen
         setAnimatingMealType(mealType);
         // Nach 300ms (Animation + etwas Puffer) den animierenden Status zurücksetzen
-        setTimeout(() => setAnimatingMealType(null), 300);
+        setTimeout(() => setAnimatingMealType(null), 500);
         // State ändern
         toggleMealAccordion(mealType);
       }}
@@ -239,10 +293,10 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                   if (nativeEvent.state === State.ACTIVE) {
                     // Haptisches Feedback beim Long Press
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    handleOpenFoodDetails(entry);
+                    handleEntryActions(entry);
                   }
                 }}
-                minDurationMs={600}
+                minDurationMs={400}
               >
                 <View style={{
                   flexDirection: 'row',
@@ -320,15 +374,41 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       [mealType]: !prev[mealType]
     }));
   };
+  // Function to handle date changes
+  const handleChangeDate = useCallback((newDate: string) => {
+    setSelectedDate(newDate);
+  }, [setSelectedDate]);
+  
+  // Funktion zum Umschalten des Cheat Day Status
+  const handleToggleCheatDay = async () => {
+    if (!dailyLog) return;
+    
+    try {
+      // Haptisches Feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Neuen Status festlegen (umkehren des aktuellen Status)
+      const updatedLog = {
+        ...dailyLog,
+        isCheatDay: !dailyLog.isCheatDay
+      };
+      
+      // Log im State aktualisieren für sofortiges UI-Feedback
+      setDailyLog(updatedLog);
+      
+      // In der Datenbank speichern
+      await saveDailyLog(updatedLog);
+      
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren des Cheat Day Status:', error);
+      Alert.alert('Fehler', 'Der Status konnte nicht aktualisiert werden.');
+    }
+  };
+
   // Function to load daily log data
   const loadDailyLog = useCallback(async () => {
-    console.log('Loading daily log data...');
     setIsLoading(true);
     try {
-      // Log details for debugging purposes
-      console.log(`Loading daily log for date: ${selectedDate}`);
-      
-      // Get the current date object for timezone reference
       const now = new Date();
       console.log(`Current time in ISO format: ${now.toISOString()}`);
       console.log(`Local timezone offset: ${now.getTimezoneOffset()} minutes`);
@@ -336,11 +416,8 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       const log = await getDailyLogByDate(selectedDate);
       
       if (log) {
-        console.log(`Loaded daily log with ${log.foodEntries.length} food entries`);
         setDailyLog(log);
       } else {
-        // If no log exists for this date, create a new empty one
-        console.log('No daily log found, creating a new one');
         const newLog: DailyLog = {
           date: selectedDate,
           foodEntries: [],
@@ -438,7 +515,6 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
           setDailyLog(updatedLog);
           
           // In der Datenbank speichern
-          console.log(`Removing food entry: ${entryId}`);
           await saveDailyLog(updatedLog);
 
           await loadDailyLog();
@@ -459,6 +535,54 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       servingAmount: entry.servingAmount,
       // Wichtig: Gib das Datum des Eintrags mit, nicht das aktuell ausgewählte Datum
       selectedDate: dailyLog?.date || selectedDate
+    });
+  };
+
+  // Funktion zum Anzeigen des ActionSheets mit Optionen für einen Eintrag
+  const handleEntryActions = (entry: FoodEntry) => {
+    // Action Sheet Options
+    const options = ['Abbrechen', 'Bearbeiten', 'Löschen'];
+    const destructiveButtonIndex = 2;
+    const cancelButtonIndex = 0;
+    
+    // Action Sheet Styling und Options
+    const actionSheetOptions: any = {
+      options,
+      cancelButtonIndex,
+      destructiveButtonIndex,
+      // Setze das Theme für das Action Sheet
+      userInterfaceStyle: (isDarkMode ? 'dark' : 'light') as 'dark' | 'light',
+      // Für iOS: Container Styling
+      containerStyle: { backgroundColor: theme.colors.card },
+      // Für iOS: Text Styling für Optionen
+      textStyle: { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.text },
+      // Für iOS: Title Styling
+      titleTextStyle: { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text },
+      // Für iOS: Message Styling
+      messageTextStyle: { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.text },
+    };
+    
+    // iOS-spezifisch
+    if (Platform.OS === 'ios') {
+      actionSheetOptions.userInterfaceStyle = isDarkMode ? 'dark' : 'light';
+    }
+    
+    showActionSheetWithOptions(actionSheetOptions, async (selectedIndex) => {
+      // Abbrechen wurde ausgewählt oder Sheet wurde geschlossen
+      if (selectedIndex === cancelButtonIndex) {
+        return;
+      }
+      
+      // Bearbeiten wurde ausgewählt
+      if (selectedIndex === 1) {
+        handleOpenFoodDetails(entry);
+        return;
+      }
+      
+      // Löschen wurde ausgewählt
+      if (selectedIndex === destructiveButtonIndex) {
+        handleRemoveEntry(entry.id);
+      }
     });
   };
 
@@ -565,10 +689,41 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       >
 
         {/* Daily summary */}
-        <View style={[styles.summaryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, marginBottom: 24 }]}>
-          <Text style={[styles.summaryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-            Tagesübersicht
-          </Text>
+        <View style={[styles.summaryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, marginBottom: theme.spacing.m }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.s }}>
+            <Text style={[styles.summaryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+              Tagesübersicht
+            </Text>
+            
+            {/* Cheat Day Button */}
+            <TouchableOpacity 
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: dailyLog?.isCheatDay ? theme.colors.primary : 'transparent',
+                borderRadius: theme.borderRadius.medium,
+                borderColor: theme.colors.primary,
+                borderWidth: 1,
+                paddingVertical: theme.spacing.xs,
+                paddingHorizontal: theme.spacing.s,
+                marginTop: -theme.spacing.s,
+              }}
+              onPress={handleToggleCheatDay}
+            >
+              {dailyLog?.isCheatDay ? (
+                <ShieldOff size={theme.typography.fontSize.s} color="white" style={{ marginRight: theme.spacing.xs }} />
+              ) : (
+                <ShieldCheck size={theme.typography.fontSize.m} color={theme.colors.primary} style={{ marginRight: theme.spacing.xs }} />
+              )}
+              <Text style={{
+                color: dailyLog?.isCheatDay ? 'white' : theme.colors.primary,
+                fontFamily: theme.typography.fontFamily.medium,
+                fontSize: theme.typography.fontSize.xs
+              }}>
+                {dailyLog?.isCheatDay ? 'Cheat Day' : 'Normaler Tag'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           
           <View style={styles.summaryContent}>
             <View style={styles.summaryItem}>
@@ -608,175 +763,36 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
             </View>
           </View>
         </View>
-
-        {/* Mahlzeiten-Kategorien */}
-        <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text, marginTop: 16, marginBottom: 16 }]}>
-          Mahlzeiten
-        </Text>
         
-        {/* Frühstück */}
-        <View style={{ marginBottom: expandedMeals['breakfast'] ? 0 : 12 }}>
-          {/* Header-Bereich - klickbar für Scanner */}
-          <TouchableOpacity 
-            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
-              borderBottomLeftRadius: expandedMeals['breakfast'] ? 0 : theme.borderRadius.medium,
-              borderBottomRightRadius: expandedMeals['breakfast'] ? 0 : theme.borderRadius.medium,
-              marginBottom: expandedMeals['breakfast'] ? 0 : undefined,
-            }]}
-          >
-            <View style={styles.mealCategoryContent}>
-              {/* Linke Seite - Mahlzeiteninfo */}
-              <TouchableOpacity 
-                style={{ flex: 1 }}
-                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'breakfast' })}
-              >
-                <View>
-                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                    🥞 Frühstück
-                  </Text>
-                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length > 0 ? (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'breakfast').length} Einträge
-                    </Text>
-                  ) : (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      Noch keine Einträge
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-              
-              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <MealAccordionButton mealType='breakfast' calories={totals.mealTotals.breakfast?.calories || 0} />
-            </View>
-          </TouchableOpacity>
-          
-          {/* Ausklappbarer Bereich für die Einträge */}
-          <MealAccordionContent mealType='breakfast' />
-        </View>
+        {/* Alle Mahlzeiten */}
+        <MealCategory 
+          mealType="breakfast"
+          emoji="🥞"
+          title="Frühstück"
+          calories={totals.mealTotals.breakfast?.calories || 0}
+        />
         
-        {/* Mittagessen */}
-        <View style={{ marginBottom: expandedMeals['lunch'] ? 0 : 12 }}>
-          {/* Header-Bereich - klickbar für Scanner */}
-          <TouchableOpacity 
-            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
-              borderBottomLeftRadius: expandedMeals['lunch'] ? 0 : theme.borderRadius.medium,
-              borderBottomRightRadius: expandedMeals['lunch'] ? 0 : theme.borderRadius.medium,
-              marginBottom: expandedMeals['lunch'] ? 0 : undefined,
-            }]}
-          >
-            <View style={styles.mealCategoryContent}>
-              {/* Linke Seite - Mahlzeiteninfo */}
-              <TouchableOpacity 
-                style={{ flex: 1 }}
-                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'lunch' })}
-              >
-                <View>
-                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                    🌮 Mittagessen
-                  </Text>
-                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length > 0 ? (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'lunch').length} Einträge
-                    </Text>
-                  ) : (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      Noch keine Einträge
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-              
-              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <MealAccordionButton mealType='lunch' calories={totals.mealTotals.lunch?.calories || 0} />
-            </View>
-          </TouchableOpacity>
-          
-          {/* Ausklappbarer Bereich für die Einträge */}
-          <MealAccordionContent mealType='lunch' />
-        </View>
+        <MealCategory 
+          mealType="lunch"
+          emoji="🌮"
+          title="Mittagessen"
+          calories={totals.mealTotals.lunch?.calories || 0}
+        />
         
-        {/* Abendessen */}
-        <View style={{ marginBottom: expandedMeals['dinner'] ? 0 : 12 }}>
-          {/* Header-Bereich - klickbar für Scanner */}
-          <TouchableOpacity 
-            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
-              borderBottomLeftRadius: expandedMeals['dinner'] ? 0 : theme.borderRadius.medium,
-              borderBottomRightRadius: expandedMeals['dinner'] ? 0 : theme.borderRadius.medium,
-              marginBottom: expandedMeals['dinner'] ? 0 : undefined,
-            }]}
-          >
-            <View style={styles.mealCategoryContent}>
-              {/* Linke Seite - Mahlzeiteninfo */}
-              <TouchableOpacity 
-                style={{ flex: 1 }}
-                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'dinner' })}
-              >
-                <View>
-                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                    🍽️ Abendessen
-                  </Text>
-                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length > 0 ? (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'dinner').length} Einträge
-                    </Text>
-                  ) : (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      Noch keine Einträge
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-              
-              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <MealAccordionButton mealType='dinner' calories={totals.mealTotals.dinner?.calories || 0} />
-            </View>
-          </TouchableOpacity>
-          
-          {/* Ausklappbarer Bereich für die Einträge */}
-          <MealAccordionContent mealType='dinner' />
-        </View>
+        <MealCategory 
+          mealType="dinner"
+          emoji="🍽️"
+          title="Abendessen"
+          calories={totals.mealTotals.dinner?.calories || 0}
+        />
         
-        {/* Snacks */}
-        <View style={{ marginBottom: expandedMeals['snack'] ? 0 : 12 }}>
-          {/* Header-Bereich - klickbar für Scanner */}
-          <TouchableOpacity 
-            style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
-              borderBottomLeftRadius: expandedMeals['snack'] ? 0 : theme.borderRadius.medium,
-              borderBottomRightRadius: expandedMeals['snack'] ? 0 : theme.borderRadius.medium,
-              marginBottom: expandedMeals['snack'] ? 0 : undefined,
-            }]}
-          >
-            <View style={styles.mealCategoryContent}>
-              {/* Linke Seite - Mahlzeiteninfo */}
-              <TouchableOpacity 
-                style={{ flex: 1 }}
-                onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType: 'snack' })}
-              >
-                <View>
-                  <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-                  🍪 Snacks
-                  </Text>
-                  {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length > 0 ? (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      {dailyLog.foodEntries.filter(entry => entry.mealType === 'snack').length} Einträge
-                    </Text>
-                  ) : (
-                    <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-                      Noch keine Einträge
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-              
-              {/* Rechte Seite - Kalorien + Akkordeon-Button */}
-              <MealAccordionButton mealType='snack' calories={totals.mealTotals.snack?.calories || 0} />
-            </View>
-          </TouchableOpacity>
-          
-          {/* Ausklappbarer Bereich für die Einträge */}
-          <MealAccordionContent mealType='snack' isLast={true} />
-        </View>
+        <MealCategory 
+          mealType="snack"
+          emoji="🍪"
+          title="Snacks"
+          calories={totals.mealTotals.snack?.calories || 0}
+          isLast={true}
+        />
       </ScrollView>
     </View>
   );
