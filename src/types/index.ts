@@ -8,8 +8,9 @@ export interface NutritionInfo {
   fiber?: number;
   sodium?: number;
   potassium?: number;
-  servingSize: string;
-  servingSizeGrams: number;
+  servingSize: string;  // Beschreibung der Portion (z.B. "1 Riegel (25g)")
+  servingSizeGrams: number; // Gewicht einer Portion in Gramm
+  servingDescription?: string; // Zusätzliche Beschreibung zur Portionsgröße
 }
 
 export interface FoodItem {
@@ -112,6 +113,8 @@ export interface BarcodeApiResponse {
   product?: {
     product_name: string;
     brands?: string;
+    serving_size?: string;  // Portionsgröße wie "1 Stück (45g)" 
+    serving_quantity?: number; // Portionsgröße in Gramm (falls vorhanden)
     nutriments?: {
       'energy-kcal_100g'?: number;
       proteins_100g?: number;

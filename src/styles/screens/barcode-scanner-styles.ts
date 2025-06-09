@@ -92,7 +92,7 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
   inputContainer: { 
     flexDirection: "row", 
     alignItems: "center", 
-    marginBottom: theme.spacing.l 
+    marginBottom: theme.spacing.s 
   },
   barcodeInput: {
     flex: 1,
@@ -130,11 +130,20 @@ export const createBarcodeScannerStyles = (theme: Theme) => StyleSheet.create({
     borderRadius: theme.borderRadius.medium 
   },
   manualEntryButton: {
-    marginTop: theme.spacing.m,
+    marginTop: theme.spacing.xs, // Verringerter Abstand nach oben
     height: theme.spacing.xxl,
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: theme.borderRadius.medium,
+  },
+  // Container für die Suchergebnisse
+  searchResultsContainer: {
+    height: 500, // Höhe reduziert für bessere Balance
+  },
+  // FlatList Style für die Ergebnisse
+  resultsList: {
+    flexGrow: 1,
     borderRadius: theme.borderRadius.medium,
   },
 });

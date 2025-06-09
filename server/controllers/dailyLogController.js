@@ -94,7 +94,6 @@ exports.getDailyLogByDate = async (req, res) => {
     const log = logs[0];
     
     // Get food entries for this log
-    console.log(`Retrieving food entries for daily log ID ${log.id} (date ${date})`);
     const [entries] = await pool.query(
       `SELECT fe.id as entry_id, fe.daily_log_id, fe.food_item_id, fe.serving_amount, fe.meal_type, fe.time_consumed,
               fi.id as food_id, fi.name, fi.brand, fi.barcode, fi.calories, fi.protein, fi.carbs, fi.fat, 
@@ -106,9 +105,7 @@ exports.getDailyLogByDate = async (req, res) => {
       [log.id]
     );
     
-    console.log(`Found ${entries.length} food entries for log ID ${log.id}`);
     if (entries.length > 0) {
-      console.log('First entry sample:', JSON.stringify(entries[0], null, 2));
     }
     
     // Transform entries to app model using the correct column aliases from our SQL query
@@ -161,12 +158,6 @@ exports.saveDailyLog = async (req, res) => {
     
     const { date, foodEntries, waterIntake, weight, dailyNotes, userId } = req.body;
     
-    // Enhanced logging for debugging the date mismatch issue
-    console.log('-------- DAILY LOG SAVING ---------');
-    console.log('Full request body:', JSON.stringify(req.body, null, 2));
-    console.log('Saving daily log with water intake:', waterIntake, 'and weight:', weight);
-    console.log('Date received from client:', date);
-    
     if (date) {
       const currentDate = new Date();
       console.log('Current server time:', currentDate.toISOString());
@@ -187,9 +178,6 @@ exports.saveDailyLog = async (req, res) => {
     if (!normalizedDate) {
       normalizedDate = dateUtils.getTodayFormatted();
     }
-    
-    console.log('Normalized date for DB query:', normalizedDate);
-    console.log('-------- END LOG SAVING INFO ---------');
     
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });

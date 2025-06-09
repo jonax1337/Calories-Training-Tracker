@@ -2,11 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal, Animated, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-native-gesture-handler';
-import { Calendar } from 'react-native-calendars';
 import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react-native';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
@@ -272,7 +270,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                     </Text>
                   </View>
                   <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }}>
-                    {Math.round(entry.foodItem.nutrition.calories * (entry.servingAmount / 100))} kcal
+                    {Math.round((entry.foodItem.nutrition?.calories ?? 0) * (entry.servingAmount / 100))} kcal
                   </Text>
                 </View>
               </LongPressGestureHandler>
@@ -502,16 +500,16 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         const mealType = entry.mealType as keyof typeof totals.mealTotals;
 
         // Calculate nutrition values for this entry
-        const entryCalories = nutrition.calories * (multiplier / 100);
-        const entryProtein = nutrition.protein * (multiplier / 100);
-        const entryCarbs = nutrition.carbs * (multiplier / 100);
-        const entryFat = nutrition.fat * (multiplier / 100);
+        const entryCalories = (nutrition?.calories ?? 0) * (multiplier / 100);
+        const entryProtein = (nutrition?.protein ?? 0) * (multiplier / 100);
+        const entryCarbs = (nutrition?.carbs ?? 0) * (multiplier / 100);
+        const entryFat = (nutrition?.fat ?? 0) * (multiplier / 100);
 
         // Update meal-specific totals
-        totals.mealTotals[mealType].calories += entryCalories;
-        totals.mealTotals[mealType].protein += entryProtein;
-        totals.mealTotals[mealType].carbs += entryCarbs;
-        totals.mealTotals[mealType].fat += entryFat;
+        totals.mealTotals[mealType].calories += entryCalories || 0;
+        totals.mealTotals[mealType].protein += entryProtein || 0;
+        totals.mealTotals[mealType].carbs += entryCarbs || 0;
+        totals.mealTotals[mealType].fat += entryFat || 0;
 
         // Update overall totals
         return {
@@ -783,8 +781,6 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
     </View>
   );
 };
-
-// Styles wurden in eine separate Datei ausgelagert
 
 // Wrapper-Komponente mit ActionSheetProvider
 export default function DailyLogScreen(props: JournalTabScreenProps) {

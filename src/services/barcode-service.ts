@@ -24,6 +24,14 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
     
     if (data.status === 1 && data.product) {
       const { product } = data;
+      
+      // Debug: Vollständige API-Antwort loggen (für Portionsgrößen-Analyse)
+      console.log('DEBUG: API product object structure:', JSON.stringify(product, null, 2));
+      console.log('DEBUG: Vorhandene Portionsfelder:',
+        'serving_size:', product.serving_size || 'nicht vorhanden',
+        'serving_quantity:', product.serving_quantity || 'nicht vorhanden',
+        'quantity:', product.quantity || 'nicht vorhanden'
+      );
 
       // Überprüfe, ob das Produkt einen gültigen Namen hat
       if (!product.product_name) {
@@ -38,6 +46,34 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
       // Parse quantity to get serving size in grams
       let servingSizeGrams = 100; // Default to 100g
       const quantity = product.quantity || "";
+      let servingSize = "";
+      let servingDescription = "";
+      
+      // 1. Bevorzuge serving_size aus der API, wenn vorhanden
+      if (product.serving_size) {
+        servingSize = product.serving_size;
+        console.log(`API serving size: ${servingSize}`);
+        
+        // Versuche, die Gramm aus der Portionsgröße zu extrahieren
+        const servingSizeMatch = servingSize.match(/(\d+([.,]\d+)?)\s*(g|gramm)/i);
+        if (servingSizeMatch) {
+          servingSizeGrams = parseFloat(servingSizeMatch[1].replace(',', '.'));
+          console.log(`Parsed serving size from API: ${servingSizeGrams}g`);
+          
+          // Setze Beschreibung der Portionsgröße
+          servingDescription = `Eine Portion entspricht ${servingSize}`;
+        }
+      } 
+      
+      // 2. Falls serving_quantity direkt verfügbar ist, verwende diesen Wert
+      if (product.serving_quantity) {
+        servingSizeGrams = product.serving_quantity;
+        console.log(`API serving quantity: ${servingSizeGrams}g`);
+        
+        if (!servingDescription && servingSize) {
+          servingDescription = `Eine Portion entspricht ${servingSize}`;
+        }
+      }
       
       if (quantity) {
         console.log(`Product quantity: ${quantity}`);
@@ -81,8 +117,9 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
         fiber: product.nutriments?.fiber_100g,
         sodium: product.nutriments?.sodium_100g,
         potassium: potassiumValue,
-        servingSize: product.quantity || '100g',
-        servingSizeGrams: servingSizeGrams
+        servingSize: product.serving_size || product.quantity || '100g',
+        servingSizeGrams: servingSizeGrams,
+        servingDescription: servingDescription || undefined
       };
       
       // Debug-Log für das erstellte Nutrition-Objekt
@@ -121,6 +158,8 @@ interface SearchApiResponse {
     brands?: string;
     image_url?: string;
     quantity?: string;
+    serving_size?: string;
+    serving_quantity?: number;
     nutriments?: {
       [key: string]: number;
     };
@@ -144,6 +183,8 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         'product_name',
         'brands',
         'quantity',
+        'serving_size',
+        'serving_quantity',
         'nutriments.energy-kcal_100g',
         'nutriments.proteins_100g',
         'nutriments.carbohydrates_100g',
@@ -151,7 +192,7 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         'nutriments.sugars_100g',
         'nutriments.fiber_100g',
         'nutriments.sodium_100g',
-        'nutriments.potassium_100g'
+        'nutriments.potassium_100g',
       ].join(',')
     });
     
@@ -167,7 +208,22 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
     console.log(`API search found ${data.products?.length || 0} products`);
     
     if (data.products && data.products.length > 0) {
+      // Log die ersten 2 Produkte vollständig für Debug-Zwecke
+      if (data.products.length >= 1) {
+        console.log('DEBUG: Erstes Suchprodukt (vollständig):', JSON.stringify(data.products[0], null, 2));
+      }
+      if (data.products.length >= 2) {
+        console.log('DEBUG: Zweites Suchprodukt (vollständig):', JSON.stringify(data.products[1], null, 2));
+      }
+      
       return data.products.map(product => {
+        // Log serving_size und serving_quantity für jedes gefundene Produkt
+        console.log('DEBUG: Produkt Portionsinfo:', product.product_name,
+          'serving_size:', product.serving_size || 'nicht vorhanden',
+          'serving_quantity:', product.serving_quantity || 'nicht vorhanden',
+          'quantity:', product.quantity || 'nicht vorhanden'
+        );
+        
         // Extract nutrition information
         
         // Parse quantity to get serving size in grams (gleicher Code wie in getFoodDataByBarcode)

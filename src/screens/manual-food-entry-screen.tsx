@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Text, View, TextInput, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { Text, View, TextInput, TouchableOpacity, Alert, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -36,6 +36,10 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
+  const [sugar, setSugar] = useState('');
+  const [fiber, setFiber] = useState('');
+  const [sodium, setSodium] = useState('');
+  const [potassium, setPotassium] = useState('');
   const [servings, setServings] = useState('100.00');
   const [sliderValue, setSliderValue] = useState(100);
   
@@ -47,27 +51,8 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
   // Use the date from route params, then context, or today as default
   const [selectedDate] = useState<string>(routeDate || contextDate || getTodayFormatted());
 
-  // Referenz zum ScrollView, um Scrollposition zu kontrollieren
+  // Referenz zum ScrollView
   const scrollViewRef = useRef<ScrollView>(null);
-  
-  // Aktuellen Scrollstatus speichern und wiederherstellen
-  const [scrollPosition, setScrollPosition] = useState<{x: number, y: number}>({x: 0, y: 0});
-  
-  // Diese Funktion hilft, die Scrollposition beizubehalten
-  const maintainScrollPosition = () => {
-    if (scrollViewRef.current) {
-      // Aktuelle Position speichern
-      scrollViewRef.current.scrollTo({x: scrollPosition.x, y: scrollPosition.y, animated: false});
-    }
-  };
-  
-  // Scroll-Position beim Text-Input-Fokus beibehalten
-  const handleScrollPositionChange = (e: any) => {
-    setScrollPosition({
-      x: e.nativeEvent.contentOffset.x,
-      y: e.nativeEvent.contentOffset.y
-    });
-  };
 
   // Handle add to log
   const handleAddToLog = async () => {
@@ -94,6 +79,10 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
           protein: parseFloat(protein) || 0,
           carbs: parseFloat(carbs) || 0,
           fat: parseFloat(fat) || 0,
+          sugar: parseFloat(sugar) || 0,
+          fiber: parseFloat(fiber) || 0,
+          sodium: parseFloat(sodium) || 0,
+          potassium: parseFloat(potassium) || 0,
           servingSize: '100g',
           servingSizeGrams: 100
         }
@@ -202,85 +191,99 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
     protein: parseFloat(protein) || 0,
     carbs: parseFloat(carbs) || 0,
     fat: parseFloat(fat) || 0,
+    sugar: parseFloat(sugar) || 0,
+    fiber: parseFloat(fiber) || 0,
+    sodium: parseFloat(sodium) || 0,
+    potassium: parseFloat(potassium) || 0,
     servingSize: '100g',
     servingSizeGrams: 100
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? theme.spacing.xl * 2 : 0}
+    >
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollContent}
         contentContainerStyle={{
-          paddingRight: 16,
-          paddingLeft: 16,
+          paddingRight: theme.spacing.m,
+          paddingLeft: theme.spacing.m,
+          paddingBottom: theme.spacing.xl * 2, // Extra padding at bottom for keyboard space
         }}
-        scrollEventThrottle={16}
-        onScroll={handleScrollPositionChange}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={true}
       >
-        {/* Food name input */}
-        <View style={[styles.inputContainer, { marginBottom: theme.spacing.m }]}>
-          <Text style={[styles.inputLabel, { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.medium,
-            marginTop: theme.spacing.m,
-            marginBottom: theme.spacing.s
-          }]}>Produktname *</Text>
-          <TextInput
-            style={[styles.textInput, { 
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.small,
+        {/* Row: Product name and brand */}
+        <View style={{ flexDirection: 'row', marginBottom: theme.spacing.m }}>
+          {/* Food name input */}
+          <View style={[styles.inputContainer, { flex: 5, marginRight: theme.spacing.m }]}>
+            <Text style={[styles.inputLabel, { 
               color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.regular,
-              padding: theme.spacing.m
-            }]}
-            value={productName}
-            onChangeText={setProductName}
-            placeholder="Produktname eingeben"
-            placeholderTextColor={theme.colors.placeholder}
-          />
-        </View>
+              fontFamily: theme.typography.fontFamily.medium,
+              marginTop: theme.spacing.m,
+              marginBottom: theme.spacing.s
+            }]}>Produktname *</Text>
+            <TextInput
+              style={[styles.textInput, { 
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                borderRadius: theme.borderRadius.small,
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.regular,
+                padding: theme.spacing.m
+              }]}
+              value={productName}
+              onChangeText={setProductName}
+              placeholder="Produktname eingeben"
+              placeholderTextColor={theme.colors.placeholder}
+            />
+          </View>
 
-        {/* Brand Input */}
-        <View style={[styles.inputContainer, { marginBottom: theme.spacing.xl }]}>
-          <Text style={[styles.inputLabel, { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.medium,
-            marginBottom: theme.spacing.s
-          }]}>Marke (optional)</Text>
-          <TextInput
-            style={[styles.textInput, { 
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              borderRadius: theme.borderRadius.small,
+          {/* Brand Input */}
+          <View style={[styles.inputContainer, { flex: 3 }]}>
+            <Text style={[styles.inputLabel, { 
               color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.regular,
-              padding: theme.spacing.m
-            }]}
-            value={productBrand}
-            onChangeText={setProductBrand}
-            placeholder="z.B. Ehrmann"
-            placeholderTextColor={theme.colors.placeholder}
-          />
+              fontFamily: theme.typography.fontFamily.medium,
+              marginTop: theme.spacing.m,
+              marginBottom: theme.spacing.s
+            }]}>Marke</Text>
+            <TextInput
+              style={[styles.textInput, { 
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                borderRadius: theme.borderRadius.small,
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.regular,
+                padding: theme.spacing.m
+              }]}
+              value={productBrand}
+              onChangeText={setProductBrand}
+              placeholder="z.B. Ehrmann"
+              placeholderTextColor={theme.colors.placeholder}
+            />
+          </View>
         </View>
 
         {/* Nutrition Inputs */}
-        <View style={[styles.inputContainer, { marginBottom: theme.spacing.m }]}>
+        <View style={[styles.inputContainer]}>
           <Text style={[styles.inputLabel, { 
             color: theme.colors.text,
             fontFamily: theme.typography.fontFamily.medium,
             marginBottom: theme.spacing.s,
             fontSize: theme.typography.fontSize.l
-          }]}>Nährwerte pro 100g/ml</Text>
+          }]}>Nährwerte pro 100g</Text>
           
-          {/* Calories Input */}
+          {/* Calories Input - Full Width */}
           <View style={styles.inputContainer}>
             <Text style={[styles.inputLabel, { 
               color: theme.colors.text,
               fontFamily: theme.typography.fontFamily.medium,
-              marginBottom: theme.spacing.s
+              marginBottom: theme.spacing.s,
+              fontSize: theme.typography.fontSize.s
             }]}>Kalorien (kcal) *</Text>
             <TextInput
               style={[styles.textInput, { 
@@ -299,76 +302,191 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
             />
           </View>
 
-          {/* Protein Input */}
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.medium,
-              marginBottom: theme.spacing.s
-            }]}>Protein (g)</Text>
-            <TextInput
-              style={[styles.textInput, { 
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                borderRadius: theme.borderRadius.small,
-                color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.regular,
-                padding: theme.spacing.m
-              }]}
-              value={protein}
-              onChangeText={(text) => setProtein(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor={theme.colors.placeholder}
-            />
-          </View>
-
           {/* Carbs Input */}
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.medium,
-              marginBottom: theme.spacing.s
-            }]}>Kohlenhydrate (g)</Text>
-            <TextInput
-              style={[styles.textInput, { 
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                borderRadius: theme.borderRadius.small,
+          <View style={[styles.inputContainer, { flex: 1 }]}>
+              <Text style={[styles.inputLabel, { 
                 color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.regular,
-                padding: theme.spacing.m
-              }]}
-              value={carbs}
-              onChangeText={(text) => setCarbs(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor={theme.colors.placeholder}
-            />
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s,
+                fontSize: theme.typography.fontSize.s
+              }]}>Kohlenhydrate (g)</Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={carbs}
+                onChangeText={(text) => setCarbs(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={theme.colors.placeholder}
+              />
+            </View>
+
+            {/* Sugar and Fiber Inputs */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {/* Sugar Input */}
+            <View style={[styles.inputContainer, { flex: 1, marginRight: theme.spacing.m }]}>
+              <Text style={[styles.inputLabel, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s,
+                fontSize: theme.typography.fontSize.s
+              }]}>Zucker (g)</Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={sugar}
+                onChangeText={(text) => setSugar(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={theme.colors.placeholder}
+              />
+            </View>
+
+            {/* Fiber Input */}
+            <View style={[styles.inputContainer, { flex: 1 }]}>
+              <Text style={[styles.inputLabel, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s,
+                fontSize: theme.typography.fontSize.s
+              }]}>Ballaststoffe (g)</Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={fiber}
+                onChangeText={(text) => setFiber(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={theme.colors.placeholder}
+              />
+            </View>
           </View>
 
-          {/* Fat Input */}
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.medium,
-              marginBottom: theme.spacing.s
-            }]}>Fett (g)</Text>
-            <TextInput
-              style={[styles.textInput, { 
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                borderRadius: theme.borderRadius.small,
+          {/* Protein, Carbs, Fat in a Row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {/* Protein Input */}
+            <View style={[styles.inputContainer, { flex: 1, marginRight: theme.spacing.m }]}>
+              <Text style={[styles.inputLabel, { 
                 color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.regular,
-                padding: theme.spacing.m
-              }]}
-              value={fat}
-              onChangeText={(text) => setFat(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor={theme.colors.placeholder}
-            />
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s,
+                fontSize: theme.typography.fontSize.s
+              }]}>Protein (g)</Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={protein}
+                onChangeText={(text) => setProtein(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={theme.colors.placeholder}
+
+              />
+            </View>
+
+            {/* Fat Input */}
+            <View style={[styles.inputContainer, { flex: 1 }]}>
+              <Text style={[styles.inputLabel, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s,
+                fontSize: theme.typography.fontSize.s
+              }]}>Fett (g)</Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={fat}
+                onChangeText={(text) => setFat(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={theme.colors.placeholder}
+
+              />
+            </View>
+          </View>
+
+          {/* Sodium and Potassium Inputs */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {/* Sodium Input */}
+            <View style={[styles.inputContainer, { flex: 1, marginRight: theme.spacing.m }]}>
+              <Text style={[styles.inputLabel, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s,
+                fontSize: theme.typography.fontSize.s
+              }]}>Natrium (mg)</Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={sodium}
+                onChangeText={(text) => setSodium(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={theme.colors.placeholder}
+              />
+            </View>
+
+            {/* Potassium Input */}
+            <View style={[styles.inputContainer, { flex: 1 }]}>
+              <Text style={[styles.inputLabel, { 
+                color: theme.colors.text,
+                fontFamily: theme.typography.fontFamily.medium,
+                marginBottom: theme.spacing.s,
+                fontSize: theme.typography.fontSize.s
+              }]}>Kalium (mg)</Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.borderRadius.small,
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.m
+                }]}
+                value={potassium}
+                onChangeText={(text) => setPotassium(text.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={theme.colors.placeholder}
+
+              />
+            </View>
           </View>
         </View>
 
@@ -387,7 +505,7 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
             setSliderValue(value);
           }}
           label="Menge"
-          unit="Gramm / Mililiter"
+          unit="Gramm"
           placeholder="100"
         />
         
@@ -396,7 +514,7 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
           <View style={{ marginBottom: theme.spacing.m }}>
             <NutritionalInfoCard
               nutrition={nutritionValues}
-              servingMultiplier={parseFloat(servings) / 100} /* Durch 100 teilen, da Nährwerte pro 100g/ml gespeichert sind */
+              servingMultiplier={parseFloat(servings) / 100} /* Durch 100 teilen, da Nährwerte pro 100g gespeichert sind */
             />
           </View>
         )}
@@ -427,15 +545,14 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
             backgroundColor: theme.colors.primary,
             borderRadius: theme.borderRadius.medium,
             padding: theme.spacing.m,
-            marginTop: theme.spacing.l,
-            marginBottom: theme.spacing.xl
+            marginTop: theme.spacing.m,
           }]}
           onPress={handleAddToLog}
         >
           <Text style={styles.addButtonText}>Hinzufügen</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -54,7 +54,7 @@ export const createManualFoodEntryStyles = (theme: Theme): ManualFoodEntryStyles
     fontFamily: theme.typography.fontFamily.medium,
   },
   inputContainer: {
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.s,
   },
   inputLabel: {
     fontSize: theme.typography.fontSize.m,

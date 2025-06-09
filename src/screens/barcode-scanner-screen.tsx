@@ -211,6 +211,7 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
     <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: theme.spacing.m }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? theme.spacing.xl : 0}
         style={styles.content}
       >
 
@@ -321,12 +322,14 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
 
         {/* Suchergebnisse - nur anzeigen, wenn im Namen-Tab */}
         {activeTab === "name" && searchResults.length > 0 && (
-          <View style={{ height: 500 }}>
+          <View style={styles.searchResultsContainer}>
           <FlatList
-            style={{ flexGrow: 1 }}              // verhindert, dass der List-Container unbegrenzt wächst
-            scrollEnabled={true}              // eigentlich Standard, aber zur Sicherheit
-            nestedScrollEnabled={true}        // wichtig, wenn du in einem ScrollView bist (Android)
+            style={styles.resultsList}
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
             showsVerticalScrollIndicator={true}
+            keyboardShouldPersistTaps="never"
+            keyboardDismissMode="on-drag"
             data={searchResults}
             keyExtractor={(i) => i.id}
             renderItem={({ item }) => (

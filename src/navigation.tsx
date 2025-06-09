@@ -73,7 +73,6 @@ export type RootStackParamList = {
   FoodDetail: { barcode?: string; foodId?: string; mealType?: string; foodItem?: any; selectedDate?: string; manualEntry?: boolean; existingEntryId?: string; servingAmount?: number };
   ManualFoodEntry: { mealType?: string; selectedDate?: string };
   DailyLog: { date?: string };
-  Settings: undefined;
   HIITTimer: { settings?: HIITSettings };
   HIITTimerSettings: { settings?: HIITSettings };
   NutritionReport: { days?: number };
@@ -81,6 +80,8 @@ export type RootStackParamList = {
   Home: undefined;
   Profile: undefined;
   Food: undefined;
+  Training: undefined;
+  Settings: undefined;
 };
 
 // Define the type for our tab navigator parameters

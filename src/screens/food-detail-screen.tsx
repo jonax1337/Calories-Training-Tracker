@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, Vibration, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { Text, View, Vibration, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, KeyboardAvoidingView } from 'react-native';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -33,16 +33,16 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const [isLoading, setIsLoading] = useState(false);
   const [foodItem, setFoodItem] = useState<FoodItem | null>(null);
   
-  // Stelle sicher, dass wir den passedServingAmount-Wert mit 2 Nachkommastellen initialisieren, falls vorhanden
-  // Andernfalls verwenden wir den Standardwert 100.00
-  const [servings, setServings] = useState(
-    typeof passedServingAmount === 'number' ? passedServingAmount.toFixed(2) : '100.00'
-  ); 
+  // Verwende die tatsächliche Portionsgröße aus dem FoodItem anstelle von 100g, wenn verfügbar
+  // Priorität: 1. Übergebener Servingwert, 2. Portionsgröße aus API, 3. Default 100g
+  const initialServingSize = 
+    typeof passedServingAmount === 'number' ? passedServingAmount : 
+    (passedFoodItem?.nutrition?.servingSizeGrams || 100);
+    
+  const [servings, setServings] = useState(initialServingSize.toFixed(2));
   
   // sliderValue sollte identisch mit dem numerischen Wert sein
-  const [sliderValue, setSliderValue] = useState(
-    typeof passedServingAmount === 'number' ? passedServingAmount : 100
-  );
+  const [sliderValue, setSliderValue] = useState(initialServingSize);
   
   // Set selected meal based on navigation parameter or default to Lunch
   const [selectedMeal, setSelectedMeal] = useState<MealType>(
@@ -115,11 +115,23 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         
         // Setze die Portionsgröße NUR, wenn wir KEINEN existierenden Eintrag bearbeiten
         // Ansonsten verwenden wir die Menge aus dem Food Entry!
-        if (!isEditing && passedFoodItem.nutrition && passedFoodItem.nutrition.servingSizeGrams) {
-          const productSize = passedFoodItem.nutrition.servingSizeGrams;
-          console.log(`Setze Portionsgröße auf Produktfüllmenge: ${productSize}${servingUnit === "Milliliter" ? "ml" : "g"}`);
-          setServings(productSize.toFixed(2));
-          setSliderValue(productSize);
+        if (!isEditing && passedFoodItem.nutrition) {
+          // Entscheide, welche Portionsgröße wir verwenden:
+          // 1. Bei neuen Einträgen verwenden wir eine Portion (servingSizeGrams) anstatt 100g
+          // 2. Beim Editieren verwenden wir die übergebene Portionsgröße
+          
+          // Servingsize verwenden, wenn vorhanden - Standardwert ist 100g oder ml
+          let portionSize = 100;
+          
+          // Verwende die Portionsgröße in Gramm, wenn diese aus der API extrahiert wurde
+          if (passedFoodItem.nutrition.servingSizeGrams) {
+            portionSize = passedFoodItem.nutrition.servingSizeGrams;
+            console.log(`Verwende Portionsgröße aus API: ${portionSize}${servingUnit === "Milliliter" ? "ml" : "g"}`);
+          }
+          
+          // Setze den Slider-Wert auf die Portionsgröße
+          setServings(portionSize.toFixed(2));
+          setSliderValue(portionSize);
         }
         
         setIsLoading(false);
@@ -315,19 +327,22 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   );
 
   return (
-    <View style={[styles.container, { 
-      backgroundColor: theme.colors.background
-    }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? theme.spacing.xl * 2 : 0}
+    >
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollContent}
         contentContainerStyle={{
-          paddingRight: 16,
-          paddingLeft: 16,
+          paddingRight: theme.spacing.m,
+          paddingLeft: theme.spacing.m,
+          paddingBottom: theme.spacing.xl, // Extra padding at bottom for keyboard space
         }}
-        scrollEventThrottle={16}
-        onScroll={handleScrollPositionChange}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={true}
       >
         {isLoading ? (
           <View style={[styles.loadingContainer, { marginTop: theme.spacing.xl }]}>
@@ -370,12 +385,42 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
             {/* Nutrition information */}
             {foodItem?.nutrition && (
-            <View style={{ marginBottom: theme.spacing.l }}>
+            <View style={{ marginBottom: theme.spacing.s }}>
               <NutritionalInfoCard
               nutrition={foodItem.nutrition}
               servingMultiplier={parseFloat(servings) / 100} 
             />
             </View>
+            )}
+
+            {/* Portionsinformationen */}
+            {foodItem?.nutrition?.servingDescription && (
+              <View style={{ 
+                marginBottom: theme.spacing.m, 
+                backgroundColor: theme.colors.surfaceVariant,
+                padding: theme.spacing.m,
+                borderRadius: theme.borderRadius.small,
+                borderLeftWidth: 3,
+                borderLeftColor: theme.colors.primary
+              }}>
+                <Text style={{
+                  color: theme.colors.text,
+                  fontFamily: theme.typography.fontFamily.medium,
+                  marginBottom: theme.spacing.xs
+                }}>
+                  Portionsinformationen:
+                </Text>
+                {foodItem.nutrition.servingDescription && (
+                  <Text style={{
+                    color: theme.colors.text,
+                    opacity: 0.7,
+                    fontFamily: theme.typography.fontFamily.regular,
+                    marginTop: theme.spacing.xs
+                  }}>
+                    {foodItem.nutrition.servingDescription}
+                  </Text>
+                )}
+              </View>
             )}
 
             {/* Mengeneingabe mit wiederverwendbarem SliderWithInput */}
@@ -464,7 +509,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           </>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
