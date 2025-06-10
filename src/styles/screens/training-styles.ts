@@ -79,7 +79,7 @@ export const createTrainingStyles = (theme: Theme): TrainingStyles => StyleSheet
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.xl,
+    padding: theme.spacing.l,
   },
   emptyStateText: {
     fontSize: theme.typography.fontSize.m,

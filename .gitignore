@@ -34,9 +34,15 @@ yarn-error.*
 .env*.local
 .env
 
+#config
+src/config/api-config.ts
+
 #uploaded images
 uploads/
 server/uploads/
+
+#android
+android/
 
 # typescript
 *.tsbuildinfo

@@ -47,7 +47,7 @@ function TrainingScreen({ navigation }: TrainingTabScreenProps) {
       {/* Content */}
       <ScrollView
         style={styles.scrollContent}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
       >
         {isLoading ? (
           <View style={styles.emptyStateContainer}>
