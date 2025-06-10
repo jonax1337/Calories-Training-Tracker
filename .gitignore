@@ -34,7 +34,7 @@ yarn-error.*
 .env*.local
 .env
 
-#config
+#api config
 src/config/api-config.ts
 
 #uploaded images
