@@ -226,8 +226,8 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                         width: 80,
                         backgroundColor: theme.colors.error,
                         opacity,
-                        borderTopRightRadius: index === 0 ? theme.borderRadius.small : 0,
-                        borderBottomRightRadius: index === array.length - 1 ? theme.borderRadius.small : 0,
+                        borderTopRightRadius: 0,
+                        borderBottomRightRadius: 0,
                         height: '100%',
                         overflow: 'hidden',
                         // Verbesserte Ausrichtung ohne absolute Positionierung
@@ -281,8 +281,8 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                         width: 80,
                         backgroundColor: theme.colors.accent,
                         opacity,
-                        borderTopLeftRadius: index === 0 ? theme.borderRadius.small : 0,
-                        borderBottomLeftRadius: index === array.length - 1 ? theme.borderRadius.small : 0,
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
                         height: '100%',
                         overflow: 'hidden',
                         // Verbesserte Ausrichtung ohne absolute Positionierung
