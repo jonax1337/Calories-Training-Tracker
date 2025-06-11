@@ -35,6 +35,8 @@ async function initializeDatabase() {
         name VARCHAR(255) NOT NULL,
         brand VARCHAR(255),
         barcode VARCHAR(100),
+        
+        -- Makronährstoffe
         calories FLOAT,
         protein FLOAT,
         carbs FLOAT,
@@ -43,6 +45,19 @@ async function initializeDatabase() {
         fiber FLOAT,
         sodium FLOAT,
         potassium FLOAT,
+        
+        -- Vitamine (in μg oder mg)
+        vitamin_a FLOAT,
+        vitamin_b12 FLOAT,
+        vitamin_c FLOAT,
+        vitamin_d FLOAT,
+        
+        -- Mineralstoffe (in mg)
+        calcium FLOAT,
+        iron FLOAT,
+        magnesium FLOAT,
+        zinc FLOAT,
+        
         serving_size VARCHAR(100) NOT NULL,
         serving_size_grams FLOAT NOT NULL,
         image VARCHAR(255),

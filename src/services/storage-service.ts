@@ -102,13 +102,13 @@ export async function saveDailyLog(log: DailyLog): Promise<void> {
   }
 }
 
-export async function getDailyLogs(): Promise<DailyLog[]> {
+export async function getDailyLogs(startDate?: string, endDate?: string): Promise<DailyLog[]> {
   try {
     // Get the authenticated user ID or use default
     const userId = await getCurrentUserId() || DEFAULT_USER_ID;
     
     // Use the API service with the current user ID
-    return await fetchDailyLogs(userId);
+    return await fetchDailyLogs(userId, startDate, endDate);
   } catch (error) {
     console.error('Error getting daily logs:', error);
     return [];

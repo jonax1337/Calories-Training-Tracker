@@ -8,14 +8,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // localhost only works when testing in a web browser on the same machine as the server
 // For mobile devices, you need to use your computer's IP address or hostname
 
-// Create axios instance for regular requests
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
 // Create an authorized API instance for protected routes
 const authorizedApi = axios.create({
   baseURL: API_BASE_URL,
@@ -138,10 +130,10 @@ export async function deleteFoodItem(id: string): Promise<boolean> {
 }
 
 // Daily logs functions
-export async function fetchDailyLogs(userId: string): Promise<DailyLog[]> {
+export async function fetchDailyLogs(userId: string, startDate?: string, endDate?: string): Promise<DailyLog[]> {
   try {
     const response = await authorizedApi.get('/api/daily-logs', {
-      params: { userId }
+      params: { userId, startDate, endDate }
     });
     return response.data;
   } catch (error) {

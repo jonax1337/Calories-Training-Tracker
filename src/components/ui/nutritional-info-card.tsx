@@ -21,7 +21,12 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
   console.log('Kalium-Wert verfügbar?', hasPotassium, nutrition.potassium);
   
   // Calculate nutrition values based on serving multiplier
-  const calculateValue = (value: number) => {
+  // Für Vitaminwerte: Umrechnung von g in μg (1g = 1.000.000μg)
+  const calculateValue = (value: number, unit: string = '') => {
+    if (unit === 'μg' && value > 0) {
+      // Umrechnung von g in μg
+      return Math.round(value * 1000000 * servingMultiplier * 10) / 10;
+    }
     return Math.round(value * servingMultiplier * 10) / 10;
   };
 
@@ -32,12 +37,14 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       shadowColor: theme.colors.shadow,
       borderColor: theme.colors.border,
     }]}>
-      <Text style={[styles.title, { 
+      {/* Makronährstoffe Überschrift */}
+      <Text style={[styles.sectionTitle, { 
         color: theme.colors.text,
         fontFamily: theme.typography.fontFamily.bold, 
-        fontSize: theme.typography.fontSize.l,
-        marginBottom: theme.spacing.m
-      }]}>Nährwertangaben</Text>
+        fontSize: theme.typography.fontSize.m,
+        marginTop: theme.spacing.s,
+        marginBottom: theme.spacing.xs
+      }]}>Makronährstoffe</Text>
       
       {nutrition.calories !== undefined && (
       <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
@@ -129,6 +136,21 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
         </View>
       )}
       
+
+      
+      {/* Elektrolyte Überschrift */}
+      {(nutrition.sodium !== undefined && nutrition.sodium > 0) || 
+       (nutrition.potassium !== undefined && nutrition.potassium > 0) ? (
+        <Text style={[styles.sectionTitle, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.bold, 
+          fontSize: theme.typography.fontSize.m,
+          marginTop: theme.spacing.m,
+          marginBottom: theme.spacing.xs
+        }]}>Elektrolyte</Text>
+      ) : null}
+      
+      {/* Natrium (in Elektrolyte verschoben) */}
       {nutrition.sodium !== undefined && nutrition.sodium > 0 && (
         <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
           <Text style={[styles.nutrientName, { 
@@ -159,6 +181,162 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
           }]}>{calculateValue(nutrition.potassium)}mg</Text>
         </View>
       )}
+      
+      {/* Vitamin-Bereich - Überschrift */}
+      {(nutrition.vitaminA !== undefined && nutrition.vitaminA > 0) ||
+       (nutrition.vitaminB12 !== undefined && nutrition.vitaminB12 > 0) ||
+       (nutrition.vitaminC !== undefined && nutrition.vitaminC > 0) ||
+       (nutrition.vitaminD !== undefined && nutrition.vitaminD > 0) ? (
+        <Text style={[styles.sectionTitle, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.bold, 
+          fontSize: theme.typography.fontSize.m,
+          marginTop: theme.spacing.m,
+          marginBottom: theme.spacing.xs
+        }]}>Vitamine</Text>
+      ) : null}
+      
+      {/* Vitamin A */}
+      {nutrition.vitaminA !== undefined && nutrition.vitaminA > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Vitamin A</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.vitaminA, 'μg')}μg</Text>
+        </View>
+      )}
+      
+      {/* Vitamin B12 */}
+      {nutrition.vitaminB12 !== undefined && nutrition.vitaminB12 > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Vitamin B12</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.vitaminB12, 'μg')}μg</Text>
+        </View>
+      )}
+      
+      {/* Vitamin C */}
+      {nutrition.vitaminC !== undefined && nutrition.vitaminC > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Vitamin C</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.vitaminC)}mg</Text>
+        </View>
+      )}
+      
+      {/* Vitamin D */}
+      {nutrition.vitaminD !== undefined && nutrition.vitaminD > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Vitamin D</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.vitaminD, 'μg')}μg</Text>
+        </View>
+      )}
+
+      {/* Mineralstoff-Bereich - Überschrift */}
+      {(nutrition.calcium !== undefined && nutrition.calcium > 0) ||
+       (nutrition.iron !== undefined && nutrition.iron > 0) ||
+       (nutrition.magnesium !== undefined && nutrition.magnesium > 0) ||
+       (nutrition.zinc !== undefined && nutrition.zinc > 0) ? (
+        <Text style={[styles.sectionTitle, { 
+          color: theme.colors.text,
+          fontFamily: theme.typography.fontFamily.bold, 
+          fontSize: theme.typography.fontSize.m,
+          marginTop: theme.spacing.m,
+          marginBottom: theme.spacing.xs
+        }]}>Mineralstoffe</Text>
+      ) : null}
+      
+      {/* Calcium */}
+      {nutrition.calcium !== undefined && nutrition.calcium > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Calcium</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.calcium)}mg</Text>
+        </View>
+      )}
+      
+      {/* Eisen */}
+      {nutrition.iron !== undefined && nutrition.iron > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Eisen</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.iron)}mg</Text>
+        </View>
+      )}
+      
+      {/* Magnesium */}
+      {nutrition.magnesium !== undefined && nutrition.magnesium > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Magnesium</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.magnesium)}mg</Text>
+        </View>
+      )}
+      
+      {/* Zink */}
+      {nutrition.zinc !== undefined && nutrition.zinc > 0 && (
+        <View style={[styles.nutritionRow, { borderBottomColor: theme.colors.border }]}>
+          <Text style={[styles.nutrientName, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>Zink</Text>
+          <Text style={[styles.nutrientValue, { 
+            color: theme.colors.text,
+            fontFamily: theme.typography.fontFamily.medium,
+            fontSize: theme.typography.fontSize.m
+          }]}>{calculateValue(nutrition.zinc)}mg</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -174,6 +352,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   title: {
+    // Theme-spezifische Stile werden inline hinzugefügt
+  },
+  sectionTitle: {
     // Theme-spezifische Stile werden inline hinzugefügt
   },
   servingInfo: {

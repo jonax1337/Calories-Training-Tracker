@@ -19,7 +19,9 @@ exports.getDailyLogs = async (req, res) => {
     // For each log, get the food entries
     const logsWithEntries = await Promise.all(logs.map(async (log) => {
       const [entries] = await pool.query(
-        `SELECT fe.*, fi.* 
+        `SELECT fe.*, fi.id, fi.name, fi.brand, fi.barcode, fi.calories, fi.protein, fi.carbs, fi.fat, 
+         fi.sugar, fi.fiber, fi.sodium, fi.potassium, fi.vitamin_a, fi.vitamin_b12, fi.vitamin_c, fi.vitamin_d,
+         fi.calcium, fi.iron, fi.magnesium, fi.zinc, fi.serving_size, fi.serving_size_grams, fi.image
          FROM food_entries fe 
          JOIN food_items fi ON fe.food_item_id = fi.id 
          WHERE fe.daily_log_id = ? 
@@ -44,6 +46,14 @@ exports.getDailyLogs = async (req, res) => {
             fiber: entry.fiber,
             sodium: entry.sodium,
             potassium: entry.potassium,
+            vitaminA: entry.vitamin_a,
+            vitaminB12: entry.vitamin_b12,
+            vitaminC: entry.vitamin_c,
+            vitaminD: entry.vitamin_d,
+            calcium: entry.calcium,
+            iron: entry.iron,
+            magnesium: entry.magnesium,
+            zinc: entry.zinc,
             servingSize: entry.serving_size,
             servingSizeGrams: entry.serving_size_grams
           },
@@ -98,7 +108,8 @@ exports.getDailyLogByDate = async (req, res) => {
     const [entries] = await pool.query(
       `SELECT fe.id as entry_id, fe.daily_log_id, fe.food_item_id, fe.serving_amount, fe.meal_type, fe.time_consumed,
               fi.id as food_id, fi.name, fi.brand, fi.barcode, fi.calories, fi.protein, fi.carbs, fi.fat, 
-              fi.sugar, fi.fiber, fi.sodium, fi.potassium, fi.serving_size, fi.serving_size_grams, fi.image
+              fi.sugar, fi.fiber, fi.sodium, fi.potassium, fi.vitamin_a, fi.vitamin_b12, fi.vitamin_c, fi.vitamin_d,
+              fi.calcium, fi.iron, fi.magnesium, fi.zinc, fi.serving_size, fi.serving_size_grams, fi.image
        FROM food_entries fe 
        JOIN food_items fi ON fe.food_item_id = fi.id 
        WHERE fe.daily_log_id = ? 
@@ -126,6 +137,14 @@ exports.getDailyLogByDate = async (req, res) => {
           fiber: entry.fiber,
           sodium: entry.sodium,
           potassium: entry.potassium,
+          vitaminA: entry.vitamin_a,
+          vitaminB12: entry.vitamin_b12,
+          vitaminC: entry.vitamin_c,
+          vitaminD: entry.vitamin_d,
+          calcium: entry.calcium,
+          iron: entry.iron,
+          magnesium: entry.magnesium,
+          zinc: entry.zinc,
           servingSize: entry.serving_size,
           servingSizeGrams: entry.serving_size_grams
         },
@@ -162,6 +181,39 @@ exports.saveDailyLog = async (req, res) => {
     
     // Log für Debugging-Zwecke
     console.log('Received isCheatDay flag:', isCheatDay);
+    console.log('Received weight:', weight);
+    
+    // Gewicht-Handling: Falls kein Gewicht angegeben wurde, holen wir das zuletzt bekannte Gewicht
+    let userWeight = weight;
+    if (userWeight === undefined || userWeight === null) {
+      console.log('No weight provided, fetching most recent weight for user', userId);
+      
+      // Schritt 1: Letzten Logeintrag mit Gewicht für diesen Benutzer finden
+      const [lastWeightRecords] = await connection.query(
+        'SELECT weight FROM daily_logs WHERE user_id = ? AND weight IS NOT NULL ORDER BY date DESC LIMIT 1',
+        [userId]
+      );
+      
+      if (lastWeightRecords.length > 0 && lastWeightRecords[0].weight) {
+        userWeight = lastWeightRecords[0].weight;
+        console.log('Found previous weight in daily logs:', userWeight);
+      } else {
+        // Schritt 2: Falls kein Gewicht in den Logs gefunden wurde, im Benutzerprofil nachschauen
+        console.log('No weight in daily logs, checking user profile');
+        const [userRecords] = await connection.query(
+          'SELECT weight FROM users WHERE id = ? AND weight IS NOT NULL',
+          [userId]
+        );
+        
+        if (userRecords.length > 0 && userRecords[0].weight) {
+          userWeight = userRecords[0].weight;
+          console.log('Found weight in user profile:', userWeight);
+        } else {
+          console.log('No weight found in user profile either');
+          userWeight = null;
+        }
+      }
+    }
     
     if (date) {
       const currentDate = new Date();
@@ -201,7 +253,7 @@ exports.saveDailyLog = async (req, res) => {
       logId = existingLogs[0].id;
       await connection.query(
         'UPDATE daily_logs SET water_intake = ?, weight = ?, daily_notes = ?, is_cheat_day = ? WHERE id = ?',
-        [sanitizedWaterIntake, weight, dailyNotes, isCheatDay ? 1 : 0, logId]
+        [sanitizedWaterIntake, userWeight, dailyNotes, isCheatDay ? 1 : 0, logId]
       );
       
       console.log(`Updated daily log ${logId} with water intake: ${sanitizedWaterIntake}ml`);
@@ -215,7 +267,7 @@ exports.saveDailyLog = async (req, res) => {
       // Create new log
       const [result] = await connection.query(
         'INSERT INTO daily_logs (date, user_id, water_intake, weight, daily_notes, is_cheat_day) VALUES (?, ?, ?, ?, ?, ?)',
-        [normalizedDate, userId, sanitizedWaterIntake, weight, dailyNotes, isCheatDay ? 1 : 0]
+        [normalizedDate, userId, sanitizedWaterIntake, userWeight, dailyNotes, isCheatDay ? 1 : 0]
       );
       
       console.log(`Created new daily log for date ${normalizedDate} with water intake: ${sanitizedWaterIntake}ml`);

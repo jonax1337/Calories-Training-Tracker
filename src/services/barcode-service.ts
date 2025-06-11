@@ -108,7 +108,29 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
       const potassiumValue = nutriments?.potassium_100g || nutriments?.['k_100g'] || undefined;
       console.log('Gefundener Kalium-Wert:', potassiumValue);
       
+      // Extrahiere Vitamindaten aus verschiedenen möglichen API-Keys
+      const extractVitaminValue = (keys: string[]): number | undefined => {
+        for (const key of keys) {
+          const value = nutriments?.[key];
+          if (value !== undefined && value !== null) {
+            return value;
+          }
+        }
+        return undefined;
+      };
+
+      // Debug log für verfügbare Vitamine
+      const vitaminKeys = Object.keys(nutriments || {}).filter(key => 
+        key.includes('vitamin') || 
+        key.includes('calcium') || 
+        key.includes('iron') || 
+        key.includes('zinc') || 
+        key.includes('magnesium')
+      );
+      console.log('Verfügbare Vitaminfelder in API:', vitaminKeys);
+      
       const nutrition: NutritionInfo = {
+        // Makronährstoffe
         calories: product.nutriments?.['energy-kcal_100g'] || 0,
         protein: product.nutriments?.proteins_100g,
         carbs: product.nutriments?.carbohydrates_100g,
@@ -117,6 +139,19 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
         fiber: product.nutriments?.fiber_100g,
         sodium: product.nutriments?.sodium_100g,
         potassium: potassiumValue,
+        
+        // Vitamine
+        vitaminA: extractVitaminValue(['vitamin-a_100g', 'vitamin-a_value', 'vitamin_a_100g']),
+        vitaminB12: extractVitaminValue(['vitamin-b12_100g', 'vitamin-b12_value', 'vitamin_b12_100g', 'cyanocobalamin_100g']),
+        vitaminC: extractVitaminValue(['vitamin-c_100g', 'vitamin-c_value', 'vitamin_c_100g', 'ascorbic-acid_100g']),
+        vitaminD: extractVitaminValue(['vitamin-d_100g', 'vitamin-d_value', 'vitamin_d_100g']),
+        
+        // Mineralstoffe
+        calcium: extractVitaminValue(['calcium_100g', 'calcium_value', 'ca_100g']),
+        iron: extractVitaminValue(['iron_100g', 'iron_value', 'fe_100g']),
+        magnesium: extractVitaminValue(['magnesium_100g', 'magnesium_value', 'mg_100g']),
+        zinc: extractVitaminValue(['zinc_100g', 'zinc_value', 'zn_100g']),
+        
         servingSize: product.serving_size || product.quantity || '100g',
         servingSizeGrams: servingSizeGrams,
         servingDescription: servingDescription || undefined
@@ -185,6 +220,8 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         'quantity',
         'serving_size',
         'serving_quantity',
+        'image_url',
+        // Makronährstoffe
         'nutriments.energy-kcal_100g',
         'nutriments.proteins_100g',
         'nutriments.carbohydrates_100g',
@@ -193,6 +230,20 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         'nutriments.fiber_100g',
         'nutriments.sodium_100g',
         'nutriments.potassium_100g',
+        // Vitamine
+        'nutriments.vitamin-a_100g',
+        'nutriments.vitamin-b12_100g',
+        'nutriments.vitamin-c_100g',
+        'nutriments.vitamin-d_100g',
+        'nutriments.vitamin_a_100g',
+        'nutriments.vitamin_b12_100g',
+        'nutriments.vitamin_c_100g',
+        'nutriments.vitamin_d_100g',
+        // Mineralstoffe
+        'nutriments.calcium_100g',
+        'nutriments.iron_100g',
+        'nutriments.magnesium_100g',
+        'nutriments.zinc_100g',
       ].join(',')
     });
     
@@ -263,16 +314,51 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         const potassiumValue = nutriments?.potassium_100g || nutriments?.['k_100g'] || undefined;
         console.log('Gefundener Kalium-Wert (Suche):', potassiumValue);
         
+        // Helper-Funktion zum Extrahieren der Vitaminwerte
+        const extractVitaminValue = (keys: string[]): number | undefined => {
+          for (const key of keys) {
+            const value = nutriments?.[key];
+            if (value !== undefined && value !== null) {
+              return value;
+            }
+          }
+          return undefined;
+        };
+
+        // Debug log für verfügbare Vitamine
+        const vitaminKeys = Object.keys(nutriments || {}).filter(key => 
+          key.includes('vitamin') || 
+          key.includes('calcium') || 
+          key.includes('iron') || 
+          key.includes('zinc') || 
+          key.includes('magnesium')
+        );
+        console.log('Verfügbare Vitaminfelder in API (Suche):', vitaminKeys);
+        
         const nutrition: NutritionInfo = {
-          calories: product.nutriments?.['energy-kcal_100g'] || 0,
-          protein: product.nutriments?.proteins_100g || 0,
-          carbs: product.nutriments?.carbohydrates_100g || 0,
-          fat: product.nutriments?.fat_100g || 0,
-          sugar: product.nutriments?.sugars_100g,
-          fiber: product.nutriments?.fiber_100g,
-          sodium: product.nutriments?.sodium_100g,
+          // Makronährstoffe
+          calories: nutriments?.['energy-kcal_100g'] || 0,
+          protein: nutriments?.proteins_100g,
+          carbs: nutriments?.carbohydrates_100g,
+          fat: nutriments?.fat_100g,
+          sugar: nutriments?.sugars_100g,
+          fiber: nutriments?.fiber_100g,
+          sodium: nutriments?.sodium_100g,
           potassium: potassiumValue,
-          servingSize: product.quantity || '100g',
+          
+          // Vitamine
+          vitaminA: extractVitaminValue(['vitamin-a_100g', 'vitamin-a_value', 'vitamin_a_100g']),
+          vitaminB12: extractVitaminValue(['vitamin-b12_100g', 'vitamin-b12_value', 'vitamin_b12_100g', 'cyanocobalamin_100g']),
+          vitaminC: extractVitaminValue(['vitamin-c_100g', 'vitamin-c_value', 'vitamin_c_100g', 'ascorbic-acid_100g']),
+          vitaminD: extractVitaminValue(['vitamin-d_100g', 'vitamin-d_value', 'vitamin_d_100g']),
+          
+          // Mineralstoffe
+          calcium: extractVitaminValue(['calcium_100g', 'calcium_value', 'ca_100g']),
+          iron: extractVitaminValue(['iron_100g', 'iron_value', 'fe_100g']),
+          magnesium: extractVitaminValue(['magnesium_100g', 'magnesium_value', 'mg_100g']),
+          zinc: extractVitaminValue(['zinc_100g', 'zinc_value', 'zn_100g']),
+          
+          servingSize: product.serving_size || product.quantity || '100g',
           servingSizeGrams: servingSizeGrams
         };
         

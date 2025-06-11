@@ -65,7 +65,25 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       // Load user profile from API
       const profile = await fetchUserProfile();
       setUserProfile(profile);
-      setCurrentWeight(profile?.weight);
+      
+      // Load the selected date's log
+      const log = await getDailyLogByDate(selectedDate);
+      setTodayLog(log);
+      
+      // PRIORITÄT: Gewicht primär aus dem Tageslog laden, nur als Fallback aus dem Profil
+      if (log?.weight !== undefined && log?.weight !== null) {
+        // Wenn das Tageslog ein Gewicht hat, nutze dieses
+        console.log(`Gewicht aus Tageslog geladen: ${log.weight}kg`);
+        setCurrentWeight(log.weight);
+      } else if (profile?.weight !== undefined) {
+        // Als Fallback das Gewicht aus dem Profil verwenden
+        console.log(`Kein Gewicht im Tageslog, verwende Profilgewicht: ${profile.weight}kg`);
+        setCurrentWeight(profile.weight);
+      } else {
+        // Wenn weder Log noch Profil ein Gewicht haben
+        console.log('Weder im Tageslog noch im Profil ist ein Gewicht gespeichert');
+        setCurrentWeight(undefined);
+      }
 
       // Load active user goal's nutritional targets - jetzt gibt dies ein leeres Array statt Fehler zurück
       let currentUserGoals: UserGoal[] = [];
@@ -92,10 +110,6 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       } else {
         setActiveGoalTargets(null); // Or set to default goals
       }
-
-      // Load the selected date's log
-      const log = await getDailyLogByDate(selectedDate);
-      setTodayLog(log);
 
       // Load health data
       const health = await fetchHealthData();
@@ -187,6 +201,43 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       
       setUserProfile(updatedProfile);
       await saveUserProfile(updatedProfile);
+      
+      // Aktualisiere auch das Gewicht im täglichen Log für das ausgewählte Datum
+      console.log(`Aktualisiere Gewicht im täglichen Log für ${selectedDate}: ${newWeight}kg`);
+      
+      if (todayLog) {
+        // Wenn bereits ein Log für heute existiert, aktualisiere diesen
+        const updatedLog = {
+          ...todayLog,
+          date: selectedDate,
+          weight: newWeight
+        };
+        
+        // Lokalen State aktualisieren
+        setTodayLog(updatedLog);
+        
+        // In der Datenbank speichern
+        await saveDailyLog(updatedLog);
+      } else {
+        // Wenn noch kein Log für heute existiert, erstelle einen neuen
+        const newLog: DailyLog = {
+          date: selectedDate,
+          foodEntries: [],
+          waterIntake: 0,
+          weight: newWeight,
+          dailyNotes: '',
+          isCheatDay: false
+        };
+        
+        // Lokalen State aktualisieren
+        setTodayLog(newLog);
+        
+        // In der Datenbank speichern
+        await saveDailyLog(newLog);
+      }
+      
+      // Daten neu laden, um sicherzustellen, dass alles synchron ist
+      await loadUserData();
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Gewichts:', error);
     } finally {
@@ -674,13 +725,37 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           elevation: 2,
         }
       ]}>
-        <Text style={[
-          styles.cardTitle, 
-          { 
-            fontFamily: theme.theme.typography.fontFamily.bold,
-            color: theme.theme.colors.text
-          }
-        ]}>Gewicht</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <Text style={[
+            styles.cardTitle, 
+            { 
+              fontFamily: theme.theme.typography.fontFamily.bold,
+              color: theme.theme.colors.text
+            }
+          ]}>Gewicht</Text>
+          
+          <TouchableOpacity 
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: theme.theme.colors.primary,
+              borderRadius: theme.theme.borderRadius.medium,
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              marginTop: -theme.theme.spacing.m,
+            }}
+            onPress={() => navigation.getParent()?.navigate('WeightHistory')}
+          >
+            <BarChart2 size={theme.theme.typography.fontSize.m} color="white" style={{ marginRight: 4 }} />
+            <Text style={{ 
+              fontFamily: theme.theme.typography.fontFamily.medium, 
+              fontSize: theme.theme.typography.fontSize.xs,
+              color: 'white'
+            }}>
+              Verlauf
+            </Text>
+          </TouchableOpacity>
+        </View>
         
         <View style={{ flexDirection: 'column', marginTop: 8 }}>
           {/* Reihe mit großen Buttons für 0.1 kg Änderungen */}

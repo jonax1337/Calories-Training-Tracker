@@ -5,7 +5,7 @@ import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-nat
 import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
-import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2, Plus, ShieldOff, ShieldCheck, PlusCircle, ListPlus } from 'lucide-react-native';
+import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2, Plus, ShieldOff, ShieldCheck, PlusCircle, ListPlus, CirclePlus } from 'lucide-react-native';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
@@ -32,7 +32,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   };
 
   // Wiederverwendbarer Button für "Eintrag hinzufügen" Funktionalität
-  const AddEntryButton = ({ mealType, label }: { mealType: string; label: string }) => {
+  const AddEntryButton = ({ mealType, label, iconSize, fontSize }: { mealType: string; label?: string; iconSize?: number; fontSize?: number }) => {
     return (
       <TouchableOpacity
         style={{
@@ -45,14 +45,14 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         }}
         onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType })}
       >
-        <ListPlus size={theme.typography.fontSize.m} color="white" style={{ marginRight: theme.spacing.s }} />
-        <Text style={{ 
+        <CirclePlus size={iconSize ?? theme.typography.fontSize.m} color="white" style={{ marginRight: label ? theme.spacing.s : 0 }} />
+        {label ? <Text style={{ 
           fontFamily: theme.typography.fontFamily.medium, 
           color: 'white',
-          fontSize: theme.typography.fontSize.s
+          fontSize: fontSize ?? theme.typography.fontSize.s
         }}>
           {label}
-        </Text>
+        </Text> : null}
       </TouchableOpacity>
     );
   };
@@ -169,9 +169,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         borderBottomRightRadius: theme.borderRadius.medium,
         borderTopWidth: 1,
         borderTopColor: theme.colors.border + '40',
-        paddingHorizontal: theme.spacing.s,
-        paddingTop: theme.spacing.s,
-        paddingBottom: theme.spacing.m,
+        paddingBottom: theme.spacing.s,
         marginBottom: isLast ? 0 : theme.spacing.m,
         opacity: animatedValue, // Animation der Transparenz
         transform: [{ 
@@ -330,18 +328,13 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    paddingVertical: 12, // Größere Touchfläche für bessere Benutzererfahrung
+                    paddingVertical: theme.spacing.m, // Größere Touchfläche für bessere Benutzererfahrung
                     paddingHorizontal: theme.spacing.m,
                     backgroundColor: theme.colors.card,
                     // Konstante Höhe für bessere Ausrichtung
-                    minHeight: 56,
-                    ...index < array.length - 1 ? {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.colors.border + '40',
-                    } : {
-                      // Kein margin beim letzten Element, da wir padding im Container haben
-                      marginBottom: 0
-                    }
+                    minHeight: theme.spacing.xxl,
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.colors.border + '40',
                   }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
@@ -361,12 +354,12 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
             
             {/* Button zum Hinzufügen weiterer Einträge */}
             <View style={{ padding: theme.spacing.m, alignItems: 'center', marginTop: theme.spacing.s }}>
-              <AddEntryButton mealType={mealType} label="Weiteren Eintrag hinzufügen" />
+              <AddEntryButton mealType={mealType} label="Weitere Einträge hinzufügen" iconSize={theme.typography.fontSize.m} fontSize={theme.typography.fontSize.xs} />
             </View>
           </>
         ) : (
-          <View style={{ padding: theme.spacing.m, alignItems: 'center' }}>
-            <AddEntryButton mealType={mealType} label="Eintrag hinzufügen" />
+          <View style={{ padding: theme.spacing.m, alignItems: 'center', marginTop: theme.spacing.s }}>
+            <AddEntryButton mealType={mealType} label="Eintrag hinzufügen" iconSize={theme.typography.fontSize.l} fontSize={theme.typography.fontSize.s} />
           </View>
         )}
       </Animated.View>

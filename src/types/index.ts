@@ -1,5 +1,6 @@
 // Food and nutrition related types
 export interface NutritionInfo {
+  // Makronährstoffe
   calories?: number;
   protein?: number;
   carbs?: number;
@@ -8,6 +9,19 @@ export interface NutritionInfo {
   fiber?: number;
   sodium?: number;
   potassium?: number;
+  
+  // Wichtige Vitamine (in μg oder mg)
+  vitaminA?: number; // in μg RAE
+  vitaminB12?: number; // in μg
+  vitaminC?: number; // in mg
+  vitaminD?: number; // in μg
+  
+  // Wichtige Mineralstoffe (in mg)
+  calcium?: number; // in mg
+  iron?: number; // in mg
+  magnesium?: number; // in mg
+  zinc?: number; // in mg
+  
   servingSize: string;  // Beschreibung der Portion (z.B. "1 Riegel (25g)")
   servingSizeGrams: number; // Gewicht einer Portion in Gramm
   servingDescription?: string; // Zusätzliche Beschreibung zur Portionsgröße

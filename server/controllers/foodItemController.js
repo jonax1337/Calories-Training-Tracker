@@ -12,6 +12,7 @@ exports.getFoodItems = async (req, res) => {
       brand: item.brand,
       barcode: item.barcode,
       nutrition: {
+        // Makronährstoffe
         calories: item.calories,
         protein: item.protein,
         carbs: item.carbs,
@@ -20,6 +21,19 @@ exports.getFoodItems = async (req, res) => {
         fiber: item.fiber,
         sodium: item.sodium,
         potassium: item.potassium,
+        
+        // Vitamine
+        vitaminA: item.vitamin_a,
+        vitaminB12: item.vitamin_b12,
+        vitaminC: item.vitamin_c,
+        vitaminD: item.vitamin_d,
+        
+        // Mineralstoffe
+        calcium: item.calcium,
+        iron: item.iron,
+        magnesium: item.magnesium,
+        zinc: item.zinc,
+        
         servingSize: item.serving_size,
         servingSizeGrams: item.serving_size_grams
       },
@@ -54,6 +68,7 @@ exports.getFoodItemById = async (req, res) => {
       brand: item.brand,
       barcode: item.barcode,
       nutrition: {
+        // Makronährstoffe
         calories: item.calories,
         protein: item.protein,
         carbs: item.carbs,
@@ -62,6 +77,19 @@ exports.getFoodItemById = async (req, res) => {
         fiber: item.fiber,
         sodium: item.sodium,
         potassium: item.potassium,
+        
+        // Vitamine
+        vitaminA: item.vitamin_a,
+        vitaminB12: item.vitamin_b12,
+        vitaminC: item.vitamin_c,
+        vitaminD: item.vitamin_d,
+        
+        // Mineralstoffe
+        calcium: item.calcium,
+        iron: item.iron,
+        magnesium: item.magnesium,
+        zinc: item.zinc,
+        
         servingSize: item.serving_size,
         servingSizeGrams: item.serving_size_grams
       },
@@ -92,14 +120,18 @@ exports.saveFoodItem = async (req, res) => {
         `UPDATE food_items SET 
          name = ?, brand = ?, barcode = ?, calories = ?, 
          protein = ?, carbs = ?, fat = ?, sugar = ?, 
-         fiber = ?, sodium = ?, potassium = ?, serving_size = ?, 
-         serving_size_grams = ?, image = ? 
+         fiber = ?, sodium = ?, potassium = ?, 
+         vitamin_a = ?, vitamin_b12 = ?, vitamin_c = ?, vitamin_d = ?,
+         calcium = ?, iron = ?, magnesium = ?, zinc = ?,
+         serving_size = ?, serving_size_grams = ?, image = ? 
          WHERE id = ?`,
         [
           name, brand, barcode, nutrition.calories,
           nutrition.protein, nutrition.carbs, nutrition.fat, nutrition.sugar,
-          nutrition.fiber, nutrition.sodium, nutrition.potassium, nutrition.servingSize,
-          nutrition.servingSizeGrams, image, id
+          nutrition.fiber, nutrition.sodium, nutrition.potassium, 
+          nutrition.vitaminA, nutrition.vitaminB12, nutrition.vitaminC, nutrition.vitaminD,
+          nutrition.calcium, nutrition.iron, nutrition.magnesium, nutrition.zinc,
+          nutrition.servingSize, nutrition.servingSizeGrams, image, id
         ]
       );
       
@@ -109,14 +141,18 @@ exports.saveFoodItem = async (req, res) => {
       await pool.query(
         `INSERT INTO food_items (
           id, name, brand, barcode, calories, protein, 
-          carbs, fat, sugar, fiber, sodium, potassium, serving_size, 
-          serving_size_grams, image
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          carbs, fat, sugar, fiber, sodium, potassium, 
+          vitamin_a, vitamin_b12, vitamin_c, vitamin_d,
+          calcium, iron, magnesium, zinc,
+          serving_size, serving_size_grams, image
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id, name, brand, barcode, nutrition.calories,
           nutrition.protein, nutrition.carbs, nutrition.fat, nutrition.sugar,
-          nutrition.fiber, nutrition.sodium, nutrition.potassium, nutrition.servingSize,
-          nutrition.servingSizeGrams, image
+          nutrition.fiber, nutrition.sodium, nutrition.potassium, 
+          nutrition.vitaminA, nutrition.vitaminB12, nutrition.vitaminC, nutrition.vitaminD,
+          nutrition.calcium, nutrition.iron, nutrition.magnesium, nutrition.zinc,
+          nutrition.servingSize, nutrition.servingSizeGrams, image
         ]
       );
       
