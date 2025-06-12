@@ -69,7 +69,9 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
     borderRadius: theme.borderRadius.medium,
     padding: theme.spacing.m,
     backgroundColor: theme.colors.card,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.s,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   servingHeader: {
     alignItems: 'center',

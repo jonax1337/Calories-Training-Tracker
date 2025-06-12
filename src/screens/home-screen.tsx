@@ -184,63 +184,60 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const totals = calculateNutritionTotals();
   const goals = getGoals();
   
-  // Funktion zum Aktualisieren des Gewichts
+  // Funktion zum Aktualisieren des Gewichts - optimiert für sofortige Reaktion
   const updateWeight = async (newWeight: number) => {
     if (!userProfile) return;
     
+    // SOFORT: UI-State aktualisieren für unmittelbares Feedback
+    setCurrentWeight(newWeight);
+    
+    // State-Flag setzen, um parallele Updates zu vermeiden
     setIsUpdatingWeight(true);
-    try {
-      // Aktualisiere lokalen State
-      setCurrentWeight(newWeight);
-      
-      // Aktualisiere und speichere Benutzerprofil
-      const updatedProfile = {
-        ...userProfile,
+    
+    // Profilupdate vorbereiten
+    const updatedProfile = {
+      ...userProfile,
+      weight: newWeight
+    };
+    
+    // UI-State aktualisieren
+    setUserProfile(updatedProfile);
+    
+    // Logupdate vorbereiten
+    let updatedLog;
+    if (todayLog) {
+      updatedLog = {
+        ...todayLog,
+        date: selectedDate,
         weight: newWeight
       };
-      
-      setUserProfile(updatedProfile);
-      await saveUserProfile(updatedProfile);
-      
-      // Aktualisiere auch das Gewicht im täglichen Log für das ausgewählte Datum
-      console.log(`Aktualisiere Gewicht im täglichen Log für ${selectedDate}: ${newWeight}kg`);
-      
-      if (todayLog) {
-        // Wenn bereits ein Log für heute existiert, aktualisiere diesen
-        const updatedLog = {
-          ...todayLog,
-          date: selectedDate,
-          weight: newWeight
-        };
-        
-        // Lokalen State aktualisieren
-        setTodayLog(updatedLog);
-        
-        // In der Datenbank speichern
-        await saveDailyLog(updatedLog);
-      } else {
-        // Wenn noch kein Log für heute existiert, erstelle einen neuen
-        const newLog: DailyLog = {
-          date: selectedDate,
-          foodEntries: [],
-          waterIntake: 0,
-          weight: newWeight,
-          dailyNotes: '',
-          isCheatDay: false
-        };
-        
-        // Lokalen State aktualisieren
-        setTodayLog(newLog);
-        
-        // In der Datenbank speichern
-        await saveDailyLog(newLog);
-      }
-      
-      // Daten neu laden, um sicherzustellen, dass alles synchron ist
-      await loadUserData();
+      setTodayLog(updatedLog);
+    } else {
+      updatedLog = {
+        date: selectedDate,
+        foodEntries: [],
+        waterIntake: 0,
+        weight: newWeight,
+        dailyNotes: '',
+        isCheatDay: false
+      };
+      setTodayLog(updatedLog);
+    }
+    
+    // ASYNCHRON: DB-Updates durchführen, ohne auf Ergebnis zu warten
+    try {
+      // Starte beide Operationen parallel und warte nicht
+      Promise.all([
+        saveUserProfile(updatedProfile),
+        saveDailyLog(updatedLog)
+      ]).catch(error => {
+        console.error('Fehler beim DB-Update (Hintergrund):', error);
+      }).finally(() => {
+        // Erst nach Abschluss beider Operationen das Flag zurücksetzen
+        setIsUpdatingWeight(false);
+      });
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Gewichts:', error);
-    } finally {
       setIsUpdatingWeight(false);
     }
   };
@@ -273,46 +270,41 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     }
   };
 
-  // Funktion zum Hinzufügen von Wasser mit Debouncing
+  // Funktion zum Hinzufügen von Wasser - optimiert für sofortige Reaktion
   const addWater = async (amount: number) => {
-    // Skip if no log or already updating
+    // Skip if no log
     if (!todayLog) return;
     
-    // Implement debouncing - prevent updates too close together
-    const now = Date.now();
+    // SOFORT: UI-State aktualisieren für unmittelbares Feedback
+    const currentIntake = todayLog.waterIntake || 0;
+    const newIntake = Math.max(0, currentIntake + amount);
     
-    setLastWaterUpdateTime(now);
+    // Lokalen State sofort aktualisieren
+    const updatedLog = {
+      ...todayLog,
+      date: selectedDate,
+      waterIntake: newIntake
+    };
+    
+    // UI sofort aktualisieren
+    setTodayLog(updatedLog);
+    
+    // Status setzen für Parallelitätskontrolle
     setIsUpdatingWater(true);
     
+    // ASYNCHRON: DB-Update im Hintergrund durchführen
     try {
-      // Ensure waterIntake is a number (may be null or undefined)
-      const currentIntake = todayLog.waterIntake || 0;
-      
-      // Use the selected date in the correct format (YYYY-MM-DD)
-      console.log(`Using date format for water update: ${selectedDate}`);
-      
-      // Aktualisiere lokalen State
-      const updatedLog = {
-        ...todayLog,
-        date: selectedDate, // Ensure consistent date format
-        waterIntake: currentIntake + amount
-      };
-      
-      console.log(`Adding water: ${amount}ml. New total: ${updatedLog.waterIntake}ml`);
-      
-      // Update local state first
-      setTodayLog(updatedLog);
-      
-      // Then save to server
-      await saveDailyLog(updatedLog);
-      
-      // Reload data to ensure everything is in sync
-      await loadUserData();
-      
-      // Animation wird automatisch durch Änderung des Prozentwerts ausgelöst
+      // DB-Operation starten, aber nicht auf das Ergebnis warten
+      saveDailyLog(updatedLog)
+        .catch(error => {
+          console.error('Fehler beim Speichern des Wasserintakes (Hintergrund):', error);
+        })
+        .finally(() => {
+          // Status erst nach Abschluss zurücksetzen
+          setIsUpdatingWater(false);
+        });
     } catch (error) {
-      console.error('Fehler beim Aktualisieren des Wasserverbrauchs:', error);
-    } finally {
+      console.error('Error updating water intake:', error);
       setIsUpdatingWater(false);
     }
   };
@@ -775,7 +767,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               elevation: 2,
             }}
             onPress={decrementWeight}
-            disabled={isUpdatingWeight || currentWeight === undefined || currentWeight <= 0.1}
+            disabled={currentWeight === undefined || currentWeight <= 0.1}
           >
             <Minus size={24} color="white" />
           </TouchableOpacity>
@@ -812,7 +804,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               elevation: 2,
             }}
             onPress={incrementWeight}
-            disabled={isUpdatingWeight || currentWeight === undefined}
+            disabled={currentWeight === undefined}
           >
             <Plus size={24} color="white" />
           </TouchableOpacity>
@@ -831,7 +823,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                 marginRight: 8,
               }}
               onPress={decrementWeightSmall}
-              disabled={isUpdatingWeight || currentWeight === undefined || currentWeight <= 0.01}
+              disabled={currentWeight === undefined || currentWeight <= 0.01}
             >
               <Minus size={14} color={theme.theme.colors.primary} />
             </TouchableOpacity>
@@ -855,7 +847,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                 marginLeft: 8,
               }}
               onPress={incrementWeightSmall}
-              disabled={isUpdatingWeight || currentWeight === undefined}
+              disabled={currentWeight === undefined}
             >
               <Plus size={14} color={theme.theme.colors.primary} />
             </TouchableOpacity>

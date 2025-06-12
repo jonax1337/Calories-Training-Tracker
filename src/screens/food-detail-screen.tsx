@@ -55,7 +55,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const isEditing = Boolean(existingEntryId);
   
   // Bestimme die Einheit basierend auf servingSize (ml oder g)
-  const [servingUnit, setServingUnit] = useState<string>("Gramm");
+  const [servingUnit, setServingUnit] = useState<"Gramm" | "Milliliter">("Gramm");
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
@@ -273,8 +273,52 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       }
 
       Vibration.vibrate([0, 100, 0, 100]);
-      // Zurück zum vorherigen Screen
-      navigation.goBack()
+      
+      // Prüfen, ob es sich um ein Produkt mit Milliliter-Einheit handelt und wir es zum ersten Mal hinzufügen
+      const isLiquidProduct = servingUnit === "Milliliter";
+      
+      // Nur bei Flüssigkeiten und nur beim Hinzufügen (nicht beim Bearbeiten)
+      if (!isEditing && isLiquidProduct) {
+        // Zeige Dialog an, der fragt, ob das Getränk zum Wasserstand hinzugefügt werden soll
+        let waterAmount = Math.round(parseFloat(servings)); // ML basierend auf der Portionsgröße
+        
+        // Sicherstellen, dass der Wasserwert sinnvoll ist (min. 50ml)
+        if (waterAmount >= 50) {
+          Alert.alert(
+            'Wasser hinzufügen?',
+            `Möchtest du ${waterAmount}ml zum heutigen Wasserstand hinzufügen?`,
+            [
+              {
+                text: 'Nein',
+                style: 'cancel',
+                onPress: () => navigation.goBack()
+              },
+              {
+                text: 'Ja',
+                onPress: async () => {
+                  try {
+                    // Wasserstand im DailyLog aktualisieren
+                    dailyLog.waterIntake += waterAmount;
+                    await saveDailyLog(dailyLog);
+                    
+                    // Erfolgs-Feedback
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    navigation.goBack();
+                  } catch (error) {
+                    console.error('Fehler beim Aktualisieren des Wasserstands:', error);
+                    navigation.goBack();
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          navigation.goBack();
+        }
+      } else {
+        // Wenn kein Getränk oder beim Bearbeiten, einfach zurückgehen
+        navigation.goBack();
+      }
     } catch (err) {
       console.error('Error in handleAddToLog:', err);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten beim Hinzufügen des Lebensmittels');
@@ -339,28 +383,36 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           </View>
         ) : (
           <>
-            {/* Food name input */}
-            <View style={[styles.inputContainer, { marginBottom: theme.spacing.m }]}>
-              <Text style={[styles.inputLabel, { 
+            {/* Abstand zur oberen Kante */}
+            <View style={{ marginTop: theme.spacing.m }} />
+            
+            {/* Produktinformationen - Name und Marke */}
+            <View style={[styles.card]}>
+              
+              {/* Produktname */}
+              <Text style={[styles.cardTitle, {
                 color: theme.colors.text,
-                fontFamily: theme.typography.fontFamily.medium,
-                marginTop: theme.spacing.m,
-                marginBottom: theme.spacing.s
-              }]}>Name</Text>
-              <TextInput
-                style={[styles.textInput, { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                  borderRadius: theme.borderRadius.small,
-                  color: theme.colors.text,
-                  fontFamily: theme.typography.fontFamily.regular,
-                  padding: theme.spacing.m
-                }]}
-                value={customName}
-                onChangeText={setCustomName}
-                placeholder="Produktname eingeben"
-                placeholderTextColor={theme.colors.placeholder}
-              />
+                marginBottom: foodItem?.brand ? theme.spacing.s : theme.spacing.m
+              }]}>
+                {foodItem?.name || customName}
+              </Text>
+              
+              {/* Marke (falls vorhanden) */}
+              {foodItem?.brand && (
+                <View style={{ 
+                  marginBottom: theme.spacing.s,
+                  backgroundColor: theme.colors.surfaceVariant,
+                  padding: theme.spacing.s,
+                  borderRadius: theme.borderRadius.small
+                }}>
+                  <Text style={[styles.label, { 
+                    color: theme.colors.textLight,
+                    marginBottom: 0
+                  }]}>
+                    <Text style={{ fontFamily: theme.typography.fontFamily.medium }}>{foodItem.brand}</Text>
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Nutrition information */}

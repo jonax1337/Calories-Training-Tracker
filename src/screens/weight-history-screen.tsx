@@ -6,11 +6,10 @@ import { RootStackParamList } from '../navigation';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Dimensions } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
 import { getDailyLogs } from '../services/storage-service';
 import { fetchUserProfile } from '../services/profile-api';
-import CalendarModal from '../components/ui/calendar-modal';
-import LineChartCard, { DataPoint, LineConfig } from '../components/charts/line-chart-card';
+import LineChartCard, { DataPoint } from '../components/charts/line-chart-card';
+import { ChevronsUp, ChevronsDown, Minus } from 'lucide-react-native';
 
 // Definiere den Typen für Weight-History-Screen
 type WeightHistoryScreenProps = {
@@ -27,14 +26,12 @@ type WeightDataPoint = {
 export default function WeightHistoryScreen({ navigation, route }: WeightHistoryScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const screenWidth = Dimensions.get('window').width;
+  const screenWidth = Dimensions.get('window').width - (theme.theme.spacing.m * 2); // Screen + Card Padding
   
   const [isLoading, setIsLoading] = useState(true);
   const [weightData, setWeightData] = useState<WeightDataPoint[]>([]);
   const [defaultWeight, setDefaultWeight] = useState<number | null>(null);
-  const [timeRange, setTimeRange] = useState<number>(30); // Standardmäßig 30 Tage
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [timeRange, setTimeRange] = useState<number>(14); // Standardmäßig 14 Tage
   
   // Funktion zum Laden der Gewichtsdaten
   const loadWeightData = async () => {
@@ -74,11 +71,8 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
         currentDate.setDate(currentDate.getDate() + 1); // Nächster Tag
       }
       
-      // Extrahiere Gewichtsdaten mit "carry-forward"-Logik
-      let lastKnownWeight: number | null = null;
-      
-      // Erzeuge Datenpunkte für ALLE Tage im Zeitraum
-      const weightPoints = allDaysInRange.map(dateObj => {
+      // Schritt 1: Erzeugt alle Datenpunkte für die Tage im Zeitraum (ohne Gewichte)
+      const initialPoints = allDaysInRange.map(dateObj => {
         // Formatiere das Datum
         const dateStr = dateObj.toISOString().split('T')[0];
         const day = dateObj.getDate().toString().padStart(2, '0');
@@ -88,22 +82,39 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
         // Versuche das Log für diesen Tag zu finden
         const log = logsByDate.get(dateStr);
         
-        // Prüfe, ob das aktuelle Log ein Gewicht hat
-        if (log && log.weight !== null && log.weight !== undefined) {
-          // Wenn ja, aktualisiere das letzte bekannte Gewicht
-          lastKnownWeight = log.weight;
-        }
-        
-        // Wenn kein Gewicht für diesen Tag existiert, verwende das letzte bekannte Gewicht
-        // Falls auch kein bekanntes Gewicht existiert, fallback auf das Profilgewicht
-        const weight = lastKnownWeight !== null ? lastKnownWeight : defaultWeight;
-        
         return {
           date: dateStr,
-          weight: weight as number,
-          formattedDate
+          formattedDate,
+          weight: (log?.weight !== undefined && log?.weight !== null) ? log.weight : null,
+          hasActualWeight: !!(log?.weight !== undefined && log?.weight !== null)
         };
-      }).filter(point => point.weight !== null && point.weight !== undefined); // Filtere Einträge ohne Gewicht
+      });
+      
+      // Schritt 2: Carry-Forward von NEUESTEM zu ÄLTESTEM Datum
+      // Sortiere Tage vom neuesten zum ältesten
+      const reversedPoints = [...initialPoints].reverse();
+      let lastKnownWeight: number | null = null;
+      
+      // Trage das letzte bekannte Gewicht nach hinten weiter
+      reversedPoints.forEach(point => {
+        if (point.hasActualWeight) {
+          // Wenn dieser Tag ein tatsächliches Gewicht hat, speichere es
+          lastKnownWeight = point.weight;
+        } else if (lastKnownWeight !== null) {
+          // Sonst benutze das letzte bekannte Gewicht (wenn vorhanden)
+          point.weight = lastKnownWeight;
+        }
+      });
+      
+      // Schritt 3: Für alle Tage, die noch kein Gewicht haben, nutze das Profilgewicht
+      const weightPoints = reversedPoints
+        .reverse() // Zurück zur ursprünglichen Reihenfolge (älteste zuerst)
+        .map(point => ({
+          date: point.date,
+          formattedDate: point.formattedDate,
+          weight: point.weight !== null ? point.weight : (defaultWeight as number)
+        }))
+        .filter(point => point.weight !== null && point.weight !== undefined); // Filtere Einträge ohne Gewicht
       
       setWeightData(weightPoints);
     } catch (error) {
@@ -140,18 +151,6 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
   
   const stats = calculateStats();
   
-  // Chart-Linien-Konfiguration für LineChartCard
-  const lineConfig: LineConfig[] = [
-    {
-      dataKey: 'weight',
-      color: theme.theme.colors.primary,
-      label: 'Gewicht',
-      strokeWidth: 2,
-      showScatter: true,
-      interpolation: 'monotoneX'
-    }
-  ];
-  
   // Zeitraum-Optionen
   const timeRangeOptions = [
     { label: '14 Tage', value: 14 },
@@ -187,10 +186,19 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
     
     return (
       <LineChartCard
+        title="Gewichtsverlauf"
         data={chartData}
-        lines={lineConfig}
+        lines={[
+          {
+            dataKey: 'weight',
+            color: theme.theme.colors.primary,
+            label: 'Gewicht',
+            strokeWidth: 2,
+            showScatter: true,
+          }
+        ]}
         height={220}
-        width={screenWidth - 32}
+        width={screenWidth}
         showLegend={false}
         yAxis={{
           label: undefined,
@@ -210,7 +218,13 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
             marginVertical: 8,
             backgroundColor: theme.theme.colors.card,
             borderRadius: theme.theme.borderRadius.medium,
-            padding: 8
+            padding: 16
+          },
+          title: {
+            color: theme.theme.colors.text,
+            fontSize: theme.theme.typography.fontSize.l,
+            fontFamily: theme.theme.typography.fontFamily.bold,
+            marginBottom: 8
           }
         }}
       />
@@ -224,7 +238,7 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
       
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: theme.theme.spacing.m }}
         showsVerticalScrollIndicator={false}
       >
         {/* Zeitraum Auswahl */}
@@ -278,7 +292,7 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
                 color: theme.theme.colors.text,
                 fontFamily: theme.theme.typography.fontFamily.medium
               }]}>
-                {stats.start.toFixed(2)} kg
+                {stats.start.toFixed(2)}kg
               </Text>
             </View>
             
@@ -290,7 +304,7 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
                 color: theme.theme.colors.text,
                 fontFamily: theme.theme.typography.fontFamily.medium
               }]}>
-                {stats.end.toFixed(2)} kg
+                {stats.end.toFixed(2)}kg
               </Text>
             </View>
             
@@ -298,33 +312,40 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
               <Text style={[styles.statLabel, { color: theme.theme.colors.textLight }]}>
                 Veränderung
               </Text>
-              <Text style={[styles.statValue, { 
-                color: stats.trend === 'down' 
-                  ? theme.theme.colors.success
-                  : stats.trend === 'up'
-                    ? theme.theme.colors.error
-                    : theme.theme.colors.text,
-                fontFamily: theme.theme.typography.fontFamily.medium
-              }]}>
-                {stats.trend === 'neutral' ? '0 kg' : 
-                 `${stats.trend === 'down' ? '−' : '+'} ${stats.change.toFixed(2)} kg`}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {stats.trend === 'down' ? (
+                  <ChevronsDown 
+                    size={theme.theme.typography.fontSize.l} 
+                    color={theme.theme.colors.success} 
+                  />
+                ) : stats.trend === 'up' ? (
+                  <ChevronsUp 
+                    size={theme.theme.typography.fontSize.l} 
+                    color={theme.theme.colors.warning}
+                  />
+                ) : stats.trend === 'neutral' ? (
+                  <Minus 
+                    size={theme.theme.typography.fontSize.l} 
+                    color={theme.theme.colors.text} 
+                  />
+                ) : null}
+                <Text style={[styles.statValue, { 
+                  color: stats.trend === 'down' 
+                    ? theme.theme.colors.success
+                    : stats.trend === 'up'
+                      ? theme.theme.colors.warning
+                      : theme.theme.colors.text,
+                  fontFamily: theme.theme.typography.fontFamily.medium
+                }]}>
+                  {stats.trend === 'neutral' ? '0kg' : `${stats.change.toFixed(2)}kg`}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
         
         {/* Chart */}
-        <View style={[styles.chartCard, {
-          backgroundColor: theme.theme.colors.card,
-          borderRadius: theme.theme.borderRadius.medium,
-        }]}>
-          <Text style={[styles.cardTitle, { 
-            color: theme.theme.colors.text,
-            fontFamily: theme.theme.typography.fontFamily.bold
-          }]}>
-            Gewichtsverlauf
-          </Text>
-          
+        <View>
           {isLoading ? (
             <ActivityIndicator 
               size="large" 
