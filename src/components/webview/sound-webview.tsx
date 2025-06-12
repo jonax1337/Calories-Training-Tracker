@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { createSoundWebViewStyles } from '../../styles/components/webview/sound-webview-styles';
+import { useTheme } from '../../theme/theme-context';
 
 // Event-Funktionstypen
 type SoundEventCallback = () => void;
@@ -226,6 +228,8 @@ export function sendSoundCommand(command: SoundCommand) {
 
 // Die unsichtbare WebView-Komponente
 const SoundWebView: React.FC = () => {
+  const { theme } = useTheme();
+  const styles = createSoundWebViewStyles(theme);
   const localWebViewRef = useRef<WebView>(null);
   
   // WebView-Referenz bei Montage setzen
@@ -272,7 +276,7 @@ const SoundWebView: React.FC = () => {
   }
   
   return (
-    <View style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden' }}>
+    <View style={styles.hiddenContainer}>
       <WebView
         ref={localWebViewRef}
         source={{ html: htmlContent }}
@@ -280,7 +284,7 @@ const SoundWebView: React.FC = () => {
         javaScriptEnabled={true}
         domStorageEnabled={true}
         originWhitelist={['*']}
-        style={{ width: 1, height: 1 }}
+        style={styles.hiddenWebView}
       />
     </View>
   );

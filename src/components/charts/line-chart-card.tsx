@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Dimensions } from 'react-native';
 import { 
   VictoryChart, 
   VictoryLine, 
@@ -9,6 +9,7 @@ import {
   VictoryContainer
 } from 'victory-native';
 import { useTheme } from '../../theme/theme-context';
+import { createLineChartCardStyles } from '../../styles/components/charts/line-chart-card-styles';
 
 export interface DataPoint {
   x: number;
@@ -62,9 +63,9 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
 }) => {
   // Prüfe, ob Cheat Days in den Daten vorhanden sind
   const hasCheatDays = data.some(item => item.isCheatDay);
-  const theme = useTheme();
-  const styles = createStyles(theme);
-  const screenWidth = width || Dimensions.get('window').width - 2 * theme.theme.spacing.m;
+  const { theme } = useTheme();
+  const styles = createLineChartCardStyles(theme);
+  const screenWidth = width || Dimensions.get('window').width - 2 * theme.spacing.m;
   
   // Generiere Daten für Ziellinien
   const generateGoalData = (goalValue: number) => {
@@ -96,13 +97,7 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
   
   return (
     <View style={[styles.chartCard, style?.container]}>
-      {title && <Text style={{ 
-        color: theme.theme.colors.text,
-        fontSize: theme.theme.typography.fontSize.l,
-        fontFamily: theme.theme.typography.fontFamily.bold,
-        textAlign: 'left',
-        paddingTop: theme.theme.spacing.xs,
-        }}>{title}</Text>}
+      {title && <Text style={styles.title}>{title}</Text>}
       
       <View style={[styles.chartContainer, style?.chartContainer]}>
         <VictoryChart
@@ -110,10 +105,10 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
           width={screenWidth}
           height={height}
           padding={{ 
-            top: theme.theme.spacing.m,
-            bottom: theme.theme.spacing.xl, 
-            left: theme.theme.spacing.xl + theme.theme.spacing.m, 
-            right: theme.theme.spacing.xl 
+            top: theme.spacing.m,
+            bottom: theme.spacing.xl, 
+            left: theme.spacing.xl + theme.spacing.m, 
+            right: theme.spacing.xl 
           }}
           containerComponent={
             <VictoryContainer
@@ -130,14 +125,14 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
             label={yAxis?.label}
             tickFormat={yAxis?.tickFormat || ((t) => `${Math.round(t)}`)}
             style={{
-              axis: { stroke: theme.theme.colors.border },
-              axisLabel: { padding: 35, fontSize: theme.theme.typography.fontSize.s, fontFamily: theme.theme.typography.fontFamily.regular },
+              axis: { stroke: theme.colors.border },
+              axisLabel: { padding: 35, fontSize: theme.typography.fontSize.s, fontFamily: theme.typography.fontFamily.regular },
               tickLabels: { 
-                fill: theme.theme.colors.textLight,
-                fontSize: theme.theme.typography.fontSize.xs,
-                fontFamily: theme.theme.typography.fontFamily.regular
+                fill: theme.colors.textLight,
+                fontSize: theme.typography.fontSize.xs,
+                fontFamily: theme.typography.fontFamily.regular
               },
-              grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.25 }
+              grid: { stroke: theme.colors.border, strokeOpacity: 0.25 }
             }}
           />
 
@@ -149,12 +144,12 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
               label={yAxis.unit}
               tickFormat={() => ""} // Keine Tick-Labels anzeigen
               style={{
-                axis: { stroke: theme.theme.colors.border },
+                axis: { stroke: theme.colors.border },
                 axisLabel: { 
-                  fill: theme.theme.colors.textLight,
-                  fontSize: theme.theme.typography.fontSize.xs, 
-                  fontFamily: theme.theme.typography.fontFamily.regular,
-                  padding: theme.theme.spacing.s // Näher an die Achse rücken
+                  fill: theme.colors.textLight,
+                  fontSize: theme.typography.fontSize.xs, 
+                  fontFamily: theme.typography.fontFamily.regular,
+                  padding: theme.spacing.s // Näher an die Achse rücken
                 },
                 tickLabels: { fill: "transparent" },
                 ticks: { stroke: "transparent" }, // Keine Tick-Markierungen anzeigen
@@ -188,12 +183,12 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                   })()
             }
             style={{
-              axis: { stroke: theme.theme.colors.border },
-              axisLabel: { fontSize: theme.theme.typography.fontSize.xs, },
+              axis: { stroke: theme.colors.border },
+              axisLabel: { fontSize: theme.typography.fontSize.xs, },
               tickLabels: { 
-                fill: theme.theme.colors.textLight,
-                fontSize: theme.theme.typography.fontSize.xs * 0.8,
-                fontFamily: theme.theme.typography.fontFamily.regular,
+                fill: theme.colors.textLight,
+                fontSize: theme.typography.fontSize.xs * 0.8,
+                fontFamily: theme.typography.fontFamily.regular,
                 angle: -45
               },
               // Dynamische Grid-Farbe basierend auf Cheat Day Status
@@ -203,9 +198,9 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                   const dataPoint = data.find(d => d.x === tick);
                   if (dataPoint && dataPoint.isCheatDay) {
                     // Fehlerfarbe für Cheat Days
-                    return theme.theme.colors.errorLight;
+                    return theme.colors.errorLight;
                   }
-                  return theme.theme.colors.border;
+                  return theme.colors.border;
                 }
               }
             }}
@@ -218,7 +213,7 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
             style={{
               axis: { stroke: "transparent" }, // Achsenlinie unsichtbar
               ticks: { stroke: "transparent" }, // Tick-Striche unsichtbar
-              grid: { stroke: theme.theme.colors.border, strokeOpacity: 0.25 }
+              grid: { stroke: theme.colors.border, strokeOpacity: 0.25 }
             }}
           />
           
@@ -276,11 +271,11 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                       
                       // Bei ignoreCheatDay wird die Cheat Day Markierung nicht angezeigt
                       if (isCheatDay && hasGoal && !ignoreCheatDay) {
-                        return theme.theme.colors.errorLight;
+                        return theme.colors.errorLight;
                       }
                       return line.color;
                     },
-                    stroke: theme.theme.colors.card,
+                    stroke: theme.colors.card,
                     strokeWidth: 2,
                   }
                 }}
@@ -306,45 +301,5 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
     </View>
   );
 };
-
-// Styles mithilfe des Themes definieren
-const createStyles = (theme: any) => StyleSheet.create({
-  chartCard: {
-    borderRadius: theme.theme.borderRadius.m,
-    backgroundColor: theme.theme.colors.card,
-    padding: theme.theme.spacing.m,
-    marginVertical: theme.theme.spacing.s,
-  },
-  chartContainer: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  legendContainer: {
-    marginTop: theme.theme.spacing.xs,
-    alignItems: 'center',
-  },
-  legendRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: theme.theme.spacing.s,
-    marginVertical: theme.theme.spacing.xs,
-  },
-  legendColor: {
-    width: theme.theme.spacing.s,
-    height: theme.theme.spacing.s,
-    borderRadius: theme.theme.spacing.s / 2,
-    marginRight: theme.theme.spacing.xs,
-  },
-  legendText: {
-    fontSize: theme.theme.typography.fontSize.xs,
-    fontFamily: theme.theme.typography.fontFamily.regular,
-    color: theme.theme.colors.text,
-  },
-});
 
 export default LineChartCard;

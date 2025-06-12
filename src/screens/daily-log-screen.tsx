@@ -35,22 +35,11 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   const AddEntryButton = ({ mealType, label, iconSize, fontSize }: { mealType: string; label?: string; iconSize?: number; fontSize?: number }) => {
     return (
       <TouchableOpacity
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: theme.colors.primary,
-          paddingVertical: theme.spacing.s,
-          paddingHorizontal: theme.spacing.m,
-          borderRadius: theme.borderRadius.medium,
-        }}
+        style={styles.addEntryButton}
         onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType })}
       >
         <CirclePlus size={iconSize ?? theme.typography.fontSize.m} color="white" style={{ marginRight: label ? theme.spacing.s : 0 }} />
-        {label ? <Text style={{ 
-          fontFamily: theme.typography.fontFamily.medium, 
-          color: 'white',
-          fontSize: fontSize ?? theme.typography.fontSize.s
-        }}>
+        {label ? <Text style={[styles.addEntryButtonText, { fontSize: fontSize ?? theme.typography.fontSize.s }]}>
           {label}
         </Text> : null}
       </TouchableOpacity>
@@ -60,32 +49,31 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   // Wiederverwendbare Komponente für eine komplette Mahlzeiten-Kategorie
   const MealCategory = ({ mealType, emoji, title, calories, isLast = false }: MealCategoryProps) => {
     return (
-      <View style={{ marginBottom: expandedMeals[mealType] ? 0 : theme.spacing.m }}>
+      <View style={styles.mealSectionContainer}>
         {/* Header-Bereich - klickbar für Scanner */}
         <TouchableOpacity 
-          style={[styles.mealCategoryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, 
-            borderBottomLeftRadius: expandedMeals[mealType] ? 0 : theme.borderRadius.medium,
-            borderBottomRightRadius: expandedMeals[mealType] ? 0 : theme.borderRadius.medium,
-            marginBottom: expandedMeals[mealType] ? 0 : undefined,
-          }]}
+          style={[
+            styles.mealCategoryCard,
+            expandedMeals[mealType] && styles.mealCategoryCardExpanded
+          ]}
         >
           <View style={styles.mealCategoryContent}>
             {/* Linke Seite - Mahlzeiteninfo mit Plus-Icon */}
             <TouchableOpacity 
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+              style={styles.mealCategoryLeftSection}
               onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType })}
             >
               <View>
-                <Text style={[styles.mealCategoryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+                <Text style={styles.mealCategoryTitle}>
                   {emoji} {title}
                 </Text>
                 {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === mealType).length > 0 ? (
-                  <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                  <Text style={styles.mealCategorySubtitle}>
                     {dailyLog.foodEntries.filter(entry => entry.mealType === mealType).length} 
                     {dailyLog.foodEntries.filter(entry => entry.mealType === mealType).length === 1 ? ' Eintrag' : ' Einträge'}
                   </Text>
                 ) : (
-                  <Text style={[styles.mealCategorySubtitle, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+                  <Text style={styles.mealCategorySubtitle}>
                     Noch keine Einträge
                   </Text>
                 )}
@@ -106,7 +94,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   // Wiederverwendbare Komponente für den Kalorien-Anzeige und Akkordeon-Button Bereich
   const MealAccordionButton = ({ mealType, calories }: { mealType: string, calories: number }) => (
     <TouchableOpacity
-      style={{ flexDirection: 'row', alignItems: 'center' }}
+      style={styles.mealCategoryRightSection}
       onPress={(e) => {
         e.stopPropagation();
         // Animation auslösen und Timer für Reset setzen
@@ -118,7 +106,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       }}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
-      <Text style={[styles.mealCategoryCalories, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.primary, marginRight: 8 }]}>
+      <Text style={styles.mealCategoryCalories}>
         {Math.round(calories)} kcal
       </Text>
       {/* Akkordeon-Icon */}
@@ -163,22 +151,19 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
     const animatedValue = animationRefs.current[mealType] || new Animated.Value(1);
     
     return (
-      <Animated.View style={{
-        backgroundColor: theme.colors.card,
-        borderBottomLeftRadius: theme.borderRadius.medium,
-        borderBottomRightRadius: theme.borderRadius.medium,
-        borderTopWidth: 1,
-        borderTopColor: theme.colors.border + '40',
-        paddingBottom: theme.spacing.s,
-        marginBottom: isLast ? 0 : theme.spacing.m,
-        opacity: animatedValue, // Animation der Transparenz
-        transform: [{ 
-          translateY: animatedValue.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-20, 0] // Gleitet von oben ein
-          })
-        }]
-      }}>
+      <Animated.View style={[
+        styles.accordionContent,
+        isLast && styles.accordionContentLast,
+        {
+          opacity: animatedValue, // Animation der Transparenz
+          transform: [{ 
+            translateY: animatedValue.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-20, 0] // Gleitet von oben ein
+            })
+          }]
+        }
+      ]}>
         {entries.length > 0 ? (
           <>
             {entries.map((entry, index, array) => (
@@ -220,37 +205,26 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                   
                   return (
                     <Animated.View 
-                      style={{
-                        width: 80,
-                        backgroundColor: theme.colors.error,
-                        opacity,
-                        borderTopRightRadius: 0,
-                        borderBottomRightRadius: 0,
-                        height: '100%',
-                        overflow: 'hidden',
-                        // Verbesserte Ausrichtung ohne absolute Positionierung
-                        justifyContent: 'center',
-                        alignSelf: 'stretch'
-                        
-                      }}
+                      style={[
+                        styles.swipeActionContainer,
+                        {
+                          backgroundColor: theme.colors.error,
+                          opacity,
+                        }
+                      ]}
                     >
                       <RectButton
-                        style={{
-                          flex: 1,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          backgroundColor: 'transparent',
-                        }}
+                        style={styles.swipeActionButton}
                         onPress={() => handleRemoveEntry(entry.id)}
                       >
                         <Animated.View
-                          style={{
-                            transform: [{ translateX: trans }],
-                            alignItems: 'center',
-                          }}
+                          style={[
+                            styles.swipeActionContent,
+                            { transform: [{ translateX: trans }] }
+                          ]}
                         >
                           <Trash2 size={theme.typography.fontSize.l} color="white" />
-                          <Text style={{ color: 'white', fontSize: theme.typography.fontSize.xs, fontFamily: theme.typography.fontFamily.medium, marginTop: 4 }}>
+                          <Text style={styles.swipeActionText}>
                             Löschen
                           </Text>
                         </Animated.View>
@@ -275,37 +249,26 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                   
                   return (
                     <Animated.View 
-                      style={{
-                        width: 80,
-                        backgroundColor: theme.colors.accent,
-                        opacity,
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
-                        height: '100%',
-                        overflow: 'hidden',
-                        // Verbesserte Ausrichtung ohne absolute Positionierung
-                        justifyContent: 'center',
-                        alignSelf: 'stretch'
-                        
-                      }}
+                      style={[
+                        styles.swipeActionContainer,
+                        {
+                          backgroundColor: theme.colors.accent,
+                          opacity,
+                        }
+                      ]}
                     >
                       <RectButton
-                        style={{
-                          flex: 1,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          backgroundColor: 'transparent',
-                        }}
+                        style={styles.swipeActionButton}
                         onPress={() => handleOpenFoodDetails(entry)}
                       >
                         <Animated.View
-                          style={{
-                            transform: [{ translateX: trans }],
-                            alignItems: 'center',
-                          }}
+                          style={[
+                            styles.swipeActionContent,
+                            { transform: [{ translateX: trans }] }
+                          ]}
                         >
                           <Edit2 size={theme.typography.fontSize.l} color="white" />
-                          <Text style={{ color: 'white', fontSize: theme.typography.fontSize.xs, fontFamily: theme.typography.fontFamily.medium, marginTop: 4 }}>
+                          <Text style={styles.swipeActionText}>
                             Bearbeiten
                           </Text>
                         </Animated.View>
@@ -324,27 +287,16 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                   }}
                   minDurationMs={400}
                 >
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: theme.spacing.m, // Größere Touchfläche für bessere Benutzererfahrung
-                    paddingHorizontal: theme.spacing.m,
-                    backgroundColor: theme.colors.card,
-                    // Konstante Höhe für bessere Ausrichtung
-                    minHeight: theme.spacing.xxl,
-                    borderBottomWidth: 1,
-                    borderBottomColor: theme.colors.border + '40',
-                  }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text }}>
+                  <View style={styles.foodEntryContainer}>
+                    <View style={styles.foodEntryLeftSection}>
+                      <Text style={styles.foodName}>
                         {entry.foodItem.name}
                       </Text>
-                      <Text style={{ fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, fontSize: 12 }}>
+                      <Text style={styles.foodServing}>
                         {entry.servingAmount}{entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('ml') || entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
                       </Text>
                     </View>
-                    <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.primary }}>
+                    <Text style={styles.foodCalories}>
                       {Math.round((entry.foodItem.nutrition?.calories ?? 0) * (entry.servingAmount / 100))} kcal
                     </Text>
                   </View>
@@ -353,12 +305,12 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
             ))}
             
             {/* Button zum Hinzufügen weiterer Einträge */}
-            <View style={{ padding: theme.spacing.m, alignItems: 'center', marginTop: theme.spacing.s }}>
+            <View style={styles.addEntryContainer}>
               <AddEntryButton mealType={mealType} label="Weitere Einträge hinzufügen" iconSize={theme.typography.fontSize.m} fontSize={theme.typography.fontSize.xs} />
             </View>
           </>
         ) : (
-          <View style={{ padding: theme.spacing.m, alignItems: 'center', marginTop: theme.spacing.s }}>
+          <View style={styles.addEntryContainer}>
             <AddEntryButton mealType={mealType} label="Eintrag hinzufügen" iconSize={theme.typography.fontSize.l} fontSize={theme.typography.fontSize.s} />
           </View>
         )}
@@ -673,20 +625,12 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   const totals = calculateTotals();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={styles.container}>
       {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
         { 
           paddingTop: insets.top,
-          backgroundColor: theme.colors.background,
-          borderBottomColor: theme.colors.border,
-          borderBottomWidth: 1,
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 3,
         }
       ]}>
         {/* Wiederverwendbare Datumsnavigations-Komponente */}
@@ -707,29 +651,22 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
 
       <ScrollView
         style={styles.scrollContent}
-        contentContainerStyle={{ padding: 16, paddingTop: 16 }} // 2 Grid-Punkte
+        contentContainerStyle={styles.scrollContentContainer}
       >
 
         {/* Daily summary */}
-        <View style={[styles.summaryCard, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium, marginBottom: theme.spacing.m }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.s }}>
-            <Text style={[styles.summaryTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryHeaderRow}>
+            <Text style={styles.summaryTitle}>
               Tagesübersicht
             </Text>
             
             {/* Cheat Day Button */}
             <TouchableOpacity 
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: dailyLog?.isCheatDay ? theme.colors.primary : 'transparent',
-                borderRadius: theme.borderRadius.medium,
-                borderColor: theme.colors.primary,
-                borderWidth: 1,
-                paddingVertical: theme.spacing.xs,
-                paddingHorizontal: theme.spacing.s,
-                marginTop: -theme.spacing.s,
-              }}
+              style={[
+                styles.cheatDayButton,
+                dailyLog?.isCheatDay && styles.cheatDayButtonActive
+              ]}
               onPress={handleToggleCheatDay}
             >
               {dailyLog?.isCheatDay ? (
@@ -737,11 +674,10 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
               ) : (
                 <ShieldCheck size={theme.typography.fontSize.m} color={theme.colors.primary} style={{ marginRight: theme.spacing.xs }} />
               )}
-              <Text style={{
-                color: dailyLog?.isCheatDay ? 'white' : theme.colors.primary,
-                fontFamily: theme.typography.fontFamily.medium,
-                fontSize: theme.typography.fontSize.xs
-              }}>
+              <Text style={[
+                styles.cheatDayText,
+                dailyLog?.isCheatDay && styles.cheatDayTextActive
+              ]}>
                 {dailyLog?.isCheatDay ? 'Cheat Day' : 'Normaler Tag'}
               </Text>
             </TouchableOpacity>
@@ -749,37 +685,37 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
           
           <View style={styles.summaryContent}>
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.calories }]}>
+              <Text style={[styles.summaryValue, { color: theme.colors.nutrition.calories }]}>
                 {Math.round(totals.calories)}
               </Text>
-              <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+              <Text style={styles.summaryLabel}>
                 Kalorien
               </Text>
             </View>
             
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.protein }]}>
+              <Text style={[styles.summaryValue, { color: theme.colors.nutrition.protein }]}>
                 {Math.round(totals.protein)}g
               </Text>
-              <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+              <Text style={styles.summaryLabel}>
                 Protein
               </Text>
             </View>
             
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.carbs }]}>
+              <Text style={[styles.summaryValue, { color: theme.colors.nutrition.carbs }]}>
                 {Math.round(totals.carbs)}g
               </Text>
-              <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+              <Text style={styles.summaryLabel}>
                 Kohlenhydrate
               </Text>
             </View>
             
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.nutrition.fat }]}>
+              <Text style={[styles.summaryValue, { color: theme.colors.nutrition.fat }]}>
                 {Math.round(totals.fat)}g
               </Text>
-              <Text style={[styles.summaryLabel, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+              <Text style={styles.summaryLabel}>
                 Fette
               </Text>
             </View>

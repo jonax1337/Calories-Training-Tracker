@@ -427,18 +427,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   // noch nicht abgeschlossen ist, zeige einen Ladebildschirm
   if (!isProfileComplete(userProfile)) {
     return (
-      <View style={[styles.container, { 
-        backgroundColor: theme.theme.colors.background,
-        justifyContent: 'center',
-        alignItems: 'center' 
-      }]}>
+      <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color={theme.theme.colors.primary} />
-        <Text style={{
-          fontFamily: theme.theme.typography.fontFamily.medium,
-          fontSize: theme.theme.typography.fontSize.m,
-          color: theme.theme.colors.textLight,
-          marginTop: 16
-        }}>
+        <Text style={styles.loadingText}>
           Profil wird vorbereitet...
         </Text>
       </View>
@@ -446,20 +437,12 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.theme.colors.background }]}>
+    <View style={styles.container}>
       {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
         { 
           paddingTop: insets.top,
-          backgroundColor: theme.theme.colors.background,
-          borderBottomColor: theme.theme.colors.border,
-          borderBottomWidth: 1,
-          shadowColor: theme.theme.colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 3,
         }
       ]}>
         {/* Wiederverwendbare Datumsnavigations-Komponente */}
@@ -480,40 +463,20 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
 
       <ScrollView
         style={styles.scrollContent}
-        contentContainerStyle={{ padding: 16, paddingTop: 16 }}
+        contentContainerStyle={styles.scrollContentContainer}
       >
 
       {/* Nutrition summary section */}
-      <View style={[
-        styles.summaryCard, 
-        { 
-          backgroundColor: theme.theme.colors.card,
-          borderRadius: theme.theme.borderRadius.large,
-          shadowColor: theme.theme.colors.shadow
-        }
-      ]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.theme.spacing.xs }}>
-          <Text style={[
-            styles.cardTitle, 
-            { 
-              fontFamily: theme.theme.typography.fontFamily.bold,
-              color: theme.theme.colors.text
-            }
-          ]}>Heutige Nährwerte</Text>
+      <View style={styles.summaryCard}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.cardTitle}>Heutige Nährwerte</Text>
           
           {/* Cheat Day Button */}
           <TouchableOpacity 
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: todayLog?.isCheatDay ? theme.theme.colors.primary : 'transparent',
-              borderRadius: theme.theme.borderRadius.medium,
-              borderColor: theme.theme.colors.primary,
-              borderWidth: 1,
-              paddingVertical: theme.theme.spacing.xs,
-              paddingHorizontal: theme.theme.spacing.s,
-              marginTop: -theme.theme.spacing.m,
-            }}
+            style={[
+              styles.cheatDayButton,
+              todayLog?.isCheatDay && styles.cheatDayButtonActive
+            ]}
             onPress={handleToggleCheatDay}
             disabled={isUpdatingCheatDay}
           >
@@ -522,11 +485,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             ) : (
               <ShieldCheck size={theme.theme.typography.fontSize.m} color={theme.theme.colors.primary} style={{ marginRight: theme.theme.spacing.xs }} />
             )}
-            <Text style={{
-              color: todayLog?.isCheatDay ? 'white' : theme.theme.colors.primary,
-              fontFamily: theme.theme.typography.fontFamily.medium,
-              fontSize: theme.theme.typography.fontSize.xs
-            }}>
+            <Text style={[
+              styles.cheatDayText,
+              todayLog?.isCheatDay && styles.cheatDayTextActive
+            ]}>
               {todayLog?.isCheatDay ? 'Cheat Day' : 'Normaler Tag'}
             </Text>
           </TouchableOpacity>
@@ -566,29 +528,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       </View>
 
       {/* Water tracking section with wave animation */}
-      <View style={[
-        styles.summaryCard, 
-        { 
-          backgroundColor: theme.theme.colors.card,
-          borderRadius: theme.theme.borderRadius.large,
-          marginBottom: 16,
-          shadowColor: theme.theme.colors.shadow,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.2,
-          shadowRadius: 1.5,
-          elevation: 2,
-          paddingBottom: 8,
-        }
-      ]}>
-        <Text style={[
-          styles.cardTitle, 
-          { 
-            fontFamily: theme.theme.typography.fontFamily.bold,
-            color: theme.theme.colors.text
-          }
-        ]}>Wasser</Text>
+      <View style={styles.summaryCard}>
+        <Text style={styles.cardTitle}>Wasser</Text>
       
-        <View style={{ height: theme.theme.spacing.xl * 5, marginVertical: theme.theme.spacing.s }}>
+        <View style={styles.waterContainer}>
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={openWaterModal}
@@ -603,13 +546,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           </TouchableOpacity>
         </View>
 
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'space-between', 
-          flexWrap: 'wrap',
-          marginTop: theme.theme.spacing.xs, 
-          marginBottom: theme.theme.spacing.xs
-        }}>
+        <View style={styles.waterButtonsContainer}>
           {[
             { amount: 100, value: '+100ml' },
             { amount: 250, value: '+250ml' },
@@ -618,27 +555,11 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           ].map((item) => (
             <TouchableOpacity
               key={item.amount}
-              style={{
-                backgroundColor: theme.theme.colors.primary,
-                borderRadius: theme.theme.borderRadius.medium,
-                paddingVertical: theme.theme.spacing.m,
-                paddingHorizontal: theme.theme.spacing.s,
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: theme.theme.spacing.xs,
-                minWidth: 60,
-                flex: 1,
-                maxWidth: 120,
-              }}
+              style={styles.waterButton}
               onPress={() => addWater(item.amount)}
               disabled={isUpdatingWater}
             >
-              <Text style={{
-                fontFamily: theme.theme.typography.fontFamily.medium,
-                color: "white",
-                fontSize: theme.theme.typography.fontSize.s,
-                textAlign: 'center',
-              }}>
+              <Text style={styles.waterButtonText}>
                 {item.value}
               </Text>
             </TouchableOpacity>
@@ -648,46 +569,16 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       
       {/* Nutrition Report Section */}
       {userProfile && activeGoalTargets && (
-        <View style={[
-          styles.summaryCard, 
-          { 
-            backgroundColor: theme.theme.colors.card,
-            borderRadius: theme.theme.borderRadius.large,
-            marginBottom: 16,
-            shadowColor: theme.theme.colors.shadow,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.2,
-            shadowRadius: 1.5,
-            elevation: 2,
-          }
-        ]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={[
-              styles.cardTitle, 
-              { 
-                fontFamily: theme.theme.typography.fontFamily.bold,
-                color: theme.theme.colors.text
-              }
-            ]}>Ernährungsbericht</Text>
+        <View style={styles.summaryCard}>
+          <View style={styles.nutritionReportHeaderRow}>
+            <Text style={styles.cardTitle}>Ernährungsbericht</Text>
             
             <TouchableOpacity 
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: theme.theme.colors.primary,
-                borderRadius: theme.theme.borderRadius.medium,
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                marginTop: -theme.theme.spacing.m,
-              }}
+              style={styles.nutritionReportButton}
               onPress={() => navigation.getParent()?.navigate('NutritionReport', { days: 14 })}
             >
               <ChartLine size={theme.theme.typography.fontSize.m} color="white" style={{ marginRight: 4 }} />
-              <Text style={{ 
-                fontFamily: theme.theme.typography.fontFamily.medium, 
-                fontSize: theme.theme.typography.fontSize.xs,
-                color: 'white'
-              }}>
+              <Text style={styles.nutritionReportButtonText}>
                 Details
               </Text>
             </TouchableOpacity>
@@ -704,105 +595,40 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       )}
 
       {/* Weight tracking section */}
-      <View style={[
-        styles.summaryCard, 
-        { 
-          backgroundColor: theme.theme.colors.card,
-          borderRadius: theme.theme.borderRadius.large,
-          marginBottom: 16,
-          shadowColor: theme.theme.colors.shadow,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.2,
-          shadowRadius: 1.5,
-          elevation: 2,
-        }
-      ]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <Text style={[
-            styles.cardTitle, 
-            { 
-              fontFamily: theme.theme.typography.fontFamily.bold,
-              color: theme.theme.colors.text
-            }
-          ]}>Gewicht</Text>
+      <View style={[styles.summaryCard, styles.weightContainer]}>
+        <View style={styles.weightHeaderRow}>
+          <Text style={styles.cardTitle}>Gewicht</Text>
           
           <TouchableOpacity 
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: theme.theme.colors.primary,
-              borderRadius: theme.theme.borderRadius.medium,
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-              marginTop: -theme.theme.spacing.m,
-            }}
+            style={styles.weightHistoryButton}
             onPress={() => navigation.getParent()?.navigate('WeightHistory')}
           >
             <BarChart2 size={theme.theme.typography.fontSize.m} color="white" style={{ marginRight: 4 }} />
-            <Text style={{ 
-              fontFamily: theme.theme.typography.fontFamily.medium, 
-              fontSize: theme.theme.typography.fontSize.xs,
-              color: 'white'
-            }}>
+            <Text style={styles.weightHistoryButtonText}>
               Verlauf
             </Text>
           </TouchableOpacity>
         </View>
         
-        <View style={{ flexDirection: 'column', marginTop: 8 }}>
+        <View style={styles.weightControlsContainer}>
           {/* Reihe mit großen Buttons für 0.1 kg Änderungen */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <View style={styles.weightMainRow}>
           <TouchableOpacity
-            style={{
-              backgroundColor: theme.theme.colors.primary,
-              borderRadius: 99,
-              width: 40,
-              height: 40,
-              justifyContent: 'center',
-              alignItems: 'center',
-              shadowColor: theme.theme.colors.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 1,
-              elevation: 2,
-            }}
+            style={styles.weightButton}
             onPress={decrementWeight}
             disabled={currentWeight === undefined || currentWeight <= 0.1}
           >
             <Minus size={24} color="white" />
           </TouchableOpacity>
           
-          <View style={{
-            backgroundColor: theme.theme.colors.background,
-            borderRadius: theme.theme.borderRadius.medium,
-            paddingVertical: 12,
-            paddingHorizontal: 16,
-            minWidth: 120,
-            alignItems: 'center',
-          }}>
-            <Text style={{
-              fontFamily: theme.theme.typography.fontFamily.bold,
-              fontSize: 24,
-              color: theme.theme.colors.text
-            }}>
+          <View style={styles.weightDisplay}>
+            <Text style={styles.weightText}>
               {(currentWeight !== undefined && currentWeight !== null) ? `${currentWeight.toFixed(2)} kg` : '-'}
             </Text>
           </View>
           
           <TouchableOpacity
-            style={{
-              backgroundColor: theme.theme.colors.primary,
-              borderRadius: 99,
-              width: 40,
-              height: 40,
-              justifyContent: 'center',
-              alignItems: 'center',
-              shadowColor: theme.theme.colors.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 1,
-              elevation: 2,
-            }}
+            style={styles.weightButton}
             onPress={incrementWeight}
             disabled={currentWeight === undefined}
           >
@@ -811,41 +637,21 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           </View>
           
           {/* Reihe mit kleinen Buttons für 0.01 kg Änderungen */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
+          <View style={styles.weightSmallRow}>
             <TouchableOpacity
-              style={{
-                backgroundColor: theme.theme.colors.primary + '15',
-                borderRadius: 99,
-                width: 26,
-                height: 26,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginRight: 8,
-              }}
+              style={[styles.weightButtonSmall, { marginLeft: 8 }]}
               onPress={decrementWeightSmall}
               disabled={currentWeight === undefined || currentWeight <= 0.01}
             >
               <Minus size={14} color={theme.theme.colors.primary} />
             </TouchableOpacity>
             
-            <Text style={{
-              fontFamily: theme.theme.typography.fontFamily.regular,
-              fontSize: 12,
-              color: theme.theme.colors.textLight
-            }}>
+            <Text style={styles.weightSmallLabel}>
               ±0.01 kg
             </Text>
             
             <TouchableOpacity
-              style={{
-                backgroundColor: theme.theme.colors.primary + '15',
-                borderRadius: 99,
-                width: 26,
-                height: 26,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginLeft: 8,
-              }}
+              style={styles.weightButtonSmall}
               onPress={incrementWeightSmall}
               disabled={currentWeight === undefined}
             >
@@ -863,21 +669,15 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         onRequestClose={() => setShowWaterModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.theme.colors.card, borderRadius: theme.theme.borderRadius.medium }]}>
-            <Text style={[styles.modalTitle, { fontFamily: theme.theme.typography.fontFamily.bold, color: theme.theme.colors.text }]}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
               Wasserstand anpassen
             </Text>
             
             <View style={styles.inputContainer}>
               <View style={styles.inputWithUnit}>
                 <TextInput
-                  style={[styles.input, { 
-                    backgroundColor: theme.theme.colors.background,
-                    color: theme.theme.colors.text,
-                    borderRadius: theme.theme.borderRadius.small,
-                    fontFamily: theme.theme.typography.fontFamily.medium,
-                    paddingRight: 40 // Platz für die Einheit
-                  }]}
+                  style={styles.input}
                   value={manualWaterAmount}
                   onChangeText={(text) => {
                     // Entferne alle Nicht-Ziffern
@@ -888,15 +688,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                   placeholder="Wassermenge"
                   placeholderTextColor={theme.theme.colors.textLight}
                 />
-                <Text style={{
-                  position: 'absolute',
-                  right: 12,
-                  alignSelf: 'center',
-                  color: theme.theme.colors.textLight,
-                  fontFamily: theme.theme.typography.fontFamily.medium,
-                  fontSize: 16,
-                  opacity: 0.7
-                }}>
+                <Text style={styles.unitText}>
                   ml
                 </Text>
               </View>
@@ -904,7 +696,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.theme.colors.error + '20', borderRadius: theme.theme.borderRadius.small }]}
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setShowWaterModal(false)}
               >
                 <Text style={{ color: theme.theme.colors.error, fontFamily: theme.theme.typography.fontFamily.medium }}>
@@ -913,7 +705,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.theme.colors.primary + '20', borderRadius: theme.theme.borderRadius.small }]}
+                style={[styles.modalButton, styles.saveButton]}
                 onPress={applyManualWaterAmount}
               >
                 <Text style={{ color: theme.theme.colors.primary, fontFamily: theme.theme.typography.fontFamily.medium }}>
@@ -924,46 +716,6 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           </View>
         </View>
       </Modal>
-
-      {/* Health data section */}
-      {healthData && (
-        <View style={[
-          styles.summaryCard, 
-          { 
-            backgroundColor: theme.theme.colors.card,
-            borderRadius: theme.theme.borderRadius.large,
-            shadowColor: theme.theme.colors.shadow
-          }
-        ]}>
-          <Text style={[
-            styles.cardTitle, 
-            { 
-              fontFamily: theme.theme.typography.fontFamily.bold,
-              color: theme.theme.colors.text
-            }
-          ]}>Aktivität</Text>
-          
-          <View style={styles.statRow}>
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { fontFamily: theme.theme.typography.fontFamily.bold, color: theme.theme.colors.text }]}>
-                {healthData.steps}
-              </Text>
-              <Text style={[styles.statLabel, { fontFamily: theme.theme.typography.fontFamily.regular, color: theme.theme.colors.textLight }]}>
-                Schritte
-              </Text>
-            </View>
-            
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { fontFamily: theme.theme.typography.fontFamily.bold, color: theme.theme.colors.text }]}>
-                {caloriesBurned}
-              </Text>
-              <Text style={[styles.statLabel, { fontFamily: theme.theme.typography.fontFamily.regular, color: theme.theme.colors.textLight }]}>
-                Kalorien verbrannt
-              </Text>
-            </View>
-          </View>
-        </View>
-      )}
       </ScrollView>
     </View>
   );

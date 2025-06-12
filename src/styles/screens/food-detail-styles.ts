@@ -7,8 +7,18 @@ interface FoodDetailStyles {
   stickyHeader: ViewStyle;
   headerText: TextStyle;
   scrollContent: ViewStyle;
+  scrollContentContainer: ViewStyle;
+  topSpacer: ViewStyle;
   card: ViewStyle;
   cardTitle: TextStyle;
+  cardTitleWithBrand: TextStyle;
+  brandInfoContainer: ViewStyle;
+  brandText: TextStyle;
+  portionInfoContainer: ViewStyle;
+  portionInfoTitle: TextStyle;
+  portionInfoDescription: TextStyle;
+  nutritionContainer: ViewStyle;
+  mealSelectionCard: ViewStyle;
   imagePlaceholder: ViewStyle;
   placeholderText: TextStyle;
   inputContainer: ViewStyle;
@@ -16,7 +26,6 @@ interface FoodDetailStyles {
   textInput: TextStyle;
   brandContainer: ViewStyle;
   brandLabel: TextStyle;
-  brandText: TextStyle;
   barcodeContainer: ViewStyle;
   barcodeLabel: TextStyle;
   barcodeText: TextStyle;
@@ -31,8 +40,11 @@ interface FoodDetailStyles {
   sectionTitle: TextStyle;
   mealTypeContainer: ViewStyle;
   mealButton: ViewStyle;
+  mealButtonSelected: ViewStyle;
+  mealButtonUnselected: ViewStyle;
   selectedMealButton: ViewStyle;
   mealButtonText: TextStyle;
+  mealButtonTextSelected: TextStyle;
   selectedMealButtonText: TextStyle;
   addButton: ViewStyle;
   addButtonText: TextStyle;
@@ -47,6 +59,7 @@ interface FoodDetailStyles {
 export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   stickyHeader: {
     width: '100%',
@@ -59,6 +72,14 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
   },
   scrollContent: {
     flex: 1,
+  },
+  scrollContentContainer: {
+    paddingRight: theme.spacing.m,
+    paddingLeft: theme.spacing.m,
+    paddingBottom: theme.spacing.xl,
+  },
+  topSpacer: {
+    marginTop: theme.spacing.m,
   },
   card: {
     shadowColor: '#000',
@@ -95,12 +116,13 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
   loadingContainer: {
     padding: theme.spacing.m,
     alignItems: 'center',
-    marginTop: theme.spacing.m,
+    marginTop: theme.spacing.xl,
   },
   loadingText: {
-    marginTop: theme.spacing.xs,
+    color: theme.colors.text,
+    fontFamily: theme.typography.fontFamily.medium,
+    marginTop: theme.spacing.m,
     fontSize: theme.typography.fontSize.m,
-    fontFamily: theme.typography.fontFamily.regular,
   },
   errorContainer: {
     padding: theme.spacing.l,
@@ -118,8 +140,48 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
   },
   cardTitle: {
     fontSize: theme.typography.fontSize.l,
-    marginBottom: theme.spacing.m,
     fontFamily: theme.typography.fontFamily.medium,
+    color: theme.colors.text,
+  },
+  cardTitleWithBrand: {
+    marginBottom: theme.spacing.s,
+  },
+  brandInfoContainer: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: theme.spacing.s,
+    borderRadius: theme.borderRadius.small,
+  },
+  brandText: {
+    color: theme.colors.textLight,
+    marginBottom: 0,
+    fontFamily: theme.typography.fontFamily.medium,
+  },
+  portionInfoContainer: {
+    marginBottom: theme.spacing.m,
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: theme.spacing.m,
+    borderRadius: theme.borderRadius.small,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+  },
+  portionInfoTitle: {
+    color: theme.colors.text,
+    fontFamily: theme.typography.fontFamily.medium,
+    marginBottom: theme.spacing.xs,
+  },
+  portionInfoDescription: {
+    color: theme.colors.text,
+    opacity: 0.7,
+    fontFamily: theme.typography.fontFamily.regular,
+    marginTop: theme.spacing.xs,
+  },
+  nutritionContainer: {
+    marginBottom: theme.spacing.s,
+  },
+  mealSelectionCard: {
+    marginTop: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   label: {
     fontSize: theme.typography.fontSize.m,
@@ -166,10 +228,6 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
     fontSize: theme.typography.fontSize.m,
     fontFamily: theme.typography.fontFamily.medium,
     marginRight: theme.spacing.xs,
-  },
-  brandText: {
-    fontSize: theme.typography.fontSize.m,
-    fontFamily: theme.typography.fontFamily.regular,
   },
   barcodeContainer: {
     flexDirection: 'row',
@@ -226,9 +284,15 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     marginBottom: theme.spacing.s,
-    display: 'none',
+  },
+  mealButtonSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '15',
+  },
+  mealButtonUnselected: {
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
   },
   selectedMealButton: {
     borderColor: theme.colors.primary,
@@ -238,6 +302,13 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
     textAlign: 'center',
     fontSize: theme.typography.fontSize.m,
     fontFamily: theme.typography.fontFamily.regular,
+    color: theme.colors.text,
+  },
+  mealButtonTextSelected: {
+    textAlign: 'center',
+    fontSize: theme.typography.fontSize.m,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.primary,
   },
   selectedMealButtonText: {
     color: theme.colors.primary,
@@ -246,9 +317,10 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
   addButton: {
     alignItems: 'center',
     backgroundColor: theme.colors.primary,
-    padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
-    marginTop: theme.spacing.m,
+    padding: theme.spacing.m,
+    marginTop: theme.spacing.l,
+    marginBottom: theme.spacing.xl,
   },
   addButtonText: {
     color: 'white',

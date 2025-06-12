@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, Dimensions, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../../theme/theme-context';
+import { createWaveAnimationStyles } from '../../styles/components/ui/wave-animation-styles';
 
 interface WaveAnimationProps {
   fillPercentage: number; // 0 to 100
@@ -425,7 +426,8 @@ const WaveAnimation = ({
   icon,
   textColor = '#2196F3'
 }: WaveAnimationProps) => {
-  const theme = useTheme();
+  const { theme } = useTheme();
+  const styles = createWaveAnimationStyles(theme);
   const webViewRef = useRef<WebView>(null);
   const [webViewLoaded, setWebViewLoaded] = useState(false);
   
@@ -661,29 +663,6 @@ useEffect(() => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    height: 160,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  webview: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  iconOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-    pointerEvents: 'none',
-  },
-});
 
 // Web-spezifische Implementierung der Wave-Animation
 interface WebWaveAnimationProps {

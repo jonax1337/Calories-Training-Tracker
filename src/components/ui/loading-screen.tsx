@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { useTheme } from '../../theme/theme-context';
+import { createLoadingScreenStyles } from '../../styles/components/ui/loading-screen-styles';
 
 interface LoadingScreenProps {
   message?: string;
@@ -8,41 +9,16 @@ interface LoadingScreenProps {
 
 function LoadingScreen({ message = 'Wird geladen...' }: LoadingScreenProps) {
   const { theme } = useTheme();
+  const styles = createLoadingScreenStyles(theme);
   
   return (
-    <View 
-      style={[
-        styles.container, 
-        { backgroundColor: theme.colors.background }
-      ]}
-    >
+    <View style={styles.container}>
       <ActivityIndicator size="large" color={theme.colors.primary} />
-      <Text 
-        style={[
-          styles.message, 
-          { 
-            color: theme.colors.text,
-            fontFamily: theme.typography.fontFamily.medium,
-            marginTop: theme.spacing.m,
-          }
-        ]}
-      >
+      <Text style={styles.message}>
         {message}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  message: {
-    fontSize: 16,
-    marginTop: 16,
-  },
-});
 
 export default LoadingScreen;

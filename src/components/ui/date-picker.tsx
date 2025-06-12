@@ -9,7 +9,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../../theme/theme-context';
-import { createProfileStyles } from '../../styles/screens/profile-styles';
+import { createDatePickerStyles } from '../../styles/components/ui/date-picker-styles';
 
 interface DatePickerProps {
   label: string;
@@ -33,7 +33,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   customModalTitle = 'Datum auswählen',
 }) => {
   const { theme } = useTheme();
-  const styles = createProfileStyles(theme);
+  const styles = createDatePickerStyles(theme);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
 
@@ -117,13 +117,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         onRequestClose={cancelDatePicker}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.medium }]}>
-            <Text style={[styles.modalTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
               {customModalTitle}
             </Text>
             {/* Close button for modal */}
             <TouchableOpacity onPress={cancelDatePicker} style={styles.modalCloseButton}>
-              <X size={24} color={theme.colors.text} strokeWidth={1.5} />
+              <X size={24} color={theme.colors.text} />
             </TouchableOpacity>
             
             <View style={styles.datePickerContainer}>
@@ -184,7 +184,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.error + '20', borderRadius: theme.borderRadius.small }]}
+                style={[styles.modalButton, { backgroundColor: theme.colors.error + '20' }]}
                 onPress={cancelDatePicker}
               >
                 <Text style={{ color: theme.colors.error, fontFamily: theme.typography.fontFamily.medium }}>
@@ -193,7 +193,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.primary + '20', borderRadius: theme.borderRadius.small }]}
+                style={[styles.modalButton, { backgroundColor: theme.colors.primary + '20' }]}
                 onPress={confirmDatePicker}
               >
                 <Text style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.medium }}>
@@ -213,37 +213,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       {renderDatePicker()}
       
       {/* Date Input Container */}
-      <View style={[styles.inputContainer, {
-        flexDirection: 'column', 
-        width: '100%',          
-        padding: theme.spacing.m,
-        marginBottom: theme.spacing.m,
-        borderRadius: theme.borderRadius.medium,
-        backgroundColor: theme.colors.card,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        overflow: 'hidden'
-      }]}>
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          marginBottom: theme.spacing.m
-        }}>
-          <Text style={[styles.inputLabel, { 
-            fontFamily: theme.typography.fontFamily.medium, 
-            color: theme.colors.text,
-            fontSize: theme.typography.fontSize.m,
-          }]}>
+      <View style={styles.inputContainer}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.inputLabel}>
             {label}
           </Text>
           {ageLabel && (
-            <Text style={{
-              fontFamily: theme.typography.fontFamily.medium,
-              fontSize: theme.typography.fontSize.s,
-              color: theme.colors.textLight
-            }}>
+            <Text style={styles.ageLabel}>
               {calculateAge(value)} Jahre
             </Text>
           )}
@@ -251,31 +227,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           
         {/* Anklickbare Datums-Anzeige */}
         <TouchableOpacity
-          style={{
-            width: '100%',
-            backgroundColor: theme.colors.background,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            borderRadius: theme.borderRadius.medium,
-            padding: theme.spacing.m,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}
+          style={styles.dateButton}
           onPress={openDatePicker}
         >
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.medium,
-            fontSize: theme.typography.fontSize.m,
-            color: theme.colors.text
-          }}>
+          <Text style={styles.dateText}>
             {value.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
           </Text>
-          <Text style={{
-            fontFamily: theme.typography.fontFamily.medium,
-            fontSize: theme.typography.fontSize.s,
-            color: theme.colors.primary
-          }}>
+          <Text style={styles.changeButtonText}>
             {customButtonText}
           </Text>
         </TouchableOpacity>
@@ -284,4 +242,3 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   );
 };
 
-// Styles are now imported from profile-styles.ts

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
+import { createWeightHistoryStyles } from '../styles/screens/weight-history-styles';
 import { getDailyLogs } from '../services/storage-service';
 import { fetchUserProfile } from '../services/profile-api';
 import LineChartCard, { DataPoint } from '../components/charts/line-chart-card';
@@ -26,8 +27,11 @@ type WeightDataPoint = {
 export default function WeightHistoryScreen({ navigation, route }: WeightHistoryScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const screenWidth = Dimensions.get('window').width - (theme.theme.spacing.m * 2); // Screen + Card Padding
+  const screenWidth = Dimensions.get('window').width - (theme.theme.spacing.m * 2);
   
+  // Theme-basierte Styles
+  const styles = useMemo(() => createWeightHistoryStyles(theme.theme), [theme.theme]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [weightData, setWeightData] = useState<WeightDataPoint[]>([]);
   const [defaultWeight, setDefaultWeight] = useState<number | null>(null);
@@ -155,8 +159,7 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
   const timeRangeOptions = [
     { label: '14 Tage', value: 14 },
     { label: '30 Tage', value: 30 },
-    { label: '90 Tage', value: 90 },
-    { label: '6 Monate', value: 180 }
+    { label: '90 Tage', value: 90 }
   ];
   
   // Bereite Daten für LineChartCard vor
@@ -175,7 +178,7 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
     if (weightData.length === 0) {
       return (
         <View style={styles.noDataContainer}>
-          <Text style={[styles.noDataText, { color: theme.theme.colors.textLight }]}>
+          <Text style={styles.noDataText}>
             Keine Gewichtsdaten im gewählten Zeitraum verfügbar
           </Text>
         </View>
@@ -199,7 +202,7 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
         ]}
         height={220}
         width={screenWidth}
-        showLegend={false}
+        showLegend={true}
         yAxis={{
           label: undefined,
           unit: 'Kilogramm',
@@ -214,31 +217,19 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
           tickCount: timeRange > 30 ? 7 : undefined // Für längere Zeiträume weniger Tick-Marks
         }}
         style={{
-          container: {
-            marginVertical: 8,
-            backgroundColor: theme.theme.colors.card,
-            borderRadius: theme.theme.borderRadius.medium,
-            padding: 16
-          },
-          title: {
-            color: theme.theme.colors.text,
-            fontSize: theme.theme.typography.fontSize.l,
-            fontFamily: theme.theme.typography.fontFamily.bold,
-            marginBottom: 8
-          }
+          container: styles.chartContainer,
+          title: styles.chartTitle,
         }}
       />
     );
   };
   
   return (
-    <View style={[styles.container, { 
-      backgroundColor: theme.theme.colors.background,
-    }]}>
+    <View style={styles.container}>
       
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ padding: theme.theme.spacing.m }}
+        contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         {/* Zeitraum Auswahl */}
@@ -248,22 +239,13 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
               key={option.value}
               style={[
                 styles.timeRangeButton,
-                timeRange === option.value && { 
-                  backgroundColor: theme.theme.colors.primary,
-                  borderColor: theme.theme.colors.primary,
-                },
-                { borderColor: theme.theme.colors.border }
+                timeRange === option.value && styles.timeRangeButtonActive
               ]}
               onPress={() => setTimeRange(option.value)}
             >
               <Text style={[
                 styles.timeRangeText,
-                { 
-                  color: timeRange === option.value ? 'white' : theme.theme.colors.text,
-                  fontFamily: timeRange === option.value ? 
-                    theme.theme.typography.fontFamily.bold : 
-                    theme.theme.typography.fontFamily.medium
-                }
+                timeRange === option.value && styles.timeRangeTextActive
               ]}>
                 {option.label}
               </Text>
@@ -272,38 +254,26 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
         </View>
         
         {/* Statistiken */}
-        <View style={[styles.statsCard, {
-          backgroundColor: theme.theme.colors.card,
-          borderRadius: theme.theme.borderRadius.medium,
-        }]}>
-          <Text style={[styles.cardTitle, { 
-            color: theme.theme.colors.text,
-            fontFamily: theme.theme.typography.fontFamily.bold
-          }]}>
+        <View style={styles.statsCard}>
+          <Text style={styles.cardTitle}>
             Zusammenfassung
           </Text>
           
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: theme.theme.colors.textLight }]}>
+              <Text style={styles.statLabel}>
                 Startgewicht
               </Text>
-              <Text style={[styles.statValue, { 
-                color: theme.theme.colors.text,
-                fontFamily: theme.theme.typography.fontFamily.medium
-              }]}>
+              <Text style={styles.statValue}>
                 {stats.start.toFixed(2)}kg
               </Text>
             </View>
             
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: theme.theme.colors.textLight }]}>
+              <Text style={styles.statLabel}>
                 Aktuelles Gewicht
               </Text>
-              <Text style={[styles.statValue, { 
-                color: theme.theme.colors.text,
-                fontFamily: theme.theme.typography.fontFamily.medium
-              }]}>
+              <Text style={styles.statValue}>
                 {stats.end.toFixed(2)}kg
               </Text>
             </View>
@@ -350,7 +320,7 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
             <ActivityIndicator 
               size="large" 
               color={theme.theme.colors.primary} 
-              style={{ marginVertical: 40 }}
+              style={styles.loadingContainer}
             />
           ) : renderChart()}
         </View>
@@ -358,89 +328,3 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    fontSize: 20,
-    textAlign: 'center',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  content: {
-    flex: 1,
-  },
-  timeRangeSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  timeRangeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    minWidth: 70,
-    alignItems: 'center',
-  },
-  timeRangeText: {
-    fontSize: 14,
-  },
-  statsCard: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 18,
-    marginBottom: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 16,
-  },
-  chartCard: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  noDataContainer: {
-    height: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noDataText: {
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  infoCard: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  infoText: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-});

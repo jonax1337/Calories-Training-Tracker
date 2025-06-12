@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, Animated, Easing } from 'react-native';
 import { useTheme } from '../../theme/theme-context';
+import { createProgressBarStyles } from '../../styles/components/ui/progress-bar-styles';
 
 interface ProgressBarProps {
   current: number;
@@ -21,7 +22,8 @@ function ProgressBar({
   showPercentage = true,
   isCheatDay = false // Standardmäßig kein Cheat Day
 }: ProgressBarProps) {
-  const theme = useTheme();
+  const { theme } = useTheme();
+  const styles = createProgressBarStyles(theme);
   
   // Prüfen, ob der aktuelle Wert das Ziel überschreitet
   // Bei Cheat Days ignorieren wir die Überschreitung
@@ -56,21 +58,12 @@ function ProgressBar({
   return (
     <View style={styles.container}>
       <View style={styles.labelContainer}>
-        <Text style={[
-          styles.label, 
-          { 
-            fontFamily: theme.theme.typography.fontFamily.medium, 
-            color: theme.theme.colors.text 
-          }
-        ]}>
+        <Text style={styles.label}>
           {label}
         </Text>
         <Text style={[
-          styles.values, 
-          { 
-            fontFamily: theme.theme.typography.fontFamily.regular, 
-            color: isOverTarget ? theme.theme.colors.error : theme.theme.colors.textLight 
-          }
+          styles.values,
+          isOverTarget && styles.valuesError
         ]}>
           {current} / {target} {showPercentage && `(${percentage}%)`}
         </Text>
@@ -79,9 +72,8 @@ function ProgressBar({
       <View style={[
         styles.progressBackground, 
         { 
-          height, 
-          backgroundColor: theme.theme.colors.surfaceVariant,
-          borderRadius: theme.theme.borderRadius.small
+          height,
+          borderRadius: theme.borderRadius.small
         }
       ]}>
         <Animated.View 
@@ -90,8 +82,8 @@ function ProgressBar({
             { 
               width: widthInterpolated, // Animierte Breite
               height,
-              backgroundColor: isOverTarget ? theme.theme.colors.error : color,
-              borderRadius: theme.theme.borderRadius.small
+              backgroundColor: isOverTarget ? theme.colors.error : color,
+              borderRadius: theme.borderRadius.small
             }
           ]} 
         />
@@ -99,27 +91,5 @@ function ProgressBar({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 8,
-  },
-  labelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  label: {
-    fontSize: 14,
-  },
-  values: {
-    fontSize: 14,
-  },
-  progressBackground: {
-    overflow: 'hidden',
-  },
-  progressFill: {
-  },
-});
 
 export default ProgressBar;

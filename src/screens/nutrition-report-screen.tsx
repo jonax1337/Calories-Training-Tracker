@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ActivityIndicator, Text as RNText, StyleSheet, View, ScrollView } from 'react-native';
+import { SafeAreaView, ActivityIndicator, Text as RNText, View, ScrollView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -9,13 +9,14 @@ import NutritionReportComponent from '../components/reports/nutrition-report-com
 import { useTheme } from '../theme/theme-context';
 import { useDateContext } from '../context/date-context';
 import LoadingScreen from '../components/ui/loading-screen';
+import { createNutritionReportStyles } from '../styles/screens/nutrition-report-styles';
 
 const NutritionReportScreen = () => {
-  const theme = useTheme();
+  const { theme } = useTheme();
+  const styles = createNutritionReportStyles(theme);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'NutritionReport'>>();
   const { selectedDate } = useDateContext();
-  const styles = createStyles(theme.theme);
   
   // Extrahiere days-Parameter aus Route oder verwende Standardwert 30
   const days = route.params?.days || 30;
@@ -58,8 +59,8 @@ const NutritionReportScreen = () => {
   // Schritt-für-Schritt Wiedereinführung der Charts
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={{ flex: 1 }}>
-        <View style={{ paddingHorizontal: theme.theme.spacing.m, paddingVertical: theme.theme.spacing.s }}>
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.contentContainer}>
           {!isLoading && (
             <View>
               <NutritionReportComponent 
@@ -75,12 +76,5 @@ const NutritionReportScreen = () => {
     </SafeAreaView>
   );
 };
-
-const createStyles = (theme: any) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-});
 
 export default NutritionReportScreen;

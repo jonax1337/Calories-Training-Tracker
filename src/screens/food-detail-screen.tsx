@@ -352,30 +352,22 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? theme.spacing.xl * 2 : 0}
     >
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollContent}
-        contentContainerStyle={{
-          paddingRight: theme.spacing.m,
-          paddingLeft: theme.spacing.m,
-          paddingBottom: theme.spacing.xl, // Extra padding at bottom for keyboard space
-        }}
+        contentContainerStyle={styles.scrollContentContainer}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={true}
       >
         {isLoading ? (
-          <View style={[styles.loadingContainer, { marginTop: theme.spacing.xl }]}>
+          <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={[styles.loadingText, { 
-              color: theme.colors.text,
-              fontFamily: theme.typography.fontFamily.medium,
-              marginTop: theme.spacing.m 
-            }]}>Lade Produktdaten...</Text>
+            <Text style={styles.loadingText}>Lade Produktdaten...</Text>
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
@@ -384,31 +376,23 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         ) : (
           <>
             {/* Abstand zur oberen Kante */}
-            <View style={{ marginTop: theme.spacing.m }} />
+            <View style={styles.topSpacer} />
             
             {/* Produktinformationen - Name und Marke */}
-            <View style={[styles.card]}>
+            <View style={styles.card}>
               
               {/* Produktname */}
-              <Text style={[styles.cardTitle, {
-                color: theme.colors.text,
-                marginBottom: foodItem?.brand ? theme.spacing.s : theme.spacing.m
-              }]}>
+              <Text style={[
+                styles.cardTitle,
+                foodItem?.brand && styles.cardTitleWithBrand
+              ]}>
                 {foodItem?.name || customName}
               </Text>
               
               {/* Marke (falls vorhanden) */}
               {foodItem?.brand && (
-                <View style={{ 
-                  marginBottom: theme.spacing.s,
-                  backgroundColor: theme.colors.surfaceVariant,
-                  padding: theme.spacing.s,
-                  borderRadius: theme.borderRadius.small
-                }}>
-                  <Text style={[styles.label, { 
-                    color: theme.colors.textLight,
-                    marginBottom: 0
-                  }]}>
+                <View style={styles.brandInfoContainer}>
+                  <Text style={[styles.label, styles.brandText]}>
                     <Text style={{ fontFamily: theme.typography.fontFamily.medium }}>{foodItem.brand}</Text>
                   </Text>
                 </View>
@@ -417,7 +401,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
             {/* Nutrition information */}
             {foodItem?.nutrition && (
-            <View style={{ marginBottom: theme.spacing.s }}>
+            <View style={styles.nutritionContainer}>
               <NutritionalInfoCard
               nutrition={foodItem.nutrition}
               servingMultiplier={parseFloat(servings) / 100} 
@@ -427,28 +411,12 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
             {/* Portionsinformationen */}
             {foodItem?.nutrition?.servingDescription && (
-              <View style={{ 
-                marginBottom: theme.spacing.m, 
-                backgroundColor: theme.colors.surfaceVariant,
-                padding: theme.spacing.m,
-                borderRadius: theme.borderRadius.small,
-                borderLeftWidth: 3,
-                borderLeftColor: theme.colors.primary
-              }}>
-                <Text style={{
-                  color: theme.colors.text,
-                  fontFamily: theme.typography.fontFamily.medium,
-                  marginBottom: theme.spacing.xs
-                }}>
+              <View style={styles.portionInfoContainer}>
+                <Text style={styles.portionInfoTitle}>
                   Portionsinformationen:
                 </Text>
                 {foodItem.nutrition.servingDescription && (
-                  <Text style={{
-                    color: theme.colors.text,
-                    opacity: 0.7,
-                    fontFamily: theme.typography.fontFamily.regular,
-                    marginTop: theme.spacing.xs
-                  }}>
+                  <Text style={styles.portionInfoDescription}>
                     {foodItem.nutrition.servingDescription}
                   </Text>
                 )}
@@ -476,7 +444,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             
             {/* Mahlzeitenauswahl - nur im Bearbeitungsmodus anzeigen */}
             {isEditing && (
-              <View style={[styles.card, { marginTop: theme.spacing.m, borderWidth: 1, borderColor: theme.colors.border }]}>
+              <View style={[styles.card, styles.mealSelectionCard]}>
                 <Text style={styles.sectionTitle}>
                   Mahlzeit auswählen
                 </Text>
@@ -485,23 +453,10 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                     <TouchableOpacity
                       key={type}
                       style={[
-                        {
-                          minWidth: '47%',
-                          alignItems: 'center',
-                          padding: theme.spacing.m,
-                          borderRadius: theme.borderRadius.medium,
-                          borderWidth: 1,
-                          marginBottom: theme.spacing.s,
-                        },
+                        styles.mealButton,
                         selectedMeal === type 
-                          ? { 
-                              borderColor: theme.colors.primary,
-                              backgroundColor: theme.colors.primary + '15',
-                            }
-                          : {
-                              borderColor: theme.colors.border,
-                              backgroundColor: theme.colors.background,
-                            }
+                          ? styles.mealButtonSelected
+                          : styles.mealButtonUnselected
                       ]}
                       onPress={() => {
                         setSelectedMeal(type);
@@ -509,14 +464,11 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }}
                     >
-                      <Text style={{
-                        textAlign: 'center',
-                        fontSize: theme.typography.fontSize.m,
-                        fontFamily: selectedMeal === type 
-                          ? theme.typography.fontFamily.bold 
-                          : theme.typography.fontFamily.regular,
-                        color: selectedMeal === type ? theme.colors.primary : theme.colors.text,
-                      }}>
+                      <Text style={
+                        selectedMeal === type 
+                          ? styles.mealButtonTextSelected
+                          : styles.mealButtonText
+                      }>
                         {getMealTypeLabel(type)}
                       </Text>
                     </TouchableOpacity>
@@ -527,13 +479,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
             {/* Add to log button */}
             <TouchableOpacity
-              style={[styles.addButton, { 
-                backgroundColor: theme.colors.primary,
-                borderRadius: theme.borderRadius.medium,
-                padding: theme.spacing.m,
-                marginTop: theme.spacing.l,
-                marginBottom: theme.spacing.xl
-              }]}
+              style={styles.addButton}
               onPress={handleAddToLog}
             >
               <Text style={styles.addButtonText}>{isEditing ? 'Aktualisieren' : 'Hinzufügen'}</Text>

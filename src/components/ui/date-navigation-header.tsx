@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../theme/theme-context';
 import { getTodayFormatted, formatToLocalISODate } from '../../utils/date-utils';
+import { createDateNavigationHeaderStyles } from '../../styles/components/ui/date-navigation-header-styles';
 
 // TypeScript Interface für die Props
 interface DateNavigationHeaderProps {
@@ -29,7 +30,7 @@ function DateNavigationHeader({
   const { theme } = useTheme();
 
   // Styles mit aktuellem Theme initialisieren
-  const styles = createStyles(theme);
+  const styles = createDateNavigationHeaderStyles(theme);
 
   // Zum vorherigen Tag navigieren
   const goToPreviousDay = () => {
@@ -59,10 +60,8 @@ function DateNavigationHeader({
       
       <TouchableOpacity onPress={onCalendarOpen} style={styles.dateButton}>
         <Text style={[
-          styles.dateText, 
-          { 
-            color: selectedDate === getTodayFormatted() ? theme.colors.primary : theme.colors.text
-          }
+          styles.dateText,
+          selectedDate === getTodayFormatted() && styles.dateTextToday
         ]}>
           {new Date(selectedDate).toLocaleDateString('de-DE', { 
             weekday: 'long', 
@@ -82,25 +81,5 @@ function DateNavigationHeader({
     </View>
   );
 }
-
-// Styles mit Theming erstellen
-const createStyles = (theme: any) => StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  dateButton: {
-    paddingVertical: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.s,
-  },
-  dateText: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.fontSize.xl,
-    textAlign: 'center',
-  }
-});
 
 export default DateNavigationHeader;

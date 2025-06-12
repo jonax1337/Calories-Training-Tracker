@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Modal, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../../theme/theme-context';
 import { getTodayFormatted } from '../../utils/date-utils';
+import { createCalendarModalStyles } from '../../styles/components/ui/calendar-modal-styles';
 
 // TypeScript Interface für die Props
 interface CalendarModalProps {
@@ -25,7 +26,7 @@ function CalendarModal({ isVisible, onClose, selectedDate, onDateSelect }: Calen
   const { theme } = useTheme();
 
   // Styles mit aktuellem Theme initialisieren
-  const styles = createStyles(theme);
+  const styles = createCalendarModalStyles(theme);
 
   return (
     <Modal
@@ -104,68 +105,5 @@ function CalendarModal({ isVisible, onClose, selectedDate, onDateSelect }: Calen
     </Modal>
   );
 }
-
-// Styles mit Theming erstellen
-const createStyles = (theme: any) => StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20
-  },
-  modalContainer: {
-    width: '100%',
-    backgroundColor: theme.colors.card,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  headerContainer: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 10 
-  },
-  headerText: { 
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 18,
-    color: theme.colors.text
-  },
-  buttonContainer: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    marginTop: 16 
-  },
-  todayButton: {
-    backgroundColor: theme.colors.border,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    flex: 1,
-    marginRight: 10,
-    alignItems: 'center'
-  },
-  todayButtonText: { 
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text
-  },
-  closeButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: 'center'
-  },
-  closeButtonText: { 
-    fontFamily: theme.typography.fontFamily.medium,
-    color: '#ffffff'
-  }
-});
 
 export default CalendarModal;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, SafeAreaView, Modal, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, SafeAreaView, Modal, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,6 +30,7 @@ import SliderWithInput from '../components/ui/slider-with-input';
 import { DatePicker } from '../components/ui/date-picker';
 import LoadingScreen from '../components/ui/loading-screen';
 import { AndroidHaptics } from 'expo-haptics';
+import { createIntroStyles } from '../styles/screens/intro-styles';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Intro'>;
 
@@ -37,6 +38,9 @@ const IntroScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  // Styles mit aktuellem Theme initialisieren
+  const styles = createIntroStyles(theme);
   
   // Funktion zum Abbrechen des Onboardings
   const cancelOnboarding = () => {
@@ -500,19 +504,14 @@ const IntroScreen: React.FC = () => {
         return (
           <View style={styles.stepContainer}>
             <User size={48} color={theme.colors.primary} style={styles.stepIcon} />
-            <Text style={[styles.title, { color: theme.colors.text }]}>Willkommen!</Text>
-            <Text style={[styles.description, { color: theme.colors.textLight }]}>
+            <Text style={styles.title}>Willkommen!</Text>
+            <Text style={styles.description}>
               Lass uns dein Profil einrichten, damit wir dir personalisierte Ernährungsempfehlungen geben können.
             </Text>
             
-            <Text style={[styles.label, { color: theme.colors.text }]}>Wie lautet dein Name?</Text>
+            <Text style={styles.label}>Wie lautet dein Name?</Text>
             <TextInput
-              style={[styles.input, { 
-                borderColor: theme.colors.border,
-                color: theme.colors.text,
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.borderRadius.s
-              }]}
+              style={styles.input}
               value={profile.name}
               onChangeText={(text) => setProfile(prev => ({ ...prev, name: text }))}
               placeholder="Dein Name"
@@ -529,14 +528,12 @@ const IntroScreen: React.FC = () => {
             <View>
               <VenusAndMars size={48} color={theme.colors.primary} style={styles.stepIcon} />
             </View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Dein Geschlecht</Text>
-            <Text style={[styles.description, { color: theme.colors.textLight }]}>
+            <Text style={styles.title}>Dein Geschlecht</Text>
+            <Text style={styles.description}>
               Diese Information hilft uns, deinen Grundumsatz präziser zu berechnen.
             </Text>
             
             <View style={[styles.pickerContainer, {
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.card,
               // Mehr Höhe für iOS-Picker, damit Werte in der Vorschau sichtbar sind
               height: Platform.OS === 'ios' ? 56 * 1.5 : 50,
               justifyContent: 'center'
@@ -579,8 +576,8 @@ const IntroScreen: React.FC = () => {
         return (
           <View style={styles.stepContainer}>
             <Calendar size={48} color={theme.colors.primary} style={styles.stepIcon} />
-            <Text style={[styles.title, { color: theme.colors.text }]}>Dein Geburtsdatum</Text>
-            <Text style={[styles.description, { color: theme.colors.textLight }]}>
+            <Text style={styles.title}>Dein Geburtsdatum</Text>
+            <Text style={styles.description}>
               Dein Alter beeinflusst deinen Kalorienbedarf.
             </Text>
             
@@ -606,8 +603,8 @@ const IntroScreen: React.FC = () => {
             <View>
               <PencilRuler size={48} color={theme.colors.primary} style={styles.stepIcon} />
             </View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Deine Körperdaten</Text>
-            <Text style={[styles.description, { color: theme.colors.textLight }]}>
+            <Text style={styles.title}>Deine Körperdaten</Text>
+            <Text style={styles.description}>
               Dein Gewicht und deine Größe helfen uns, deinen BMI und Kalorienbedarf zu berechnen.
             </Text>
             
@@ -675,8 +672,8 @@ const IntroScreen: React.FC = () => {
         return (
           <View style={styles.stepContainer}>
             <Activity size={48} color={theme.colors.primary} style={styles.stepIcon} />
-            <Text style={[styles.title, { color: theme.colors.text }]}>Dein Aktivitätsniveau</Text>
-            <Text style={[styles.description, { color: theme.colors.textLight }]}>
+            <Text style={styles.title}>Dein Aktivitätsniveau</Text>
+            <Text style={styles.description}>
               Wähle die Option, die am besten zu deinem Alltag passt.
             </Text>
             
@@ -693,8 +690,8 @@ const IntroScreen: React.FC = () => {
             >
               <Bed size={30} color={theme.colors.primary} />
               <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Kaum aktiv</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
+                <Text style={styles.activityTitle}>Kaum aktiv</Text>
+                <Text style={styles.activityDescription}>
                   Vorwiegend sitzende Tätigkeit, wenig Bewegung im Alltag
                 </Text>
               </View>
@@ -712,8 +709,8 @@ const IntroScreen: React.FC = () => {
             >
               <Footprints size={30} color={theme.colors.primary} />
               <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Leicht aktiv</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
+                <Text style={styles.activityTitle}>Leicht aktiv</Text>
+                <Text style={styles.activityDescription}>
                   Stehende Tätigkeit, leichter Spaziergang oder 1-2x Sport pro Woche
                 </Text>
               </View>
@@ -731,8 +728,8 @@ const IntroScreen: React.FC = () => {
             >
               <Bike size={30} color={theme.colors.primary} />
               <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Mäßig aktiv</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
+                <Text style={styles.activityTitle}>Mäßig aktiv</Text>
+                <Text style={styles.activityDescription}>
                   Regelmäßige körperliche Aktivität, 2-3x Sport pro Woche
                 </Text>
               </View>
@@ -750,8 +747,8 @@ const IntroScreen: React.FC = () => {
             >
               <Dumbbell size={30} color={theme.colors.primary} />
               <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Sehr aktiv</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
+                <Text style={styles.activityTitle}>Sehr aktiv</Text>
+                <Text style={styles.activityDescription}>
                   Körperlich anstrengende Tätigkeit oder 4-5x Sport pro Woche
                 </Text>
               </View>
@@ -769,8 +766,8 @@ const IntroScreen: React.FC = () => {
             >
               <BicepsFlexed size={30} color={theme.colors.primary} />
               <View style={styles.activityText}>
-                <Text style={[styles.activityTitle, { color: theme.colors.text }]}>Extrem aktiv</Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.textLight }]}>
+                <Text style={styles.activityTitle}>Extrem aktiv</Text>
+                <Text style={styles.activityDescription}>
                   Sportler, tägliches intensives Training oder körperliche Arbeit
                 </Text>
               </View>
@@ -783,8 +780,8 @@ const IntroScreen: React.FC = () => {
         return (
           <View style={styles.stepContainer}>
             <Goal size={48} color={theme.colors.primary} style={styles.stepIcon} />
-            <Text style={[styles.title, { color: theme.colors.text }]}>Dein Ziel</Text>
-            <Text style={[styles.description, { color: theme.colors.textLight }]}>
+            <Text style={styles.title}>Dein Ziel</Text>
+            <Text style={styles.description}>
               Wähle ein Ziel, das zu dir passt. Basierend auf deinem BMI empfehlen wir:
             </Text>
             
@@ -805,8 +802,8 @@ const IntroScreen: React.FC = () => {
                 >
                   <ChevronsUp size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
-                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtszunahme</Text>
-                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                    <Text style={styles.goalTitle}>Gesunde Gewichtszunahme</Text>
+                    <Text style={styles.goalDescription}>
                       Für Personen mit Untergewicht oder Muskelaufbau-Ziel.
                     </Text>
                   </View>
@@ -827,8 +824,8 @@ const IntroScreen: React.FC = () => {
                 >
                   <Scale size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
-                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gewicht halten</Text>
-                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                    <Text style={styles.goalTitle}>Gewicht halten</Text>
+                    <Text style={styles.goalDescription}>
                       Für Personen mit Normalgewicht, die ihre Fitness verbessern möchten.
                     </Text>
                   </View>
@@ -849,8 +846,8 @@ const IntroScreen: React.FC = () => {
                 >
                   <ArrowBigDown size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
-                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Moderate Gewichtsreduktion</Text>
-                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                    <Text style={styles.goalTitle}>Moderate Gewichtsreduktion</Text>
+                    <Text style={styles.goalDescription}>
                       Für leichtes Übergewicht, langsamer aber nachhaltiger Gewichtsverlust.
                     </Text>
                   </View>
@@ -871,8 +868,8 @@ const IntroScreen: React.FC = () => {
                 >
                   <ChevronsDown size={30} color={theme.colors.primary} />
                   <View style={styles.goalText}>
-                    <Text style={[styles.goalTitle, { color: theme.colors.text }]}>Gesunde Gewichtsreduktion</Text>
-                    <Text style={[styles.goalDescription, { color: theme.colors.textLight }]}>
+                    <Text style={styles.goalTitle}>Gesunde Gewichtsreduktion</Text>
+                    <Text style={styles.goalDescription}>
                       Für stärkeres Übergewicht, schnellerer Gewichtsverlust.
                     </Text>
                   </View>
@@ -902,20 +899,20 @@ const IntroScreen: React.FC = () => {
         return (
           <View style={styles.stepContainer}>
             <Award size={48} color={theme.colors.primary} style={styles.stepIcon} />
-            <Text style={[styles.title, { color: theme.colors.text }]}>Zusammenfassung</Text>
-            <Text style={[styles.description, { color: theme.colors.textLight }]}>
+            <Text style={styles.title}>Zusammenfassung</Text>
+            <Text style={styles.description}>
               Hier ist eine Übersicht deiner Daten. Alles kann später noch geändert werden.
             </Text>
             
-            <View style={[styles.summaryContainer, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
+            <View style={styles.summaryContainer}>
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Name:</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>{profile.name || '-'}</Text>
+                <Text style={styles.summaryLabel}>Name:</Text>
+                <Text style={styles.summaryValue}>{profile.name || '-'}</Text>
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Geschlecht:</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                <Text style={styles.summaryLabel}>Geschlecht:</Text>
+                <Text style={styles.summaryValue}>
                   {/* Immer einen Wert anzeigen, Standardwert ist 'male' */}
                   {(profile.gender || 'male') === 'male' ? 'Männlich' : 
                    profile.gender === 'female' ? 'Weiblich' : 
@@ -924,29 +921,29 @@ const IntroScreen: React.FC = () => {
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Alter:</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                <Text style={styles.summaryLabel}>Alter:</Text>
+                <Text style={styles.summaryValue}>
                   {profile.age || (birthDate ? calculateAge(birthDate) : '-')}
                 </Text>
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Gewicht:</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                <Text style={styles.summaryLabel}>Gewicht:</Text>
+                <Text style={styles.summaryValue}>
                   {profile.weight ? `${profile.weight} kg` : '-'}
                 </Text>
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Größe:</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                <Text style={styles.summaryLabel}>Größe:</Text>
+                <Text style={styles.summaryValue}>
                   {profile.height ? `${profile.height} cm` : '-'}
                 </Text>
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Aktivitätslevel:</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                <Text style={styles.summaryLabel}>Aktivitätslevel:</Text>
+                <Text style={styles.summaryValue}>
                   {profile.activityLevel === ActivityLevel.Sedentary ? 'Kaum aktiv' : 
                    profile.activityLevel === ActivityLevel.LightlyActive ? 'Leicht aktiv' : 
                    profile.activityLevel === ActivityLevel.ModeratelyActive ? 'Mäßig aktiv' : 
@@ -956,8 +953,8 @@ const IntroScreen: React.FC = () => {
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Ziel:</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                <Text style={styles.summaryLabel}>Ziel:</Text>
+                <Text style={styles.summaryValue}>
                   {selectedGoalId === 'gain' ? 'Gesunde Gewichtszunahme' : 
                    selectedGoalId === 'maintain' ? 'Gewicht halten' : 
                    selectedGoalId === 'lose_moderate' ? 'Moderate Gewichtsreduktion' : 
@@ -967,8 +964,8 @@ const IntroScreen: React.FC = () => {
             </View>
             
             {/* Informationstext zur Kalorienberechnung */}
-            <View style={[styles.infoContainer, { backgroundColor: `${theme.colors.primary}15`, borderColor: theme.colors.primary, borderRadius: theme.borderRadius.s }]}>
-              <Text style={[styles.infoText, { color: theme.colors.text }]}>
+            <View style={styles.infoContainer}>
+              <Text style={styles.infoText}>
                 Wir berechnen deinen Kalorienbedarf mit der Harris-Benedict-Formel und passen ihn an dein Aktivitätslevel und Ziel an.
               </Text>
             </View>
@@ -989,7 +986,6 @@ const IntroScreen: React.FC = () => {
   
   return (
     <SafeAreaView style={[styles.container, {
-      backgroundColor: theme.colors.background,
       paddingTop: insets.top,
       paddingBottom: insets.bottom,
       paddingLeft: insets.left,
@@ -1044,7 +1040,7 @@ const IntroScreen: React.FC = () => {
       </Animated.ScrollView>
       
       {/* Navigation - animiert unten */}
-      <View style={[styles.navigationContainer, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.navigationContainer}>
         {currentStep > 0 ? (
           <Animated.View
             entering={FadeIn.duration(300)}
@@ -1052,7 +1048,7 @@ const IntroScreen: React.FC = () => {
             style={styles.leftButtonContainer}
           >
             <TouchableOpacity 
-              style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
+              style={[styles.navButton, styles.backButton]}
               onPress={() => { goToPreviousStep(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
             >
               <ArrowLeft size={20} color={theme.colors.text} />
@@ -1066,7 +1062,7 @@ const IntroScreen: React.FC = () => {
             style={styles.leftButtonContainer}
           >
             <TouchableOpacity 
-              style={[styles.navButton, styles.backButton, { borderColor: theme.colors.border, borderRadius: theme.borderRadius.s }]}
+              style={[styles.navButton, styles.backButton]}
               onPress={cancelOnboarding}
             >
               <X size={20} color={theme.colors.text} />
@@ -1087,7 +1083,6 @@ const IntroScreen: React.FC = () => {
               { 
                 backgroundColor: isStepValid() ? theme.colors.primary : theme.colors.disabled,
                 opacity: isStepValid() ? 1 : 0.7,
-                borderRadius: theme.borderRadius.s
               }
             ]}
             onPress={() => { 
@@ -1106,220 +1101,5 @@ const IntroScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-// Wir verwenden useTheme im StyleSheet nicht, daher definieren wir mit Bezug auf das importierte Theme
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-    paddingTop: 10,
-    paddingBottom: 80, // Mehr Platz unten fu00fcr die Navigationsbuttons
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingTop: 15,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
-  },
-  progressDot: {
-    width: 8, // Etwas kleiner
-    height: 8, // Etwas kleiner
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  stepContainer: {
-    alignItems: 'center',
-    justifyContent: 'flex-start', // Von oben anfangen statt zu zentrieren
-    paddingBottom: 20,
-    paddingTop: 20, // Neuer Abstand nach oben zu den Dots
-  },
-  stepIcon: {
-    marginBottom: 16,
-    marginTop: 5, // Zusätzlicher Abstand zum oberen Rand
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: 'SpaceGrotesk-Bold', // Verwende die custom Schriftart statt fontWeight
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Regular', // Verwende die custom Schriftart
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Bold', // Verwende die custom Schriftart statt fontWeight
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Regular', // Füge die Schriftart hinzu
-  },
-  navigationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    position: 'absolute',
-    bottom: 15, // Von 0 auf 15 geändert, um die Buttons nach oben zu verschieben
-    left: 0,
-    right: 0,
-    // Theme-Farben werden in der Komponente angewendet
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    paddingBottom: 15, // Von 20 auf 15 reduziert
-  },
-  navButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  leftButtonContainer: {
-    // Container für den linken Button (Zurück/Abbrechen)
-    alignSelf: 'flex-start',
-  },
-  rightButtonContainer: {
-    // Container für den rechten Button (Weiter/Fertig)
-    alignSelf: 'flex-end',
-  },
-  backButton: {
-    borderWidth: 1,
-  },
-  nextButton: {
-    marginLeft: 'auto',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Bold', // Verwende die custom Schriftart statt fontWeight
-    marginHorizontal: 10,
-  },
-  // DatePicker-Styles wurden in die DatePicker-Komponente verschoben
-  activityCardIconContainer: {
-    width: 30,
-    height: 30,
-    marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Styles für den Informationscontainer zur Kalorienberechnung
-  infoContainer: {
-    width: '100%',
-    padding: 12,
-    marginTop: 15,
-    borderWidth: 1,
-  },
-  infoText: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Regular',
-    lineHeight: 18,
-  },
-  pickerContainer: {
-    width: '100%',
-    borderWidth: 1,
-    borderRadius: 8,
-    height: 50,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginTop: 10,
-  },
-  sliderContainer: {
-    width: '100%',
-    marginTop: 16,
-  },
-  sliderValueContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  sliderValue: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Bold',
-  },
-  activityOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 6,
-  },
-  activityText: {
-    marginLeft: 10,
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Bold',
-    marginBottom: 2,
-  },
-  activityDescription: {
-    fontSize: 12,
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-  goalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 6, // Reduziert von 10
-  },
-  summaryContainer: {
-    width: '100%',
-    padding: 20,
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  summaryLabel: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontFamily: 'SpaceGrotesk-Bold',
-  },
-  // Styles für Zielauswahl
-  goalOptionsContainer: {
-    width: '100%',
-    marginTop: 15,
-  },
-  goalText: {
-    marginLeft: 10, // Reduziert von 15
-    flex: 1,
-  },
-  goalTitle: {
-    fontSize: 14, // Reduziert von 16
-    fontFamily: 'SpaceGrotesk-Bold',
-    marginBottom: 2, // Reduziert von 5
-  },
-  goalDescription: {
-    fontSize: 12, // Reduziert von 14
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-});
 
 export default IntroScreen;

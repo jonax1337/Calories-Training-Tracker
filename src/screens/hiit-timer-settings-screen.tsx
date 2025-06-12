@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HIITSettings, RootStackParamList } from '../navigation';
 import SliderWithInput from '../components/ui/slider-with-input';
+import { createHIITTimerSettingsStyles } from '../styles/screens/hiit-timer-settings-styles';
 
 // Navigation Types
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -19,6 +20,7 @@ const defaultSettings: HIITSettings = {
 
 const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navigation, route }) => {
   const { theme } = useTheme();
+  const styles = createHIITTimerSettingsStyles(theme);
   const insets = useSafeAreaInsets();
   
   // Get settings from route params or use defaults
@@ -38,54 +40,7 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
     navigation.navigate('HIITTimer', { settings });
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.colors.background,
-    },
-    scrollContent: {
-      flex: 1,
-    },
-    settingsContainer: {
-      padding: theme.spacing.m,
-      paddingBottom: Math.max(theme.spacing.xxl, insets.bottom + theme.spacing.l),
-    },
-    headerText: {
-      fontSize: theme.typography.fontSize.xl,
-      textAlign: 'center',
-      marginVertical: theme.spacing.s,
-      fontFamily: theme.typography.fontFamily.bold,
-      color: theme.colors.primary,
-    },
-    settingContainer: {
-      marginBottom: theme.spacing.m,
-    },
-    settingLabel: {
-      fontSize: theme.typography.fontSize.m,
-      marginBottom: theme.spacing.xs,
-      fontFamily: theme.typography.fontFamily.medium,
-      color: theme.colors.text,
-    },
-    actionButton: {
-      paddingVertical: theme.spacing.m,
-      paddingHorizontal: theme.spacing.l,
-      borderRadius: theme.borderRadius.medium,
-      marginTop: theme.spacing.l,
-      elevation: 2,
-      backgroundColor: theme.colors.primary,
-      shadowColor: theme.colors.shadow,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 1.5,
-    },
-    actionButtonText: {
-      fontSize: theme.typography.fontSize.m,
-      textAlign: 'center',
-      color: 'white',
-      fontFamily: theme.typography.fontFamily.bold,
-    },
-  });
-
+  
   return (
     <View style={styles.container}>
       <StatusBar
@@ -94,7 +49,7 @@ const HIITTimerSettingsScreen: React.FC<HIITTimerSettingsScreenProps> = ({ navig
       />
       
       <ScrollView style={styles.scrollContent}>
-        <View style={styles.settingsContainer}>
+        <View style={[styles.settingsContainer, { paddingBottom: Math.max(theme.spacing.xxl, insets.bottom + theme.spacing.l) }]}>
           
           <SliderWithInput
             label="Arbeit"

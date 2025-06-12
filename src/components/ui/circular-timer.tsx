@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, Animated, Easing } from 'react-native';
 import { useTheme } from '../../theme/theme-context';
 import Svg, { Circle, G } from 'react-native-svg';
+import { createCircularTimerStyles } from '../../styles/components/ui/circular-timer-styles';
 
 interface CircularTimerProps {
   duration: number; // in seconds
@@ -25,6 +26,7 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
   isPaused = false,
 }) => {
   const { theme } = useTheme();
+  const styles = createCircularTimerStyles(theme);
   
   // Animation für den Füllstand des Kreises
   const fillAnimation = useRef(new Animated.Value(0)).current;
@@ -249,14 +251,14 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
       <View style={styles.textContainer}>
         {/* Status Text - FESTE BREITE UND HÖHE */}
         <View style={styles.statusTextContainer}>
-          <Text style={[styles.statusText, { color: getStatusColor(), fontFamily: theme.typography.fontFamily.bold }]}>
+          <Text style={[styles.statusText, { color: getStatusColor() }]}>
             {getStatusText()}
           </Text>
         </View>
         
         {/* Timer Text - IMMER GERENDERT - KEINE BEDINGUNGEN */}
         <View style={styles.timerTextContainer}>
-          <Text style={[styles.timerText, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.bold }]}>
+          <Text style={styles.timerText}>
             {formatTime(remainingTime)}
           </Text>
         </View>
@@ -264,7 +266,7 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
         {/* Cycles Text - IMMER GERENDERT WENN totalCycles > 0 */}
         {totalCycles > 0 && (
           <View style={styles.cyclesTextContainer}>
-            <Text style={[styles.cyclesText, { color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.medium }]}>
+            <Text style={styles.cyclesText}>
               {status !== 'completed' ? `${currentCycle}/${totalCycles}` : `${totalCycles}/${totalCycles}`}
             </Text>
           </View>
@@ -277,54 +279,5 @@ const CircularTimer: React.FC<CircularTimerProps> = ({
 // Animierte Komponenten
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedG = Animated.createAnimatedComponent(G);
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textContainer: {
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
-  },
-  // 🔥 EXAKTE FESTE DIMENSIONEN - KEINE LAYOUT SHIFTS MEHR
-  statusTextContainer: {
-    width: 100,        // EXAKTE BREITE
-    height: 35,        // EXAKTE HÖHE
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  timerTextContainer: {
-    width: 120,        // EXAKTE BREITE FÜR "00:00"
-    height: 55,        // EXAKTE HÖHE
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 5,
-  },
-  timerText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  cyclesTextContainer: {
-    width: 80,         // EXAKTE BREITE FÜR "0/0"
-    height: 30,        // EXAKTE HÖHE
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cyclesText: {
-    fontSize: 18,
-    textAlign: 'center',
-  },
-});
 
 export default CircularTimer;

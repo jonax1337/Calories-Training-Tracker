@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
+import { View, Text, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
 import { 
   VictoryChart, 
   VictoryLine, 
@@ -14,6 +14,7 @@ import { useTheme } from '../../theme/theme-context';
 import { useDateContext } from '../../context/date-context';
 import { getDailyLogs } from '../../services/storage-service';
 import { getTodayFormatted } from '../../utils/date-utils';
+import { createNutritionReportComponentStyles } from '../../styles/components/reports/nutrition-report-component-styles';
 
 interface NutritionReportProps {
   userProfile: UserProfile | null;
@@ -99,8 +100,8 @@ const NutritionReportComponent = ({
   compact = false, 
   selectedDate: propSelectedDate, 
 }: NutritionReportProps) => {
-  const theme = useTheme();
-  const styles = createStyles(theme.theme);
+  const { theme } = useTheme();
+  const styles = createNutritionReportComponentStyles(theme);
   const { selectedDate: contextSelectedDate } = useDateContext();
   
   // Verwende das übergebene Datum oder das Datum aus dem Context, oder als Fallback das heutige Datum
@@ -113,8 +114,8 @@ const NutritionReportComponent = ({
   // Breite abhängig von Verwendung berechnen
   const isInScreen = !compact; // Wenn nicht compact, wird es in einem Screen verwendet
   const screenWidth = isInScreen 
-    ? Dimensions.get('window').width - (theme.theme.spacing.m * 2) // Nur Screen-Padding
-    : Dimensions.get('window').width - (theme.theme.spacing.m * 4); // Screen + Card Padding
+    ? Dimensions.get('window').width - (theme.spacing.m * 2) // Nur Screen-Padding
+    : Dimensions.get('window').width - (theme.spacing.m * 4); // Screen + Card Padding
 
   // Laden der Log-Daten für die letzten X Tage, ausgehend vom ausgewählten Datum
   useEffect(() => {
@@ -248,9 +249,9 @@ const NutritionReportComponent = ({
         alignItems: 'center', 
         height: screenHeight * 0.7, // 70% der Bildschirmhöhe
         width: '100%',
-        paddingVertical: theme.theme.spacing.xl
+        paddingVertical: theme.spacing.xl
       }}>
-        <ActivityIndicator size="large" color={theme.theme.colors.primary} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -359,7 +360,7 @@ const NutritionReportComponent = ({
         lines={[
           {
             dataKey: "calories",
-            color: theme.theme.colors.nutrition.calories,
+            color: theme.colors.nutrition.calories,
             label: "Kalorien",
             showGoal: true,
             goalValue: userGoals.dailyCalories,
@@ -385,7 +386,7 @@ const NutritionReportComponent = ({
         lines={[
           {
             dataKey: "carbs",
-            color: theme.theme.colors.nutrition.carbs,
+            color: theme.colors.nutrition.carbs,
             label: "Kohlenhydrate",
             showGoal: true,
             goalValue: userGoals.dailyCarbs,
@@ -394,14 +395,14 @@ const NutritionReportComponent = ({
           },
           {
             dataKey: "sugar",
-            color: theme.theme.colors.warning,  // Akzentfarbe für Zucker
+            color: theme.colors.warning,  // Akzentfarbe für Zucker
             label: "Zucker",
             showScatter: true,
             interpolation: "linear"
           },
           {
             dataKey: "fiber",
-            color: theme.theme.colors.success,  // Erfolgsfarbe für Ballaststoffe
+            color: theme.colors.success,  // Erfolgsfarbe für Ballaststoffe
             label: "Ballaststoffe",
             showScatter: true,
             interpolation: "linear"
@@ -425,7 +426,7 @@ const NutritionReportComponent = ({
         lines={[
           {
             dataKey: "protein",
-            color: theme.theme.colors.nutrition.protein,
+            color: theme.colors.nutrition.protein,
             label: "Protein",
             showGoal: true,
             goalValue: userGoals.dailyProtein,
@@ -434,7 +435,7 @@ const NutritionReportComponent = ({
           },
           {
             dataKey: "fat",
-            color: theme.theme.colors.nutrition.fat,
+            color: theme.colors.nutrition.fat,
             label: "Fett",
             showGoal: true,
             goalValue: userGoals.dailyFat,
@@ -460,7 +461,7 @@ const NutritionReportComponent = ({
         lines={[
           {
             dataKey: "water",
-            color: theme.theme.colors.primary,
+            color: theme.colors.primary,
             label: "Wasser",
             showGoal: userGoals.dailyWater != null,
             goalValue: userGoals.dailyWater,
@@ -487,14 +488,14 @@ const NutritionReportComponent = ({
         lines={[
           {
             dataKey: "sodium",
-            color: theme.theme.colors.error,  // Sekundärfarbe für Natrium
+            color: theme.colors.error,  // Sekundärfarbe für Natrium
             label: "Natrium",
             showScatter: true,
             interpolation: "linear"
           },
           {
             dataKey: "potassium",
-            color: theme.theme.colors.info,  // Info-Farbe für Kalium
+            color: theme.colors.info,  // Info-Farbe für Kalium
             label: "Kalium",
             showScatter: true,
             interpolation: "linear"
@@ -514,191 +515,5 @@ const NutritionReportComponent = ({
     </ScrollView>
   );
 };
-
-// Styles
-const createStyles = (theme: any) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  compactContainer: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.medium,
-    marginBottom: theme.spacing.m,
-    width: '100%',
-  },
-  loadingContainer: {
-    padding: theme.spacing.l,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.medium,
-  },
-  loadingText: {
-    marginTop: theme.spacing.s,
-    fontSize: theme.typography.fontSize.m,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text,
-  },
-  emptyContainer: {
-    padding: theme.spacing.l,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.medium,
-    elevation: 2,
-  },
-  emptyText: {
-    fontSize: theme.typography.fontSize.m,
-    fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.textLight,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: theme.typography.fontSize.xl,
-    fontFamily: theme.typography.fontFamily.bold,
-    marginBottom: theme.spacing.l,
-    color: theme.colors.text,
-    textAlign: 'center',
-  },
-  section: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.large,
-    elevation: 3,
-    overflow: 'hidden', // Wichtig für Charts
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.l,
-    fontFamily: theme.typography.fontFamily.bold,
-    marginBottom: theme.spacing.s,
-    color: theme.colors.text,
-    paddingHorizontal: theme.spacing.m,
-    paddingTop: theme.spacing.m,
-  },
-  chartContainer: {
-    marginBottom: theme.spacing.s,
-    alignItems: 'center', // Zentriert die Charts
-  },
-  legendContainer: {
-    paddingHorizontal: theme.spacing.m,
-    paddingBottom: theme.spacing.s,
-  },
-  legendRow: {
-    flexDirection: 'row',
-    marginBottom: theme.spacing.xs,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: theme.spacing.xs,
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-    marginRight: theme.spacing.xs,
-  },
-  legendDash: {
-    width: 12,
-    height: 2,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    marginRight: theme.spacing.xs,
-  },
-  legendText: {
-    fontSize: theme.typography.fontSize.xs,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.textLight,
-  },
-  goalSection: {
-    paddingHorizontal: theme.spacing.m,
-    paddingBottom: theme.spacing.m,
-  },
-  goalItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.m,
-    paddingVertical: theme.spacing.xs,
-  },
-  goalLabel: {
-    width: 110,
-    fontSize: theme.typography.fontSize.s,
-    fontFamily: theme.typography.fontFamily.medium,
-    color: theme.colors.text,
-  },
-  goalBarContainer: {
-    flex: 1,
-    height: 28,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: theme.borderRadius.small,
-    overflow: 'hidden',
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  goalBar: {
-    height: '100%',
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    borderRadius: theme.borderRadius.small,
-  },
-  goalText: {
-    position: 'absolute',
-    left: theme.spacing.s,
-    top: 6,
-    fontSize: theme.typography.fontSize.xs,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.background,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
-  },
-  belowGoalBar: {
-    backgroundColor: theme.colors.warning,
-  },
-  onTargetBar: {
-    backgroundColor: theme.colors.success,
-  },
-  aboveGoalBar: {
-    backgroundColor: theme.colors.error,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    alignItems: 'center',
-  },
-  summaryItemLeft: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.xs,
-  },
-  summaryItemCenter: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.xs,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  summaryItemRight: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.xs,
-  },
-  summaryLabel: {
-    fontSize: theme.typography.fontSize.s,
-    fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.textLight,
-    marginBottom: theme.spacing.xs,
-    width: '100%',
-  },
-  summaryValue: {
-    fontSize: theme.typography.fontSize.l,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.text,
-  },
-});
 
 export default NutritionReportComponent;
