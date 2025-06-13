@@ -1,11 +1,13 @@
-import React from 'react';
-import { Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, View, TouchableOpacity, ScrollView, Alert, Switch, Platform } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { useTheme } from '../theme/theme-context';
 import { ThemeType } from '../theme/theme-types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logout } from '../services/auth-service';
+import * as NotificationsService from '../services/notifications-service';
 import { createSettingsStyles } from '../styles/screens/settings-styles';
 
 type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
@@ -16,6 +18,56 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   
   // Styles mit aktuellem Theme initialisieren
   const styles = createSettingsStyles(theme);
+
+  // State für Wassererinnerungen - simplifiziert
+  const [isWaterReminderEnabled, setIsWaterReminderEnabled] = useState(false);
+  const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
+  
+  // Lade Wassererinnerungseinstellungen beim ersten Render
+  useEffect(() => {
+    const loadWaterSettings = async () => {
+      try {
+        // Lade Wassererinnerungseinstellungen (nur aktiviert/deaktiviert)
+        const waterConfig = await NotificationsService.loadWaterReminderSettings();
+        setIsWaterReminderEnabled(waterConfig.enabled);
+
+        // Überprüfe Benachrichtigungsberechtigungen
+        const hasPermission = await NotificationsService.checkAndRequestPermissions();
+        setHasNotificationPermission(hasPermission);
+      } catch (error) {
+        console.error('Fehler beim Laden der Wassererinnerungseinstellungen:', error);
+      }
+    };
+
+    loadWaterSettings();
+  }, []);
+
+  // Aktualisiere Wassererinnerungsstatus
+  const handleWaterReminderToggle = async (value: boolean) => {
+    try {
+      if (value && !hasNotificationPermission) {
+        // Wenn Benutzer Erinnerungen aktivieren möchte, aber keine Berechtigung hat
+        const hasPermission = await NotificationsService.checkAndRequestPermissions();
+        if (!hasPermission) {
+          Alert.alert(
+            'Benachrichtigungen deaktiviert',
+            'Bitte aktiviere Benachrichtigungen in den Geräteeinstellungen, um Wassererinnerungen zu erhalten.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        setHasNotificationPermission(true);
+      }
+
+      setIsWaterReminderEnabled(value);
+      await NotificationsService.toggleWaterReminders(value);
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren des Wassererinnerungsstatus:', error);
+      Alert.alert('Fehler', 'Die Einstellung konnte nicht gespeichert werden.');
+    }
+  };
+  
+
 
   // Handle user logout
   const handleLogout = async () => {
@@ -157,7 +209,29 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </Text>
       </TouchableOpacity>
 
-      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.m }]}>
+      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
+        Benachrichtigungen
+      </Text>
+      <Text style={styles.sectionDescription}>
+        Erhalte intelligente Erinnerungen.
+      </Text>
+
+      <View style={[styles.settingCard, { marginTop: 0 }]}>
+        {/* Wassererinnerungen An/Aus */}
+        <View style={styles.settingRow}>
+          <View>
+            <Text style={styles.settingLabel}>Wassererinnerungen</Text>
+          </View>
+          <Switch
+            value={isWaterReminderEnabled}
+            onValueChange={handleWaterReminderToggle}
+            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+            thumbColor={Platform.OS === 'android' ? theme.colors.surface : ''}
+          />
+        </View>
+      </View>
+
+      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
         App-Informationen
       </Text>
       

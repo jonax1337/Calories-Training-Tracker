@@ -634,7 +634,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           width: '100%',
-          marginBottom: theme.spacing.s
         }}>
           <Text style={{
             fontFamily: theme.typography.fontFamily.medium, 
@@ -1673,7 +1672,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           { 
             backgroundColor: theme.colors.primary, 
             borderRadius: theme.borderRadius.medium,
-            padding: 16,
+            padding: theme.spacing.m,
             alignItems: 'center',
             marginTop: theme.spacing.xs,
           },

@@ -391,8 +391,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               
               {/* Marke (falls vorhanden) */}
               {foodItem?.brand && (
-                <View style={styles.brandInfoContainer}>
-                  <Text style={[styles.label, styles.brandText]}>
+                <View>
+                  <Text style={[styles.brandText]}>
                     <Text style={{ fontFamily: theme.typography.fontFamily.medium }}>{foodItem.brand}</Text>
                   </Text>
                 </View>

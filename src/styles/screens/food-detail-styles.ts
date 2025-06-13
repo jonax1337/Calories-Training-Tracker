@@ -12,7 +12,6 @@ interface FoodDetailStyles {
   card: ViewStyle;
   cardTitle: TextStyle;
   cardTitleWithBrand: TextStyle;
-  brandInfoContainer: ViewStyle;
   brandText: TextStyle;
   portionInfoContainer: ViewStyle;
   portionInfoTitle: TextStyle;
@@ -146,11 +145,6 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
   cardTitleWithBrand: {
     marginBottom: theme.spacing.s,
   },
-  brandInfoContainer: {
-    backgroundColor: theme.colors.surfaceVariant,
-    padding: theme.spacing.s,
-    borderRadius: theme.borderRadius.small,
-  },
   brandText: {
     color: theme.colors.textLight,
     marginBottom: 0,
@@ -184,7 +178,7 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
     borderColor: theme.colors.border,
   },
   label: {
-    fontSize: theme.typography.fontSize.m,
+    fontSize: theme.typography.fontSize.s,
     marginBottom: theme.spacing.xs,
     fontFamily: theme.typography.fontFamily.regular,
   },
@@ -225,7 +219,7 @@ export const createFoodDetailStyles = (theme: Theme): FoodDetailStyles => StyleS
     marginBottom: theme.spacing.s,
   },
   brandLabel: {
-    fontSize: theme.typography.fontSize.m,
+    fontSize: theme.typography.fontSize.s,
     fontFamily: theme.typography.fontFamily.medium,
     marginRight: theme.spacing.xs,
   },

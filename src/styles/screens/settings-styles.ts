@@ -21,6 +21,17 @@ interface SettingsStyles {
   infoText: TextStyle;
   logoutButton: ViewStyle;
   logoutText: TextStyle;
+  // Wassererinnerungen
+  settingCard: ViewStyle;
+  settingRow: ViewStyle;
+  settingLabel: TextStyle;
+  settingValue: TextStyle;
+  switchContainer: ViewStyle;
+  sliderContainer: ViewStyle;
+  sliderValueText: TextStyle;
+  timeRangeContainer: ViewStyle;
+  timeValue: TextStyle;
+  timeLabel: TextStyle;
 }
 
 // Erstellt und gibt die Styles zurück, basierend auf dem aktuellen Theme
@@ -144,8 +155,73 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     elevation: 2,
   },
   logoutText: {
-    color: theme.colors.error,
+    color: 'white',
+    textAlign: 'center',
     fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.typography.fontSize.m,
+  },
+  settingCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.m,
+    marginVertical: theme.spacing.s,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingLabel: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.fontSize.m,
+    color: theme.colors.text,
+    flex: 1,
+    marginVertical: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+  },
+  settingValue: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.fontSize.m,
+    color: theme.colors.primary,
+    marginRight: theme.spacing.s,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sliderContainer: {
+    marginVertical: theme.spacing.s,
+  },
+  sliderValueText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.fontSize.m,
+    color: theme.colors.primary,
+    textAlign: 'center',
+    marginTop: theme.spacing.xs,
+  },
+  timeRangeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: theme.spacing.s,
+  },
+  timeValue: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.fontSize.l,
+    color: theme.colors.primary,
+    textAlign: 'center',
+  },
+  timeLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textLight,
+    textAlign: 'center',
+    marginTop: theme.spacing.xs/2, // Half of xs instead of xxs
   },
 });
