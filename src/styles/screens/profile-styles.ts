@@ -128,6 +128,11 @@ export const createProfileStyles = (theme: Theme): ProfileStyles => StyleSheet.c
   },
   inputContainer: {
     marginBottom: theme.spacing.m,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputLabel: {
     fontSize: theme.typography.fontSize.m,

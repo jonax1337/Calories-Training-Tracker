@@ -75,6 +75,11 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     marginBottom: theme.spacing.m,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   themeColorPreview: {
     width: 50,

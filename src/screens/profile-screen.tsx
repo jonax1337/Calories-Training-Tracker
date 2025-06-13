@@ -802,7 +802,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         borderRadius: theme.borderRadius.medium,
         backgroundColor: theme.colors.card,
         borderWidth: 1,
-        borderColor: theme.colors.border
+        borderColor: theme.colors.border,
+        shadowColor: theme.colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
       }]}>
         <View style={{
           width: '100%',
@@ -918,7 +923,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderRadius: theme.borderRadius.medium,
             padding: theme.spacing.m,
             flexDirection: 'row',
-            alignItems: 'center'
+            alignItems: 'center',
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
           }}
           onPress={() => handleActivityChange(ActivityLevel.Sedentary)}
         >
@@ -952,7 +962,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderRadius: theme.borderRadius.medium,
             padding: theme.spacing.m,
             flexDirection: 'row',
-            alignItems: 'center'
+            alignItems: 'center',
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
           }}
           onPress={() => handleActivityChange(ActivityLevel.LightlyActive)}
         >
@@ -986,7 +1001,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderRadius: theme.borderRadius.medium,
             padding: theme.spacing.m,
             flexDirection: 'row',
-            alignItems: 'center'
+            alignItems: 'center',
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
           }}
           onPress={() => handleActivityChange(ActivityLevel.ModeratelyActive)}
         >
@@ -1020,7 +1040,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderRadius: theme.borderRadius.medium,
             padding: theme.spacing.m,
             flexDirection: 'row',
-            alignItems: 'center'
+            alignItems: 'center',
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
           }}
           onPress={() => handleActivityChange(ActivityLevel.VeryActive)}
         >
@@ -1053,7 +1078,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderRadius: theme.borderRadius.medium,
             padding: theme.spacing.m,
             flexDirection: 'row',
-            alignItems: 'center'
+            alignItems: 'center',
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
           }}
           onPress={() => handleActivityChange(ActivityLevel.ExtremelyActive)}
         >
@@ -1130,7 +1160,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                       padding: theme.spacing.m,
                       borderLeftWidth: 4,
                       borderLeftColor: theme.colors.primary,
-                      marginBottom: theme.spacing.m
+                      marginBottom: theme.spacing.m,
+                      shadowColor: theme.colors.shadow,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 4,
+                      elevation: 2,
                     }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: theme.spacing.xs }}>
                       {activeGoal.icon}
@@ -1357,7 +1392,12 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                         borderWidth: 1,
                         borderColor: theme.colors.border,
                         paddingHorizontal: theme.spacing.s,
-                        marginBottom: goalsExpanded ? theme.spacing.s : theme.spacing.m
+                        marginBottom: goalsExpanded ? theme.spacing.s : theme.spacing.m,
+                        shadowColor: theme.colors.shadow,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 2,
+                        elevation: 2,
                       }}
                       onPress={() => setGoalsExpanded(!goalsExpanded)}
                     >
@@ -1385,9 +1425,14 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                     {goalsExpanded && (
                       <View style={{
                         backgroundColor: theme.colors.card,
-                        borderRadius: theme.borderRadius.small,
+                        borderRadius: theme.borderRadius.medium,
                         padding: theme.spacing.m,
-                        marginBottom: theme.spacing.m
+                        marginBottom: theme.spacing.m,
+                        shadowColor: theme.colors.shadow,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 2,
+                        elevation: 2,
                       }}>
                         <Text style={{
                           fontFamily: theme.typography.fontFamily.medium,
@@ -1630,8 +1675,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             borderRadius: theme.borderRadius.medium,
             padding: 16,
             alignItems: 'center',
-            marginTop: 24,
-            marginBottom: 40
+            marginTop: theme.spacing.xs,
+            marginBottom: theme.spacing.xs
           },
           isLoading && { backgroundColor: theme.colors.disabled }
         ]} 

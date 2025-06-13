@@ -71,7 +71,12 @@ export const createWeightHistoryStyles = (theme: Theme): WeightHistoryStyles => 
     backgroundColor: theme.colors.card,
     borderRadius: theme.borderRadius.medium,
     padding: theme.spacing.m,
-    marginBottom: theme.spacing.m,
+    marginBottom: theme.spacing.s,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardTitle: {
     fontSize: theme.typography.fontSize.l,

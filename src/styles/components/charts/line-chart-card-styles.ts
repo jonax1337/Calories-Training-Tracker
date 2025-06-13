@@ -7,6 +7,11 @@ export const createLineChartCardStyles = (theme: Theme) => StyleSheet.create({
     backgroundColor: theme.colors.card,
     padding: theme.spacing.m,
     marginVertical: theme.spacing.s,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   title: {
     color: theme.colors.text,

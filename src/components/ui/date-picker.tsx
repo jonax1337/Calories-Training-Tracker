@@ -118,13 +118,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {customModalTitle}
-            </Text>
-            {/* Close button for modal */}
-            <TouchableOpacity onPress={cancelDatePicker} style={styles.modalCloseButton}>
-              <X size={24} color={theme.colors.text} />
-            </TouchableOpacity>
+            <View style={styles.headerContainer}>
+              <Text style={styles.modalTitle}>
+                {customModalTitle}
+              </Text>
+              <TouchableOpacity onPress={cancelDatePicker} style={styles.modalCloseButton}>
+                <X size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
             
             <View style={styles.datePickerContainer}>
               {Platform.OS === 'web' ? (
@@ -139,7 +140,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                   }}
                   style={{
                     width: '100%',
-                    border: `1px solid ${theme.colors.border}`,
+                    border: `1px`,
                     borderRadius: theme.borderRadius.small,
                     backgroundColor: theme.colors.background,
                     fontSize: '16px',
@@ -153,13 +154,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               ) : (
                 <View style={[{
                   backgroundColor: theme.colors.background,
-                  borderRadius: theme.borderRadius.small,
+                  borderRadius: theme.borderRadius.s,
                   borderWidth: 1,
-                  borderColor: 'rgba(0,0,0,0.1)',
+                  borderColor: theme.colors.border,
                   overflow: 'hidden',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: 0
+                  padding: -theme.spacing.l
                 }]} >
                   <DateTimePicker
                     testID="dateTimePickerModal"
@@ -175,7 +176,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     minimumDate={minDate}
                     themeVariant={theme.dark ? 'dark' : 'light'}
                     style={{
-                      height: 200
+                      height: 150
                     }}
                   />
                 </View>
@@ -184,19 +185,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.error + '20' }]}
+                style={[styles.modalButton, { backgroundColor: theme.colors.border }]}
                 onPress={cancelDatePicker}
               >
-                <Text style={{ color: theme.colors.error, fontFamily: theme.typography.fontFamily.medium }}>
+                <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: theme.colors.text, fontSize: theme.typography.fontSize.m }}>
                   Abbrechen
                 </Text>
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.colors.primary + '20' }]}
+                style={[styles.modalButton, { backgroundColor: theme.colors.primary }]}
                 onPress={confirmDatePicker}
               >
-                <Text style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.medium }}>
+                <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: '#ffffff', fontSize: theme.typography.fontSize.m }}>
                   Speichern
                 </Text>
               </TouchableOpacity>
