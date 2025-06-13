@@ -1156,7 +1156,7 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
                     {/* Hervorgehobene aktive Zielauswahl */}
                     <View style={{
                       backgroundColor: theme.colors.primary + '15',
-                      borderRadius: theme.borderRadius.small,
+                      borderRadius: theme.borderRadius.medium,
                       padding: theme.spacing.m,
                       borderLeftWidth: 4,
                       borderLeftColor: theme.colors.primary,
@@ -1676,7 +1676,6 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             padding: 16,
             alignItems: 'center',
             marginTop: theme.spacing.xs,
-            marginBottom: theme.spacing.xs
           },
           isLoading && { backgroundColor: theme.colors.disabled }
         ]} 

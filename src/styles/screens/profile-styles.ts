@@ -213,7 +213,7 @@ export const createProfileStyles = (theme: Theme): ProfileStyles => StyleSheet.c
     padding: theme.spacing.m,
     alignItems: 'center',
     marginTop: theme.spacing.m,
-    marginBottom: theme.spacing.xxl,
+    marginBottom: 0,
   },
   saveButtonText: {
     fontSize: theme.typography.fontSize.m,

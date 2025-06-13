@@ -132,7 +132,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         contentContainerStyle={{ 
           padding: theme.spacing.m,
           paddingTop: theme.spacing.m,
-          paddingBottom: Math.max(theme.spacing.m, insets.bottom) // Entweder Standard-Padding oder Safe Area
+          paddingBottom: Math.max(theme.spacing.xs, insets.bottom) // Entweder Standard-Padding oder Safe Area
         }}
       >
       <Text style={styles.sectionTitle}>
@@ -157,7 +157,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         </Text>
       </TouchableOpacity>
 
-      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
+      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.m }]}>
         App-Informationen
       </Text>
       

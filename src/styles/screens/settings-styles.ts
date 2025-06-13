@@ -136,6 +136,7 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.l,
+    marginTop: theme.spacing.s,
     shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
