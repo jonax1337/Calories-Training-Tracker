@@ -161,7 +161,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         App-Informationen
       </Text>
       
-      <Text style={styles.sectionDescription}>Diese App befindet sich in der Beta-Phase. Danke für dein Feedback! 
+      <Text style={[styles.sectionDescription, { marginBottom: 0 }]}>Diese App befindet sich in der Beta-Phase. Danke für dein Feedback! 
         <Text style={{ color: theme.colors.primary }}> Version: 0.0.1 (Beta)</Text>
       </Text>
       
