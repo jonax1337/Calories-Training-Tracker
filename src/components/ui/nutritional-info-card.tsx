@@ -24,12 +24,32 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
   
   // Calculate nutrition values based on serving multiplier
   // Für Vitaminwerte: Umrechnung von g in μg (1g = 1.000.000μg)
-  const calculateValue = (value: number, unit: string = '') => {
-    if (unit === 'μg' && value > 0) {
-      // Umrechnung von g in μg
+  // Für Mineralwerte: Umrechnung von g in mg (1g = 1.000mg)
+  const calculateValue = (value: number | undefined, unit: string = '') => {
+    // Bei undefined oder null Werten 0 zurückgeben
+    if (value === undefined || value === null || isNaN(value)) {
+      return 0;
+    }
+    
+    if (unit === 'μg') {
+      // Umrechnung von g in μg (Mikrogramm)
       return Math.round(value * 1000000 * servingMultiplier * 10) / 10;
+    } else if (unit === 'mg') {
+      // Umrechnung von g in mg (Milligramm) - immer umrechnen!
+      return Math.round(value * 1000 * servingMultiplier * 10) / 10;
     }
     return Math.round(value * servingMultiplier * 10) / 10;
+  };
+  
+  // Spezifische Berechnungsfunktion für Mineralstoffe (immer in mg anzeigen)
+  const calculateMineralValue = (value: number | undefined) => {
+    // Bei undefined oder null Werten 0 zurückgeben
+    if (value === undefined || value === null || isNaN(value)) {
+      return 0;
+    }
+    // Umrechnung von g in mg (1g = 1000mg)
+    // Runde auf eine Nachkommastelle
+    return Math.round(value * 1000 * servingMultiplier * 10) / 10;
   };
 
   return (
@@ -91,7 +111,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       {nutrition.sodium !== undefined && nutrition.sodium > 0 && (
         <View style={styles.nutritionRow}>
           <Text style={styles.nutrientName}>Natrium</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.sodium)}mg</Text>
+          <Text style={styles.nutrientValue}>{calculateMineralValue(nutrition.sodium)}mg</Text>
         </View>
       )}
       
@@ -99,7 +119,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       {nutrition.potassium !== undefined && nutrition.potassium > 0 && (
         <View style={styles.nutritionRow}>
           <Text style={styles.nutrientName}>Kalium</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.potassium)}mg</Text>
+          <Text style={styles.nutrientValue}>{calculateMineralValue(nutrition.potassium)}mg</Text>
         </View>
       )}
       
@@ -131,7 +151,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       {nutrition.vitaminC !== undefined && nutrition.vitaminC > 0 && (
         <View style={styles.nutritionRow}>
           <Text style={styles.nutrientName}>Vitamin C</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.vitaminC)}mg</Text>
+          <Text style={styles.nutrientValue}>{calculateMineralValue(nutrition.vitaminC)}mg</Text>
         </View>
       )}
       
@@ -155,7 +175,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       {nutrition.calcium !== undefined && nutrition.calcium > 0 && (
         <View style={styles.nutritionRow}>
           <Text style={styles.nutrientName}>Calcium</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.calcium)}mg</Text>
+          <Text style={styles.nutrientValue}>{calculateMineralValue(nutrition.calcium)}mg</Text>
         </View>
       )}
       
@@ -163,7 +183,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       {nutrition.iron !== undefined && nutrition.iron > 0 && (
         <View style={styles.nutritionRow}>
           <Text style={styles.nutrientName}>Eisen</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.iron)}mg</Text>
+          <Text style={styles.nutrientValue}>{calculateMineralValue(nutrition.iron)}mg</Text>
         </View>
       )}
       
@@ -171,7 +191,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       {nutrition.magnesium !== undefined && nutrition.magnesium > 0 && (
         <View style={styles.nutritionRow}>
           <Text style={styles.nutrientName}>Magnesium</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.magnesium)}mg</Text>
+          <Text style={styles.nutrientValue}>{calculateMineralValue(nutrition.magnesium)}mg</Text>
         </View>
       )}
       
@@ -179,7 +199,7 @@ function NutritionalInfoCard({ nutrition, servingMultiplier = 1 }: NutritionalIn
       {nutrition.zinc !== undefined && nutrition.zinc > 0 && (
         <View style={styles.nutritionRow}>
           <Text style={styles.nutrientName}>Zink</Text>
-          <Text style={styles.nutrientValue}>{calculateValue(nutrition.zinc)}mg</Text>
+          <Text style={styles.nutrientValue}>{calculateMineralValue(nutrition.zinc)}mg</Text>
         </View>
       )}
     </View>

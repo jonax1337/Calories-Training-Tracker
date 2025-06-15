@@ -68,8 +68,9 @@ const calculateDailyTotals = (log: DailyLog): NutritionTotals => {
         fat: acc.fat + ((nutrition?.fat || 0) * (multiplier / 100)),
         sugar: acc.sugar + ((nutrition?.sugar || 0) * (multiplier / 100)),
         fiber: acc.fiber + ((nutrition?.fiber || 0) * (multiplier / 100)),
-        sodium: acc.sodium + ((nutrition?.sodium !== undefined && !isNaN(nutrition.sodium) ? nutrition.sodium : 0) * (multiplier / 100)),
-        potassium: acc.potassium + ((nutrition?.potassium !== undefined && !isNaN(nutrition.potassium) ? nutrition.potassium : 0) * (multiplier / 100)),
+        // Umrechnung von g zu mg (1g = 1000mg) für Natrium und Kalium
+        sodium: acc.sodium + ((nutrition?.sodium !== undefined && !isNaN(nutrition.sodium) ? nutrition.sodium * 1000 : 0) * (multiplier / 100)),
+        potassium: acc.potassium + ((nutrition?.potassium !== undefined && !isNaN(nutrition.potassium) ? nutrition.potassium * 1000 : 0) * (multiplier / 100)),
         water: acc.water,
         date: acc.date,
         isCheatDay: acc.isCheatDay // Cheat Day Status übernehmen
@@ -502,8 +503,8 @@ const NutritionReportComponent = ({
           }
         ]}
         yAxis={{
-          unit: "Miligramm",
-          tickFormat: (t) => `${t && !isNaN(t) ? t.toFixed(1) : '0'}`
+          unit: "Milligramm",
+          tickFormat: (t) => `${t && !isNaN(t) ? t.toFixed(0) : '0'}`
         }}
         height={200}
         width={screenWidth}

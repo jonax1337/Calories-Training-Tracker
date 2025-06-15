@@ -102,9 +102,36 @@ export const updateUserProfile = async (profileData: UserProfile): Promise<UserP
     profileToSend.active_goal_type_id = activeGoalTypeId;
   }
 
-  // Map birthDate to snake_case if it exists and is a string
-  if (typeof birthDate === 'string') {
-    profileToSend.birth_date = birthDate; // Send as YYYY-MM-DD string
+  // Map birthDate to snake_case with robust validation and formatting
+  if (birthDate) {
+    try {
+      // ROBUST: Zuerst prüfen, ob es bereits ein korrektes Format hat (YYYY-MM-DD)
+      const isAlreadyProperFormat = /^\d{4}-\d{2}-\d{2}$/.test(birthDate);
+      let formattedDate = birthDate; // Standardwert ist der Originalwert
+      
+      if (!isAlreadyProperFormat) {
+        // Sonst versuchen zu konvertieren
+        const dateObj = new Date(birthDate);
+        
+        if (!isNaN(dateObj.getTime())) {
+          // Manuelle Formatierung ins ISO-Format YYYY-MM-DD
+          const year = dateObj.getFullYear();
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          formattedDate = `${year}-${month}-${day}`;
+        }
+      }
+      
+      // WICHTIG: Explizit als klar definierten String ohne Zeitangaben setzen
+      // Zuerst als normalen Schlüssel für den Frontend-Code
+      profileToSend.birthDate = formattedDate;
+      
+      // Dann als snake_case-Schlüssel für das Backend
+      // KRITISCH: Das ist der wichtigste Teil, der ins Backend geht!
+      profileToSend.birth_date = formattedDate;
+    } catch (error) {
+      // Fehlerbehandlung ohne Logging
+    }
   }
 
   // Add the 'goals' object back if it was present in the original profileData

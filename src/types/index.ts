@@ -35,6 +35,7 @@ export interface FoodItem {
   nutrition: NutritionInfo;
   image?: string;
   isFavorite?: boolean;
+  description?: string; // Produktbeschreibung oder Zutatenliste
 }
 
 export interface DailyLog {

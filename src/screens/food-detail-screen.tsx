@@ -152,9 +152,30 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             
             // Setze die Portionsgröße auf die tatsächliche Füllmenge des Produkts
             if (data.nutrition && data.nutrition.servingSizeGrams) {
-              const productSize = data.nutrition.servingSizeGrams;
-              setServings(productSize.toFixed(2));
-              setSliderValue(productSize);
+              // Konvertiere servingSizeGrams zu einer Zahl, falls es ein String ist
+              let productSize: string | number = data.nutrition.servingSizeGrams as any;
+              
+              // Konvertiere String zu Zahl oder entferne "g", "ml" usw.
+              if (typeof productSize === 'string') {
+                // Entferne nicht-numerische Zeichen, behalte aber dezimale Punkte
+                productSize = parseFloat(productSize.replace(/[^0-9.]/g, ''));
+              }
+
+              // Prüfe, ob die Konvertierung erfolgreich war und wir eine gültige Zahl haben
+              if (!isNaN(productSize) && typeof productSize === 'number') {
+                setServings(productSize.toFixed(2));
+                setSliderValue(productSize);
+              } else {
+                // Fallback auf einen Standardwert
+                console.log('Ungültiger servingSizeGrams-Wert:', data.nutrition.servingSizeGrams);
+                setServings('100.00');
+                setSliderValue(100);
+              }
+            } else {
+              // Fallback, wenn keine servingSizeGrams angegeben sind
+              console.log('Keine servingSizeGrams vorhanden');
+              setServings('100.00');
+              setSliderValue(100);
             }
           } else {
             setError('Produkt nicht gefunden.');

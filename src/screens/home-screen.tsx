@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
 import NutritionReportComponent from '../components/reports/nutrition-report-component';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Helper function to check if user profile is complete with minimum required data
 function isProfileComplete(profile: UserProfile | null): boolean {
@@ -184,60 +185,65 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const totals = calculateNutritionTotals();
   const goals = getGoals();
   
-  // Funktion zum Aktualisieren des Gewichts - optimiert für sofortige Reaktion
+  // Funktion zum Aktualisieren des Gewichts - mit verbesserter Geburtsdatumsbehandlung
   const updateWeight = async (newWeight: number) => {
-    if (!userProfile) return;
+    if (!userProfile) {
+      return;
+    }
+    
+    // WICHTIG: Das aktuelle Geburtsdatum speichern, für den Fall, dass es vom Backend gelöscht wird
+    const currentBirthDate = userProfile.birthDate;
     
     // SOFORT: UI-State aktualisieren für unmittelbares Feedback
     setCurrentWeight(newWeight);
     
-    // State-Flag setzen, um parallele Updates zu vermeiden
+    // State-Flag setzen
     setIsUpdatingWeight(true);
     
-    // Profilupdate vorbereiten
-    const updatedProfile = {
-      ...userProfile,
-      weight: newWeight
-    };
-    
-    // UI-State aktualisieren
-    setUserProfile(updatedProfile);
-    
-    // Logupdate vorbereiten
-    let updatedLog;
-    if (todayLog) {
-      updatedLog = {
-        ...todayLog,
-        date: selectedDate,
-        weight: newWeight
-      };
-      setTodayLog(updatedLog);
-    } else {
-      updatedLog = {
-        date: selectedDate,
-        foodEntries: [],
-        waterIntake: 0,
-        weight: newWeight,
-        dailyNotes: '',
-        isCheatDay: false
-      };
-      setTodayLog(updatedLog);
-    }
-    
-    // ASYNCHRON: DB-Updates durchführen, ohne auf Ergebnis zu warten
     try {
-      // Starte beide Operationen parallel und warte nicht
-      Promise.all([
-        saveUserProfile(updatedProfile),
-        saveDailyLog(updatedLog)
-      ]).catch(error => {
-        console.error('Fehler beim DB-Update (Hintergrund):', error);
-      }).finally(() => {
-        // Erst nach Abschluss beider Operationen das Flag zurücksetzen
-        setIsUpdatingWeight(false);
-      });
+      // 1. Tageslog aktualisieren - hier keine Profile-Aktualisierung, das kommt später
+      let updatedLog;
+      if (todayLog) {
+        updatedLog = {
+          ...todayLog,
+          date: selectedDate,
+          weight: newWeight
+        };
+      } else {
+        updatedLog = {
+          date: selectedDate,
+          foodEntries: [],
+          waterIntake: 0,
+          weight: newWeight,
+          dailyNotes: '',
+          isCheatDay: false
+        };
+      }
+      
+      // UI-State für das Tageslog aktualisieren
+      setTodayLog(updatedLog);
+      
+      // Tageslog speichern
+      await saveDailyLog(updatedLog);
+      
+      // 2. Profil direkt aus dem lokalen State aktualisieren, OHNE das Backend zu befragen
+      // Dies verhindert, dass das Backend uns überschriebene Daten zurückgibt
+      const updatedProfile = {
+        ...userProfile,
+        weight: newWeight,
+        // KRITISCH: Das Geburtsdatum explizit beibehalten
+        birthDate: currentBirthDate
+      };
+      
+      // 3. Profil im UI aktualisieren
+      setUserProfile(updatedProfile);
+      
+      // 4. Profil in der Datenbank speichern ohne es vorher vom Backend zu laden
+      await saveUserProfile(updatedProfile);
+      
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Gewichts:', error);
+    } finally {
       setIsUpdatingWeight(false);
     }
   };

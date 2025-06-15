@@ -49,17 +49,57 @@ exports.saveUserProfile = async (req, res) => {
     } = req.body;
 
     // Check if user exists
-    const [existingUser] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
+    const [existingUser] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
     
     if (existingUser.length > 0) {
       // Update existing user
-      // Format birth_date to YYYY-MM-DD format (MySQL format)
-      let formattedBirthDate = birth_date;
-      if (birth_date && typeof birth_date === 'string' && birth_date.includes('T')) {
-        // If ISO format, extract just the date part 
-        formattedBirthDate = birth_date.split('T')[0];
+      // WICHTIGE ÄNDERUNG: Viel robustere Datumsbehandlung mit mehreren Fallbacks
+      
+      // 1. Priorisieren und validieren des Geburtsdatums mit mehreren Quellen
+      let originalBirthDate = birth_date || req.body.birthDate || null;
+      let formattedBirthDate = null;
+      
+      // Wenn kein neues Geburtsdatum gesendet wird, behalte das aktuelle aus der DB
+      if (!originalBirthDate) {
+        formattedBirthDate = existingUser[0].birth_date;
+      } 
+      // Wenn ein neues Geburtsdatum gesendet wird
+      else {
+        // YYYY-MM-DD Format prüfen
+        const isCorrectFormat = /^\d{4}-\d{2}-\d{2}$/.test(originalBirthDate);
+        
+        if (isCorrectFormat) {
+          // Bereits im richtigen Format
+          formattedBirthDate = originalBirthDate;
+        } 
+        // ISO-Format mit Zeitstempel (enthält 'T')
+        else if (typeof originalBirthDate === 'string' && originalBirthDate.includes('T')) {
+          formattedBirthDate = originalBirthDate.split('T')[0];
+        }
+        // Andere String-Formate versuchen zu parsen
+        else if (typeof originalBirthDate === 'string') {
+          try {
+            const dateObj = new Date(originalBirthDate);
+            if (!isNaN(dateObj)) {
+              const year = dateObj.getFullYear();
+              const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+              const day = String(dateObj.getDate()).padStart(2, '0');
+              formattedBirthDate = `${year}-${month}-${day}`;
+            } else {
+              // Fallback: Behalte existierendes Datum
+              formattedBirthDate = existingUser[0].birth_date;
+            }
+          } catch (e) {
+            // Fallback: Behalte existierendes Datum
+            formattedBirthDate = existingUser[0].birth_date;
+          }
+        }
       }
       
+      // 2. Gewichtsupdate speziell behandeln
+      const weightValue = weight !== undefined ? Number(weight) : existingUser[0].weight;
+      
+      // 3. SQL-Update ausführen
       await pool.query(
         `UPDATE users SET 
         name = ?, birth_date = ?, age = ?, weight = ?, height = ?, 
@@ -67,9 +107,20 @@ exports.saveUserProfile = async (req, res) => {
         daily_carbs = ?, daily_fat = ?, daily_water = ?, weight_goal = ? 
         WHERE id = ?`,
         [
-          name, formattedBirthDate, age, weight, height, gender, activityLevel,
-          goals?.dailyCalories, goals?.dailyProtein, goals?.dailyCarbs,
-          goals?.dailyFat, goals?.dailyWater, goals?.weightGoal, id
+          name || existingUser[0].name, 
+          formattedBirthDate, 
+          age || existingUser[0].age, 
+          weightValue, 
+          height || existingUser[0].height, 
+          gender || existingUser[0].gender, 
+          activityLevel || existingUser[0].activity_level,
+          goals?.dailyCalories || existingUser[0].daily_calories, 
+          goals?.dailyProtein || existingUser[0].daily_protein, 
+          goals?.dailyCarbs || existingUser[0].daily_carbs,
+          goals?.dailyFat || existingUser[0].daily_fat, 
+          goals?.dailyWater || existingUser[0].daily_water, 
+          goals?.weightGoal || existingUser[0].weight_goal, 
+          id
         ]
       );
       

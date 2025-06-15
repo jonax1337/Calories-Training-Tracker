@@ -1,8 +1,202 @@
 import { BarcodeApiResponse, FoodItem, NutritionInfo } from '../types';
 
+// Gemeinsame Interface für Produktdaten aus beiden API-Endpunkten
+interface ProductData {
+  code: string;
+  product_name?: string;
+  brands?: string;
+  image_url?: string;
+  quantity?: string;
+  serving_size?: string;
+  serving_quantity?: number;
+  nutriments?: {
+    [key: string]: number;
+  };
+  generic_name?: string;
+  ingredients_text?: string;
+  description?: string;
+}
+
 // Using the Open Food Facts API for nutrition data
 const API_URL = 'https://world.openfoodfacts.org/api/v2/product/';
 const SEARCH_API_URL = 'https://world.openfoodfacts.org/cgi/search.pl';
+
+/**
+ * Gemeinsame Funktion zur Erstellung eines FoodItem aus API-Produktdaten
+ * @param product Das Produktobjekt aus der API
+ * @returns Ein einheitlich formatiertes FoodItem
+ */
+function createFoodItemFromProduct(product: ProductData): FoodItem {
+  // Debug-Log: Produktdaten
+  console.log('DEBUG: Produktdaten verarbeiten:', product.product_name,
+    'serving_size:', product.serving_size || 'nicht vorhanden',
+    'serving_quantity:', product.serving_quantity || 'nicht vorhanden',
+    'quantity:', product.quantity || 'nicht vorhanden',
+    'description:', product.description || product.generic_name || 'nicht vorhanden'
+  );
+  
+  // Parse quantity to get serving size in grams
+  let servingSizeGrams = 100; // Default to 100g
+  let servingSize = product.serving_size || product.quantity || '';
+  let servingDescription = "";
+  
+  // 1. Bevorzuge serving_size aus der API, wenn vorhanden
+  if (servingSize) {
+    console.log(`API serving size: ${servingSize}`);
+    
+    // Versuche, die Gramm aus der Portionsgröße zu extrahieren
+    const servingSizeMatch = servingSize.match(/(\d+([.,]\d+)?)\s*(g|gramm)/i);
+    if (servingSizeMatch) {
+      servingSizeGrams = parseFloat(servingSizeMatch[1].replace(',', '.'));
+      console.log(`Parsed serving size from API: ${servingSizeGrams}g`);
+      
+      // Extrahiere nur die relevanten Informationen: Zahl + Einheit (g, ml, etc.)
+      let cleanedServingSize = "100g"; // Standardwert falls nichts gefunden wird
+      
+      if (typeof servingSize === 'string') {
+        // Suche direkt nach Zahlenwerten mit Einheiten wie "123g", "45 ml", "3.5 kg"
+        const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|ml|l|kg)/i);
+        
+        if (unitMatches && unitMatches.length >= 3) {
+          // Nehme nur die Zahl und die Einheit
+          const amount = unitMatches[1].replace(',', '.'); // Kommas zu Punkten konvertieren
+          const unit = unitMatches[2].toLowerCase();
+          cleanedServingSize = `${amount}${unit}`;
+        } else {
+          // Fallback: Suche nach Zahlen im String
+          const numberMatch = servingSize.match(/(\d+[.,]?\d*)/i);
+          if (numberMatch) {
+            // Wenn eine Zahl gefunden wurde, aber keine Einheit, nehmen wir g als Standard
+            cleanedServingSize = `${numberMatch[1].replace(',', '.')}g`;
+          }
+        }
+      }
+      
+      servingDescription = `Eine Portion entspricht ${cleanedServingSize}`;
+    }
+  } 
+  
+  // 2. Falls serving_quantity direkt verfügbar ist, verwende diesen Wert
+  if (product.serving_quantity) {
+    servingSizeGrams = product.serving_quantity;
+    console.log(`API serving quantity: ${servingSizeGrams}g`);
+    
+    if (!servingDescription && servingSize) {
+      // Extrahiere nur die relevanten Informationen: Zahl + Einheit (g, ml, etc.)
+      let cleanedServingSize = "100g"; // Standardwert falls nichts gefunden wird
+      
+      if (typeof servingSize === 'string') {
+        // Suche direkt nach Zahlenwerten mit Einheiten wie "123g", "45 ml", "3.5 kg"
+        const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|ml|l|kg)/i);
+        
+        if (unitMatches && unitMatches.length >= 3) {
+          // Nehme nur die Zahl und die Einheit
+          const amount = unitMatches[1].replace(',', '.'); // Kommas zu Punkten konvertieren
+          const unit = unitMatches[2].toLowerCase();
+          cleanedServingSize = `${amount}${unit}`;
+        } else {
+          // Fallback: Suche nach Zahlen im String
+          const numberMatch = servingSize.match(/(\d+[.,]?\d*)/i);
+          if (numberMatch) {
+            // Wenn eine Zahl gefunden wurde, aber keine Einheit, nehmen wir g als Standard
+            cleanedServingSize = `${numberMatch[1].replace(',', '.')}g`;
+          }
+        }
+      }
+      
+      servingDescription = `Eine Portion entspricht ${cleanedServingSize}`;
+    }
+  }
+  
+  // 3. Fallback: Analysiere das quantity-Feld für die Portionsgröße
+  const quantity = product.quantity || "";
+  if (quantity && !servingDescription) {
+    console.log(`API product quantity: ${quantity}`);
+    // Try to extract number from string like "400g"
+    const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|l)/i);
+    if (match) {
+      const amount = parseFloat(match[1].replace(',', '.'));
+      const unit = match[2].toLowerCase();
+      
+      // Convert to grams based on unit
+      if (unit === 'kg') {
+        servingSizeGrams = amount * 1000;
+      } else if (unit === 'ml' || unit === 'l') {
+        // Für Flüssigkeiten nehmen wir an, dass 1ml ≈ 1g
+        servingSizeGrams = unit === 'l' ? amount * 1000 : amount;
+      } else {
+        servingSizeGrams = amount;
+      }
+      
+      console.log(`Parsed quantity to serving size: ${servingSizeGrams}g`);
+      servingDescription = `Eine Portion entspricht ${servingSizeGrams}g`;
+    }
+  }
+  
+  // Extrahiere die Nährwerte aus der API-Antwort
+  const nutriments = product.nutriments || {};
+  
+  // Spezielle Behandlung für Kalium, da es in unterschiedlichen Feldern auftauchen kann
+  let potassiumValue = nutriments['potassium_100g'] || 0;
+  
+  // Hilfsfunktion zum Extrahieren von Vitaminwerten aus verschiedenen möglichen Feldern
+  const extractVitaminValue = (fields: string[]): number => {
+    for (const field of fields) {
+      if (nutriments[field] !== undefined) {
+        return nutriments[field];
+      }
+    }
+    return 0; // Standardwert, wenn kein Wert gefunden wurde
+  };
+  
+  // Erstelle das Nutrition-Objekt mit allen Nährwerten
+  // Stelle sicher, dass servingSizeGrams immer eine Zahl ist, nicht ein String
+  const numericServingSizeGrams = typeof servingSizeGrams === 'string' ? 
+    parseFloat(servingSizeGrams) : 
+    (typeof servingSizeGrams === 'number' ? servingSizeGrams : 100);
+
+  const nutrition: NutritionInfo = {
+    // Makronährstoffe
+    calories: nutriments['energy-kcal_100g'] || 0,
+    protein: nutriments?.proteins_100g,
+    carbs: nutriments?.carbohydrates_100g,
+    fat: nutriments?.fat_100g,
+    sugar: nutriments?.sugars_100g,
+    fiber: nutriments?.fiber_100g,
+    sodium: nutriments?.sodium_100g,
+    potassium: potassiumValue,
+    
+    // Vitamine
+    vitaminA: extractVitaminValue(['vitamin-a_100g', 'vitamin-a_value', 'vitamin_a_100g']),
+    vitaminB12: extractVitaminValue(['vitamin-b12_100g', 'vitamin-b12_value', 'vitamin_b12_100g', 'cyanocobalamin_100g']),
+    vitaminC: extractVitaminValue(['vitamin-c_100g', 'vitamin-c_value', 'vitamin_c_100g', 'ascorbic-acid_100g']),
+    vitaminD: extractVitaminValue(['vitamin-d_100g', 'vitamin-d_value', 'vitamin_d_100g']),
+    
+    // Mineralstoffe
+    calcium: extractVitaminValue(['calcium_100g', 'calcium_value', 'ca_100g']),
+    iron: extractVitaminValue(['iron_100g', 'iron_value', 'fe_100g']),
+    magnesium: extractVitaminValue(['magnesium_100g', 'magnesium_value', 'mg_100g']),
+    zinc: extractVitaminValue(['zinc_100g', 'zinc_value', 'zn_100g']),
+    
+    servingSize: servingSize,
+    servingSizeGrams: numericServingSizeGrams, // Verwende die numerische Version
+    servingDescription: servingDescription
+  };
+  
+  // Debug-Log für das erstellte Nutrition-Objekt
+  console.log('Erstelltes Nutrition-Objekt:', JSON.stringify(nutrition, null, 2));
+  
+  // Erstelle das FoodItem
+  return {
+    id: `food_${product.code}`,
+    name: product.product_name || 'Unknown Product',
+    brand: product.brands,
+    barcode: product.code,
+    nutrition,
+    image: product.image_url,
+    description: product.description || product.generic_name || product.ingredients_text || ''
+  };
+}
 
 /**
  * Fetches food data from the Open Food Facts API using a barcode
@@ -41,136 +235,8 @@ export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | 
       
       console.log(`Product found: ${product.product_name}`);
       
-      // Extract nutrition information from the API response
-      
-      // Parse quantity to get serving size in grams
-      let servingSizeGrams = 100; // Default to 100g
-      const quantity = product.quantity || "";
-      let servingSize = "";
-      let servingDescription = "";
-      
-      // 1. Bevorzuge serving_size aus der API, wenn vorhanden
-      if (product.serving_size) {
-        servingSize = product.serving_size;
-        console.log(`API serving size: ${servingSize}`);
-        
-        // Versuche, die Gramm aus der Portionsgröße zu extrahieren
-        const servingSizeMatch = servingSize.match(/(\d+([.,]\d+)?)\s*(g|gramm)/i);
-        if (servingSizeMatch) {
-          servingSizeGrams = parseFloat(servingSizeMatch[1].replace(',', '.'));
-          console.log(`Parsed serving size from API: ${servingSizeGrams}g`);
-          
-          // Setze Beschreibung der Portionsgröße
-          servingDescription = `Eine Portion entspricht ${servingSize}`;
-        }
-      } 
-      
-      // 2. Falls serving_quantity direkt verfügbar ist, verwende diesen Wert
-      if (product.serving_quantity) {
-        servingSizeGrams = product.serving_quantity;
-        console.log(`API serving quantity: ${servingSizeGrams}g`);
-        
-        if (!servingDescription && servingSize) {
-          servingDescription = `Eine Portion entspricht ${servingSize}`;
-        }
-      }
-      
-      if (quantity) {
-        console.log(`Product quantity: ${quantity}`);
-        // Try to extract number from string like "400g"
-        const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|l)/i);
-        if (match) {
-          const amount = parseFloat(match[1].replace(',', '.'));
-          const unit = match[2].toLowerCase();
-          
-          // Convert to grams based on unit
-          if (unit === 'kg') {
-            servingSizeGrams = amount * 1000;
-          } else if (unit === 'g') {
-            servingSizeGrams = amount;
-          } else if (unit === 'l') {
-            servingSizeGrams = amount * 1000; // Assuming 1L = 1000g for simplicity
-          } else if (unit === 'ml') {
-            servingSizeGrams = amount; // Assuming 1ml = 1g for simplicity
-          }
-          
-          console.log(`Parsed serving size: ${servingSizeGrams}g`);
-        }
-      }
-      
-      // Debug-Log für gefundene Nährwerte
-      console.log('Nutriments von API:', product.nutriments);
-      console.log('Kalium-Wert von API:', product.nutriments?.potassium_100g);
-      
-      // Kalium kann in verschiedenen Formaten in der API vorkommen
-      // Wir müssen any verwenden, da die API-Struktur nicht fest definiert ist
-      const nutriments = product.nutriments as any;
-      const potassiumValue = nutriments?.potassium_100g || nutriments?.['k_100g'] || undefined;
-      console.log('Gefundener Kalium-Wert:', potassiumValue);
-      
-      // Extrahiere Vitamindaten aus verschiedenen möglichen API-Keys
-      const extractVitaminValue = (keys: string[]): number | undefined => {
-        for (const key of keys) {
-          const value = nutriments?.[key];
-          if (value !== undefined && value !== null) {
-            return value;
-          }
-        }
-        return undefined;
-      };
-
-      // Debug log für verfügbare Vitamine
-      const vitaminKeys = Object.keys(nutriments || {}).filter(key => 
-        key.includes('vitamin') || 
-        key.includes('calcium') || 
-        key.includes('iron') || 
-        key.includes('zinc') || 
-        key.includes('magnesium')
-      );
-      console.log('Verfügbare Vitaminfelder in API:', vitaminKeys);
-      
-      const nutrition: NutritionInfo = {
-        // Makronährstoffe
-        calories: product.nutriments?.['energy-kcal_100g'] || 0,
-        protein: product.nutriments?.proteins_100g,
-        carbs: product.nutriments?.carbohydrates_100g,
-        fat: product.nutriments?.fat_100g,
-        sugar: product.nutriments?.sugars_100g,
-        fiber: product.nutriments?.fiber_100g,
-        sodium: product.nutriments?.sodium_100g,
-        potassium: potassiumValue,
-        
-        // Vitamine
-        vitaminA: extractVitaminValue(['vitamin-a_100g', 'vitamin-a_value', 'vitamin_a_100g']),
-        vitaminB12: extractVitaminValue(['vitamin-b12_100g', 'vitamin-b12_value', 'vitamin_b12_100g', 'cyanocobalamin_100g']),
-        vitaminC: extractVitaminValue(['vitamin-c_100g', 'vitamin-c_value', 'vitamin_c_100g', 'ascorbic-acid_100g']),
-        vitaminD: extractVitaminValue(['vitamin-d_100g', 'vitamin-d_value', 'vitamin_d_100g']),
-        
-        // Mineralstoffe
-        calcium: extractVitaminValue(['calcium_100g', 'calcium_value', 'ca_100g']),
-        iron: extractVitaminValue(['iron_100g', 'iron_value', 'fe_100g']),
-        magnesium: extractVitaminValue(['magnesium_100g', 'magnesium_value', 'mg_100g']),
-        zinc: extractVitaminValue(['zinc_100g', 'zinc_value', 'zn_100g']),
-        
-        servingSize: product.serving_size || product.quantity || '100g',
-        servingSizeGrams: servingSizeGrams,
-        servingDescription: servingDescription || undefined
-      };
-      
-      // Debug-Log für das erstellte Nutrition-Objekt
-      console.log('Erstelltes Nutrition-Objekt:', nutrition);
-      
-      // Create and return a FoodItem object from the API data
-      const foodItem: FoodItem = {
-        id: `food_${barcode}`,
-        name: product.product_name, // Kein Fallback mehr nötig, da wir oben bereits prüfen
-        brand: product.brands || '',
-        barcode,
-        nutrition,
-        image: product.image_url
-      };
-      
-      return foodItem;
+       // Verwende die gemeinsame Funktion zur Erstellung des FoodItem
+      return createFoodItemFromProduct(product as ProductData);
     }
     
     return null;
@@ -187,18 +253,7 @@ interface SearchApiResponse {
   count: number;
   page: number;
   page_size: number;
-  products: Array<{
-    code: string;
-    product_name?: string;
-    brands?: string;
-    image_url?: string;
-    quantity?: string;
-    serving_size?: string;
-    serving_quantity?: number;
-    nutriments?: {
-      [key: string]: number;
-    };
-  }>;
+  products: Array<ProductData>;
 }
 
 /**
@@ -221,6 +276,10 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         'serving_size',
         'serving_quantity',
         'image_url',
+        // Beschreibungen
+        'generic_name',
+        'ingredients_text', 
+        'description',
         // Makronährstoffe
         'nutriments.energy-kcal_100g',
         'nutriments.proteins_100g',
@@ -272,108 +331,12 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
         console.log('DEBUG: Produkt Portionsinfo:', product.product_name,
           'serving_size:', product.serving_size || 'nicht vorhanden',
           'serving_quantity:', product.serving_quantity || 'nicht vorhanden',
-          'quantity:', product.quantity || 'nicht vorhanden'
+          'quantity:', product.quantity || 'nicht vorhanden',
+          'description:', product.description || product.generic_name || 'nicht vorhanden'
         );
         
-        // Extract nutrition information
-        
-        // Parse quantity to get serving size in grams (gleicher Code wie in getFoodDataByBarcode)
-        let servingSizeGrams = 100; // Default to 100g
-        const quantity = product.quantity || "";
-        
-        if (quantity) {
-          console.log(`Search product quantity: ${quantity}`);
-          // Try to extract number from string like "400g"
-          const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|l)/i);
-          if (match) {
-            const amount = parseFloat(match[1].replace(',', '.'));
-            const unit = match[2].toLowerCase();
-            
-            // Convert to grams based on unit
-            if (unit === 'kg') {
-              servingSizeGrams = amount * 1000;
-            } else if (unit === 'g') {
-              servingSizeGrams = amount;
-            } else if (unit === 'l') {
-              servingSizeGrams = amount * 1000; // Assuming 1L = 1000g for simplicity
-            } else if (unit === 'ml') {
-              servingSizeGrams = amount; // Assuming 1ml = 1g for simplicity
-            }
-            
-            console.log(`Search parsed serving size: ${servingSizeGrams}g`);
-          }
-        }
-        
-        // Debug-Log für gefundene Nährwerte
-        console.log('Nutriments von API (Suche):', product.nutriments);
-        console.log('Kalium-Wert von API (Suche):', product.nutriments?.potassium_100g);
-        
-        // Kalium kann in verschiedenen Formaten in der API vorkommen
-        // Wir müssen any verwenden, da die API-Struktur nicht fest definiert ist
-        const nutriments = product.nutriments as any;
-        const potassiumValue = nutriments?.potassium_100g || nutriments?.['k_100g'] || undefined;
-        console.log('Gefundener Kalium-Wert (Suche):', potassiumValue);
-        
-        // Helper-Funktion zum Extrahieren der Vitaminwerte
-        const extractVitaminValue = (keys: string[]): number | undefined => {
-          for (const key of keys) {
-            const value = nutriments?.[key];
-            if (value !== undefined && value !== null) {
-              return value;
-            }
-          }
-          return undefined;
-        };
-
-        // Debug log für verfügbare Vitamine
-        const vitaminKeys = Object.keys(nutriments || {}).filter(key => 
-          key.includes('vitamin') || 
-          key.includes('calcium') || 
-          key.includes('iron') || 
-          key.includes('zinc') || 
-          key.includes('magnesium')
-        );
-        console.log('Verfügbare Vitaminfelder in API (Suche):', vitaminKeys);
-        
-        const nutrition: NutritionInfo = {
-          // Makronährstoffe
-          calories: nutriments?.['energy-kcal_100g'] || 0,
-          protein: nutriments?.proteins_100g,
-          carbs: nutriments?.carbohydrates_100g,
-          fat: nutriments?.fat_100g,
-          sugar: nutriments?.sugars_100g,
-          fiber: nutriments?.fiber_100g,
-          sodium: nutriments?.sodium_100g,
-          potassium: potassiumValue,
-          
-          // Vitamine
-          vitaminA: extractVitaminValue(['vitamin-a_100g', 'vitamin-a_value', 'vitamin_a_100g']),
-          vitaminB12: extractVitaminValue(['vitamin-b12_100g', 'vitamin-b12_value', 'vitamin_b12_100g', 'cyanocobalamin_100g']),
-          vitaminC: extractVitaminValue(['vitamin-c_100g', 'vitamin-c_value', 'vitamin_c_100g', 'ascorbic-acid_100g']),
-          vitaminD: extractVitaminValue(['vitamin-d_100g', 'vitamin-d_value', 'vitamin_d_100g']),
-          
-          // Mineralstoffe
-          calcium: extractVitaminValue(['calcium_100g', 'calcium_value', 'ca_100g']),
-          iron: extractVitaminValue(['iron_100g', 'iron_value', 'fe_100g']),
-          magnesium: extractVitaminValue(['magnesium_100g', 'magnesium_value', 'mg_100g']),
-          zinc: extractVitaminValue(['zinc_100g', 'zinc_value', 'zn_100g']),
-          
-          servingSize: product.serving_size || product.quantity || '100g',
-          servingSizeGrams: servingSizeGrams
-        };
-        
-        // Debug-Log für das erstellte Nutrition-Objekt
-        console.log('Erstelltes Nutrition-Objekt (Suche):', nutrition);
-        
-        // Create a FoodItem object
-        return {
-          id: `food_${product.code}`,
-          name: product.product_name || 'Unknown Product',
-          brand: product.brands,
-          barcode: product.code,
-          nutrition,
-          image: product.image_url
-        };
+        // Verwende die gemeinsame Funktion zur Erstellung des FoodItem
+        return createFoodItemFromProduct(product);
       });
     }
     
