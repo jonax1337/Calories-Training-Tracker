@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, TouchableOpacity, ScrollView, Alert, Switch, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/theme-context';
 import { ThemeType } from '../theme/theme-types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -232,11 +233,18 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       </View>
 
       <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
-        App-Informationen
+        App-Informationen & Feedback
       </Text>
       
-      <Text style={[styles.sectionDescription, { marginBottom: 0 }]}>Diese App befindet sich in der Beta-Phase. Danke für dein Feedback! 
-        <Text style={{ color: theme.colors.primary }}> Version: 0.0.1 (Beta)</Text>
+      <Text style={[styles.sectionDescription, { marginBottom: theme.spacing.s }]}>Diese App befindet sich in der Beta-Phase. Wir freuen uns über dein Feedback!
+      </Text>
+
+      <Text style={[styles.sectionDescription, { marginBottom: 0 }]}>
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('Feedback')}
+      >
+        <Text style={{ color: theme.colors.primary, textDecorationLine: 'underline' }}>Feedback geben</Text>
+      </TouchableOpacity>
       </Text>
       
       </ScrollView>

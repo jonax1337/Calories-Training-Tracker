@@ -25,6 +25,7 @@ import HIITTimerSettingsScreen from './screens/hiit-timer-settings-screen';
 import ManualFoodEntryScreen from './screens/manual-food-entry-screen';
 import NutritionReportScreen from './screens/nutrition-report-screen';
 import WeightHistoryScreen from './screens/weight-history-screen';
+import FeedbackScreen from './screens/feedback-screen';
 
 // Types for HIIT Timer
 export interface HIITSettings {
@@ -78,6 +79,7 @@ export type RootStackParamList = {
   HIITTimerSettings: { settings?: HIITSettings };
   NutritionReport: { days?: number };
   WeightHistory: { days?: number };
+  Feedback: undefined;
   // Tab screens (for backwards compatibility)
   Home: undefined;
   Profile: undefined;
@@ -389,6 +391,15 @@ function AppStack() {
         component={SettingsScreen} 
         options={{
           title: 'Einstellungen',
+          headerBackTitle: 'Zurück'
+        }} 
+      />
+      <Stack.Screen 
+        name="Feedback" 
+        component={FeedbackScreen} 
+        options={{
+          title: 'Feedback',
+          animation: 'slide_from_right',
           headerBackTitle: 'Zurück'
         }} 
       />

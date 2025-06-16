@@ -141,7 +141,7 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     fontSize: theme.typography.fontSize.m,
   },
   logoutButton: {
-    backgroundColor: theme.colors.errorLight,
+    backgroundColor: theme.colors.error,
     padding: theme.spacing.m,
     borderRadius: theme.borderRadius.medium,
     alignItems: 'center',
