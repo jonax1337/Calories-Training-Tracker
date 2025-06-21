@@ -11,6 +11,7 @@ interface ProgressBarProps {
   height?: number;
   showPercentage?: boolean;
   isCheatDay?: boolean; // Neue Option für Cheat Days
+  unit?: string;
 }
 
 function ProgressBar({
@@ -19,6 +20,7 @@ function ProgressBar({
   label,
   color = '#4CAF50',
   height = 12,
+  unit = 'g',
   showPercentage = true,
   isCheatDay = false // Standardmäßig kein Cheat Day
 }: ProgressBarProps) {
@@ -65,7 +67,10 @@ function ProgressBar({
           styles.values,
           isOverTarget && styles.valuesError
         ]}>
-          {current} / {target} {showPercentage && `(${percentage}%)`}
+          {isCheatDay 
+            ? `${current} ${unit}`
+            : `${current} / ${target} ${unit} ${showPercentage ? `(${percentage}%)` : ''}`
+          }
         </Text>
       </View>
       

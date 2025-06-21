@@ -35,6 +35,8 @@ interface DailyLogStyles {
   mealCategoryCalories: TextStyle;
   mealCategoryLeftSection: ViewStyle;
   mealCategoryRightSection: ViewStyle;
+  mealTitleContainer: ViewStyle;
+  scanIcon: TextStyle;
   addFoodButton: ViewStyle;
   addFoodButtonText: TextStyle;
   addEntryButton: ViewStyle;
@@ -299,6 +301,15 @@ export const createDailyLogStyles = (theme: Theme): DailyLogStyles => StyleSheet
   mealCategoryRightSection: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  mealTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  scanIcon: {
+    marginEnd: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
   },
   mealCategoryTitle: {
     fontSize: theme.typography.fontSize.l,

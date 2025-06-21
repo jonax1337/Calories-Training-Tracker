@@ -344,24 +344,17 @@ function AppStack() {
           let title = 'Produkt scannen';
           
           if (mealType) {
-            const mealEmojis = {
-              breakfast: '🥞',
-              lunch: '🌮',
-              dinner: '🍽️',
-              snack: '🍪'
-            };
-            
             const mealLabels = {
               breakfast: 'Frühstück',
               lunch: 'Mittagessen',
               dinner: 'Abendessen',
-              snack: 'Snacks'
+              snack: 'Snacks',
+              drinks: 'Getränke'
             };
             
-            const emoji = mealEmojis[mealType as keyof typeof mealEmojis] || '';
             const label = mealLabels[mealType as keyof typeof mealLabels] || '';
             
-            title = `${emoji} ${label}`;
+            title = `${label}`;
           }
           
           return { 

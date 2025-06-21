@@ -39,9 +39,9 @@ export const configureNotifications = () => {
   // Handler für das Empfangen von Benachrichtigungen einrichten
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,  // Abwärtskompatibilität
-      shouldShowBanner: true, // Neue API
-      shouldShowList: true,   // Neue API
+      shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
     }),

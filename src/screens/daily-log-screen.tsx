@@ -5,7 +5,7 @@ import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-nat
 import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
-import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2, Plus, ShieldOff, ShieldCheck, PlusCircle, ListPlus, CirclePlus } from 'lucide-react-native';
+import { CircleChevronUp, CircleChevronDown, ChevronsLeft, ChevronsRight, X, Trash2, Info, ChevronLeft, ChevronRight, Edit2, Plus, ShieldOff, ShieldCheck, PlusCircle, ListPlus, CirclePlus, ScanLine, ScanBarcode, ScanQrCode } from 'lucide-react-native';
 import { JournalTabScreenProps } from '../types/navigation-types';
 import { DailyLog, FoodEntry, MealType } from '../types';
 import { getDailyLogByDate, saveDailyLog } from '../services/storage-service';
@@ -58,15 +58,18 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
           ]}
         >
           <View style={styles.mealCategoryContent}>
-            {/* Linke Seite - Mahlzeiteninfo mit Plus-Icon */}
+            {/* Linke Seite - Mahlzeiteninfo mit Scan-Icon */}
             <TouchableOpacity 
               style={styles.mealCategoryLeftSection}
               onPress={() => navigation.getParent()?.navigate('BarcodeScanner', { mealType })}
             >
               <View>
-                <Text style={styles.mealCategoryTitle}>
-                  {emoji} {title}
-                </Text>
+                <View style={styles.mealTitleContainer}>
+                  <ScanQrCode size={theme.typography.fontSize.xxl} color={theme.colors.text} style={styles.scanIcon} />
+                  <Text style={styles.mealCategoryTitle}>
+                    {title} {emoji}
+                  </Text>
+                </View>
                 {dailyLog && dailyLog.foodEntries.filter(entry => entry.mealType === mealType).length > 0 ? (
                   <Text style={styles.mealCategorySubtitle}>
                     {dailyLog.foodEntries.filter(entry => entry.mealType === mealType).length} 
@@ -348,36 +351,6 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       [mealType]: !prev[mealType]
     }));
   };
-  // Function to handle date changes
-  const handleChangeDate = useCallback((newDate: string) => {
-    setSelectedDate(newDate);
-  }, [setSelectedDate]);
-  
-  // Funktion zum Umschalten des Cheat Day Status
-  const handleToggleCheatDay = async () => {
-    if (!dailyLog) return;
-    
-    try {
-      // Haptisches Feedback
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      
-      // Neuen Status festlegen (umkehren des aktuellen Status)
-      const updatedLog = {
-        ...dailyLog,
-        isCheatDay: !dailyLog.isCheatDay
-      };
-      
-      // Log im State aktualisieren für sofortiges UI-Feedback
-      setDailyLog(updatedLog);
-      
-      // In der Datenbank speichern
-      await saveDailyLog(updatedLog);
-      
-    } catch (error) {
-      console.error('Fehler beim Aktualisieren des Cheat Day Status:', error);
-      Alert.alert('Fehler', 'Der Status konnte nicht aktualisiert werden.');
-    }
-  };
 
   // Function to load daily log data
   const loadDailyLog = useCallback(async () => {
@@ -572,7 +545,8 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
           breakfast: { calories: 0, protein: 0, carbs: 0, fat: 0 },
           lunch: { calories: 0, protein: 0, carbs: 0, fat: 0 },
           dinner: { calories: 0, protein: 0, carbs: 0, fat: 0 },
-          snack: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+          snack: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+          drinks: { calories: 0, protein: 0, carbs: 0, fat: 0 }
         }
       };
     }
@@ -587,7 +561,8 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         breakfast: { calories: 0, protein: 0, carbs: 0, fat: 0 },
         lunch: { calories: 0, protein: 0, carbs: 0, fat: 0 },
         dinner: { calories: 0, protein: 0, carbs: 0, fat: 0 },
-        snack: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        snack: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        drinks: { calories: 0, protein: 0, carbs: 0, fat: 0 }
       }
     };
 
@@ -660,27 +635,6 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
             <Text style={styles.summaryTitle}>
               Tagesübersicht
             </Text>
-            
-            {/* Cheat Day Button */}
-            <TouchableOpacity 
-              style={[
-                styles.cheatDayButton,
-                dailyLog?.isCheatDay && styles.cheatDayButtonActive
-              ]}
-              onPress={handleToggleCheatDay}
-            >
-              {dailyLog?.isCheatDay ? (
-                <ShieldOff size={theme.typography.fontSize.s} color="white" style={{ marginRight: theme.spacing.xs }} />
-              ) : (
-                <ShieldCheck size={theme.typography.fontSize.m} color={theme.colors.primary} style={{ marginRight: theme.spacing.xs }} />
-              )}
-              <Text style={[
-                styles.cheatDayText,
-                dailyLog?.isCheatDay && styles.cheatDayTextActive
-              ]}>
-                {dailyLog?.isCheatDay ? 'Cheat Day' : 'Normaler Tag'}
-              </Text>
-            </TouchableOpacity>
           </View>
           
           <View style={styles.summaryContent}>
@@ -749,6 +703,14 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
           emoji="🍪"
           title="Snacks"
           calories={totals.mealTotals.snack?.calories || 0}
+          isLast={false}
+        />
+        
+        <MealCategory 
+          mealType="drinks"
+          emoji="🥤"
+          title="Getränke"
+          calories={totals.mealTotals.drinks?.calories || 0}
           isLast={true}
         />
       </ScrollView>

@@ -12,7 +12,7 @@ import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDateContext } from '../context/date-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
-import { Minus, Plus, BarChart2, ChartSpline, ChartLine, ShieldCheck, ShieldOff } from 'lucide-react-native';
+import { Minus, Plus, BarChart2, ChartSpline, ChartLine, ShieldCheck, ShieldOff, ShieldBan, Shield, ShieldX } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
@@ -487,7 +487,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             disabled={isUpdatingCheatDay}
           >
             {todayLog?.isCheatDay ? (
-              <ShieldOff size={theme.theme.typography.fontSize.s} color="white" style={{ marginRight: theme.theme.spacing.xs }} />
+              <ShieldX size={theme.theme.typography.fontSize.m} color="white" style={{ marginRight: theme.theme.spacing.xs }} />
             ) : (
               <ShieldCheck size={theme.theme.typography.fontSize.m} color={theme.theme.colors.primary} style={{ marginRight: theme.theme.spacing.xs }} />
             )}
@@ -505,6 +505,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           current={Math.round(totals.calories)}
           target={goals.dailyCalories}
           color={theme.theme.colors.nutrition.calories}
+          unit="kcal"
           isCheatDay={todayLog?.isCheatDay || false}
         />
         
@@ -513,6 +514,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           current={Math.round(totals.protein)}
           target={goals.dailyProtein || 50}
           color={theme.theme.colors.nutrition.protein}
+          unit="g"
           isCheatDay={todayLog?.isCheatDay || false}
         />
         
@@ -521,6 +523,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           current={Math.round(totals.carbs)}
           target={goals.dailyCarbs || 250}
           color={theme.theme.colors.nutrition.carbs}
+          unit="g"
           isCheatDay={todayLog?.isCheatDay || false}
         />
         
@@ -529,6 +532,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           current={Math.round(totals.fat)}
           target={goals.dailyFat || 65}
           color={theme.theme.colors.nutrition.fat}
+          unit="g"
           isCheatDay={todayLog?.isCheatDay || false}
         />
       </View>

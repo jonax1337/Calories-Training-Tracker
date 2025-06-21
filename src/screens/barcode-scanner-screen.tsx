@@ -255,20 +255,18 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
                   style={styles.preview}
                   facing="back"
                   enableTorch={isTorchOn}
+                  selectedLens="Back Camera"
                   autofocus={autofocus}
-                  onCameraReady={() => setTimeout(() => setIsTorchOn(false), 500)}
+                  onCameraReady={() => setTimeout(() => setIsTorchOn(false), 100)}
                   onMountError={(err) => console.error("Camera error:", err)}
                   onBarcodeScanned={scanned || isScanningRef.current ? undefined : handleBarcodeScanned}
                   barcodeScannerSettings={{
                     barcodeTypes: [
-                      "codabar",
-                      "code128",
-                      "code39",
-                      "code93",
                       "ean13",
                       "ean8",
-                      "itf14",
-                      "upc_e"
+                      "code128",
+                      "upc_e",
+                      "upc_a"
                     ],
                   }}
                   videoStabilizationMode="auto"
@@ -281,9 +279,9 @@ export default function BarcodeScannerScreen({ navigation, route }: BarcodeScree
                   onPress={() => setIsTorchOn(prev => !prev)}
                 >
                   {isTorchOn ? (
-                    <Zap size={24} color="white" />
+                    <Zap size={theme.typography.fontSize.xxl} color="white" />
                   ) : (
-                    <ZapOff size={24} color="white" />
+                    <ZapOff size={theme.typography.fontSize.xxl} color="white" />
                   )}
                 </TouchableOpacity>
               </View>

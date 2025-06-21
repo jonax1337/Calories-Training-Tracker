@@ -208,7 +208,7 @@ export const createHomeStyles = (theme: Theme): HomeStyles => StyleSheet.create(
     borderColor: theme.colors.primary,
     borderWidth: 1,
     paddingVertical: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.s,
+    paddingHorizontal: theme.spacing.xs,
     marginTop: -theme.spacing.m,
   },
   cheatDayButtonActive: {

@@ -54,8 +54,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Flag to indicate if we're editing an existing entry
   const isEditing = Boolean(existingEntryId);
   
-  // Bestimme die Einheit basierend auf servingSize (ml oder g)
-  const [servingUnit, setServingUnit] = useState<"Gramm" | "Milliliter">("Gramm");
+  // Bestimme die Einheit basierend auf dem ausgewählten Mahlzeitentyp
+  const servingUnit = selectedMeal === MealType.Drinks ? "Milliliter" : "Gramm";
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
@@ -92,15 +92,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
         setFoodItem(passedFoodItem);
         setCustomName(passedFoodItem.name);
         
-        // Setze die Einheit basierend auf der servingSize
-        if (passedFoodItem.nutrition && passedFoodItem.nutrition.servingSize) {
-          const servingSizeStr = passedFoodItem.nutrition.servingSize.toLowerCase();
-          if (servingSizeStr.includes('ml') || servingSizeStr.includes('l')) {
-            setServingUnit("Milliliter");
-          } else {
-            setServingUnit("Gramm");
-          }
-        }
+        // Einheit wird jetzt dynamisch basierend auf selectedMeal bestimmt
         
         // Setze die Portionsgröße NUR, wenn wir KEINEN existierenden Eintrag bearbeiten
         // Ansonsten verwenden wir die Menge aus dem Food Entry!
@@ -140,15 +132,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             setFoodItem(foodWithoutImage);
             setCustomName(data.name);
             
-            // Setze die Einheit basierend auf der servingSize
-            if (data.nutrition && data.nutrition.servingSize) {
-              const servingSizeStr = data.nutrition.servingSize.toLowerCase();
-              if (servingSizeStr.includes('ml') || servingSizeStr.includes('l')) {
-                setServingUnit("Milliliter");
-              } else {
-                setServingUnit("Gramm");
-              }
-            }
+            // Einheit wird jetzt dynamisch basierend auf selectedMeal bestimmt
             
             // Setze die Portionsgröße auf die tatsächliche Füllmenge des Produkts
             if (data.nutrition && data.nutrition.servingSizeGrams) {
@@ -295,49 +279,33 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
       Vibration.vibrate([0, 100, 0, 100]);
       
-      // Prüfen, ob es sich um ein Produkt mit Milliliter-Einheit handelt und wir es zum ersten Mal hinzufügen
-      const isLiquidProduct = servingUnit === "Milliliter";
-      
-      // Nur bei Flüssigkeiten und nur beim Hinzufügen (nicht beim Bearbeiten)
-      if (!isEditing && isLiquidProduct) {
-        // Zeige Dialog an, der fragt, ob das Getränk zum Wasserstand hinzugefügt werden soll
-        let waterAmount = Math.round(parseFloat(servings)); // ML basierend auf der Portionsgröße
+      // Bei der Getränke-Kategorie automatisch die Menge zum Wasserkonsum hinzufügen
+      if (!isEditing && selectedMeal === MealType.Drinks) {
+        // ML basierend auf der Portionsgröße
+        let waterAmount = Math.round(parseFloat(servings)); 
         
         // Sicherstellen, dass der Wasserwert sinnvoll ist (min. 50ml)
         if (waterAmount >= 50) {
-          Alert.alert(
-            'Wasser hinzufügen?',
-            `Möchtest du ${waterAmount}ml zum heutigen Wasserstand hinzufügen?`,
-            [
-              {
-                text: 'Nein',
-                style: 'cancel',
-                onPress: () => navigation.goBack()
-              },
-              {
-                text: 'Ja',
-                onPress: async () => {
-                  try {
-                    // Wasserstand im DailyLog aktualisieren
-                    dailyLog.waterIntake += waterAmount;
-                    await saveDailyLog(dailyLog);
-                    
-                    // Erfolgs-Feedback
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    navigation.goBack();
-                  } catch (error) {
-                    console.error('Fehler beim Aktualisieren des Wasserstands:', error);
-                    navigation.goBack();
-                  }
-                }
-              }
-            ]
-          );
+          // Wasserstand im DailyLog aktualisieren
+          try {
+            dailyLog.waterIntake += waterAmount;
+            await saveDailyLog(dailyLog);
+            
+            // Kurze Info anzeigen
+            Alert.alert(
+              'Wasserstand aktualisiert',
+              `${waterAmount}ml wurden zum Wasserstand hinzugefügt.`,
+              [{ text: 'OK', onPress: () => navigation.goBack() }]
+            );
+          } catch (error) {
+            console.error('Fehler beim Aktualisieren des Wasserstands:', error);
+            navigation.goBack();
+          }
         } else {
           navigation.goBack();
         }
       } else {
-        // Wenn kein Getränk oder beim Bearbeiten, einfach zurückgehen
+        // Bei anderen Kategorien einfach zurückgehen
         navigation.goBack();
       }
     } catch (err) {
@@ -518,6 +486,7 @@ function getMealTypeLabel(mealType: string): string {
     case 'lunch': return 'Mittagessen';
     case 'dinner': return 'Abendessen';
     case 'snack': return 'Snack';
+    case 'drinks': return 'Getränke';
     default: return 'Mahlzeit';
   }
 }

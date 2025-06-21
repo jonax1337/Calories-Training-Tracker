@@ -365,8 +365,7 @@ const NutritionReportComponent = ({
             label: "Kalorien",
             showGoal: true,
             goalValue: userGoals.dailyCalories,
-            showScatter: true,
-            interpolation: "linear"
+            showScatter: true
           }
         ]}
         yAxis={{
@@ -391,22 +390,19 @@ const NutritionReportComponent = ({
             label: "Kohlenhydrate",
             showGoal: true,
             goalValue: userGoals.dailyCarbs,
-            showScatter: true,
-            interpolation: "linear"
+            showScatter: true
           },
           {
             dataKey: "sugar",
             color: theme.colors.warning,  // Akzentfarbe für Zucker
             label: "Zucker",
-            showScatter: true,
-            interpolation: "linear"
+            showScatter: true
           },
           {
             dataKey: "fiber",
             color: theme.colors.success,  // Erfolgsfarbe für Ballaststoffe
             label: "Ballaststoffe",
-            showScatter: true,
-            interpolation: "linear"
+            showScatter: true
           },
         ]}
         yAxis={{
@@ -432,7 +428,6 @@ const NutritionReportComponent = ({
             showGoal: true,
             goalValue: userGoals.dailyProtein,
             showScatter: true,
-            interpolation: "linear"
           },
           {
             dataKey: "fat",
@@ -441,7 +436,6 @@ const NutritionReportComponent = ({
             showGoal: true,
             goalValue: userGoals.dailyFat,
             showScatter: true,
-            interpolation: "linear"
           },
         ]}
         yAxis={{
@@ -467,7 +461,6 @@ const NutritionReportComponent = ({
             showGoal: userGoals.dailyWater != null,
             goalValue: userGoals.dailyWater,
             showScatter: true,
-            interpolation: "linear",
             ignoreCheatDay: true // Wasser zählt immer, auch an Cheat Days
           }
         ]}
@@ -491,15 +484,13 @@ const NutritionReportComponent = ({
             dataKey: "sodium",
             color: theme.colors.error,  // Sekundärfarbe für Natrium
             label: "Natrium",
-            showScatter: true,
-            interpolation: "linear"
+            showScatter: true
           },
           {
             dataKey: "potassium",
             color: theme.colors.info,  // Info-Farbe für Kalium
             label: "Kalium",
-            showScatter: true,
-            interpolation: "linear"
+            showScatter: true
           }
         ]}
         yAxis={{

@@ -89,7 +89,7 @@ async function initializeDatabase() {
         daily_log_id INT NOT NULL,
         food_item_id VARCHAR(36) NOT NULL,
         serving_amount FLOAT NOT NULL,
-        meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
+        meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack', 'drinks') NOT NULL,
         time_consumed DATETIME NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

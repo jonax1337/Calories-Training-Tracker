@@ -19,7 +19,8 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan food barcodes."
         }
       ],
-      "expo-health-kit"
+      "expo-health-kit",
+      "react-native-vision-camera"
     ],
     "ios": {
       "supportsTablet": true,

@@ -75,6 +75,8 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
     }));
   };
   
+
+  
   // Berechne Label-Intervall basierend auf Datenmenge
   // Unter 14 Tagen: jedes Label anzeigen (Intervall 1)
   // Ab 14 Tagen: nur jedes zweite Label anzeigen (Intervall 2)
@@ -261,6 +263,17 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                 x="x"
                 y={line.dataKey}
                 size={4}
+                symbol={({ datum }) => {
+                  // Symbol für Cheat Days
+                  const isCheatDay = Boolean(datum.isCheatDay);
+                  const hasGoal = line.showGoal && line.goalValue !== undefined;
+                  const ignoreCheatDay = line.ignoreCheatDay === true;
+                  
+                  if (isCheatDay && hasGoal && !ignoreCheatDay) {
+                    return "diamond"; // "plus" ist am nächsten an einem X in Victory-Native
+                  }
+                  return "circle"; // Standard Kreis für normale Tage
+                }}
                 style={{
                   data: { 
                     fill: ({ datum }) => {
@@ -271,12 +284,21 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
                       
                       // Bei ignoreCheatDay wird die Cheat Day Markierung nicht angezeigt
                       if (isCheatDay && hasGoal && !ignoreCheatDay) {
-                        return theme.colors.errorLight;
+                        return theme.colors.error;
                       }
                       return line.color;
                     },
-                    stroke: theme.colors.card,
-                    strokeWidth: 2,
+                    stroke: ({ datum }) => {
+                      const isCheatDay = Boolean(datum.isCheatDay);
+                      const hasGoal = line.showGoal && line.goalValue !== undefined;
+                      const ignoreCheatDay = line.ignoreCheatDay === true;
+                      
+                      if (isCheatDay && hasGoal && !ignoreCheatDay) {
+                        return theme.colors.errorLight;
+                      }
+                      return theme.colors.card;
+                    },
+                    strokeWidth: 2
                   }
                 }}
               />
