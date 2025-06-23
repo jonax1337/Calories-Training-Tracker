@@ -48,6 +48,11 @@ interface DailyLogStyles {
   mealTypeHeader: TextStyle;
   accordionContent: ViewStyle;
   accordionContentLast: ViewStyle;
+  noEntriesContainer: ViewStyle;
+  noEntriesText: TextStyle;
+  lastFoodEntryContainer: ViewStyle;
+  lastSwipeActionContainerLeft: ViewStyle;
+  lastSwipeActionContainerRight: ViewStyle;
   foodEntryCard: ViewStyle;
   foodEntryContainer: ViewStyle;
   foodEntryHeader: ViewStyle;
@@ -283,10 +288,12 @@ export const createDailyLogStyles = (theme: Theme): DailyLogStyles => StyleSheet
     borderBottomRightRadius: theme.borderRadius.medium,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border + '40',
-    paddingBottom: theme.spacing.s,
+    paddingBottom: 0,
   },
   accordionContentLast: {
     marginBottom: 0,
+    borderBottomLeftRadius: theme.borderRadius.medium,
+    borderBottomRightRadius: theme.borderRadius.medium,
   },
   mealCategoryContent: {
     flexDirection: 'row',
@@ -516,5 +523,31 @@ export const createDailyLogStyles = (theme: Theme): DailyLogStyles => StyleSheet
   },
   accordionButton: {
     padding: theme.spacing.xs,
+  },
+  noEntriesContainer: {
+    padding: theme.spacing.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noEntriesText: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.m,
+    color: theme.colors.textLight,
+    textAlign: 'center',
+  },
+  lastFoodEntryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.m,
+    backgroundColor: theme.colors.card,
+    borderBottomLeftRadius: theme.borderRadius.medium,
+    borderBottomRightRadius: theme.borderRadius.medium,
+  },
+  lastSwipeActionContainerLeft: {
+    borderBottomLeftRadius: theme.borderRadius.medium,
+  },
+  lastSwipeActionContainerRight: {
+    borderBottomRightRadius: theme.borderRadius.medium,
   },
 });

@@ -28,8 +28,10 @@
         "UIUserInterfaceStyle": "automatic",
         "NSCameraUsageDescription": "This app uses the camera to scan barcodes from food products.",
         "NSHealthShareUsageDescription": "This app requires access to your health data to track your fitness activities and sync with your nutritional intake.",
-        "NSHealthUpdateUsageDescription": "This app requires permission to update your health data."
-      }
+        "NSHealthUpdateUsageDescription": "This app requires permission to update your health data.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.jonax1337.trackandtrain"
     },
     "android": {
       "adaptiveIcon": {
@@ -42,10 +44,17 @@
         "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
         "android.permission.ACTIVITY_RECOGNITION"
       ],
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.jonax1337.trackandtrain"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5192f6fe-8867-4cba-bfc7-82946975662e"
+      }
+    },
+    "owner": "jonax1337"
   }
 }

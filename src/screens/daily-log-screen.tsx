@@ -65,7 +65,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
             >
               <View>
                 <View style={styles.mealTitleContainer}>
-                  <ScanQrCode size={theme.typography.fontSize.xxl} color={theme.colors.text} style={styles.scanIcon} />
+                  <ScanQrCode size={theme.typography.fontSize.xl} color={theme.colors.text} style={styles.scanIcon} />
                   <Text style={styles.mealCategoryTitle}>
                     {title} {emoji}
                   </Text>
@@ -168,153 +168,150 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         }
       ]}>
         {entries.length > 0 ? (
-          <>
-            {entries.map((entry, index, array) => (
-              <Swipeable
-                key={entry.id}
-                ref={ref => {
-                  // Ref zum Zurücksetzen des Swipe-Zustands speichern
-                  // WICHTIG: Immer aktualisieren, auch wenn bereits vorhanden
-                  if (ref) {
-                    swipeableRefs.current.set(entry.id, ref);
+          // Wenn Einträge vorhanden sind, nur die Einträge anzeigen
+          entries.map((entry, index, array) => (
+            <Swipeable
+              key={entry.id}
+              ref={ref => {
+                // Ref zum Zurücksetzen des Swipe-Zustands speichern
+                // WICHTIG: Immer aktualisieren, auch wenn bereits vorhanden
+                if (ref) {
+                  swipeableRefs.current.set(entry.id, ref);
+                }
+              }}
+              friction={2}      // Höherer Wert = langsameres Schwingen
+              leftThreshold={80} // Schwellenwert für automatische Aktion (Bearbeiten)
+              rightThreshold={80} // Schwellenwert für automatische Aktion (Löschen)
+              overshootLeft={false}  // Keine Überschwingung nach links
+              overshootRight={false} // Keine Überschwingung nach rechts
+              onSwipeableOpen={(direction) => {
+                if (direction === 'left') {
+                  handleOpenFoodDetails(entry);
+                } else if (direction === 'right') {
+                  handleRemoveEntry(entry.id);
+                }
+              }}
+              // Nach rechts wischen zeigt den Löschen-Button
+              renderRightActions={(progress, dragX) => {
+                // Animation für Löschen (nach rechts wischen)
+                const trans = dragX.interpolate({
+                  inputRange: [-80, 0],
+                  outputRange: [0, 80],
+                  extrapolate: 'clamp',
+                });
+                
+                // Farbübergang: Je weiter gewischt, desto intensiver
+                const opacity = progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                });
+                
+                return (
+                  <Animated.View 
+                    style={[
+                      styles.swipeActionContainer,
+                      index === array.length - 1 ? styles.lastSwipeActionContainerRight : null,
+                      {
+                        backgroundColor: theme.colors.error,
+                        opacity,
+                      }
+                    ]}
+                  >
+                    <RectButton
+                      style={styles.swipeActionButton}
+                      onPress={() => handleRemoveEntry(entry.id)}
+                    >
+                      <Animated.View
+                        style={[
+                          styles.swipeActionContent,
+                          { transform: [{ translateX: trans }] }
+                        ]}
+                      >
+                        <Trash2 size={theme.typography.fontSize.l} color="white" />
+                        <Text style={styles.swipeActionText}>
+                          Löschen
+                        </Text>
+                      </Animated.View>
+                    </RectButton>
+                  </Animated.View>
+                );
+              }}
+              // Nach links wischen zeigt den Bearbeiten-Button
+              renderLeftActions={(progress, dragX) => {
+                // Animation für Bearbeiten (nach links wischen)
+                const trans = dragX.interpolate({
+                  inputRange: [0, 80],
+                  outputRange: [-80, 0],
+                  extrapolate: 'clamp',
+                });
+                
+                // Farbübergang: Je weiter gewischt, desto intensiver
+                const opacity = progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                });
+                
+                return (
+                  <Animated.View 
+                    style={[
+                      styles.swipeActionContainer,
+                      index === array.length - 1 ? styles.lastSwipeActionContainerLeft : null,
+                      {
+                        backgroundColor: theme.colors.accent,
+                        opacity,
+                      }
+                    ]}
+                  >
+                    <RectButton
+                      style={styles.swipeActionButton}
+                      onPress={() => handleOpenFoodDetails(entry)}
+                    >
+                      <Animated.View
+                        style={[
+                          styles.swipeActionContent,
+                          { transform: [{ translateX: trans }] }
+                        ]}
+                      >
+                        <Edit2 size={theme.typography.fontSize.l} color="white" />
+                        <Text style={styles.swipeActionText}>
+                          Bearbeiten
+                        </Text>
+                      </Animated.View>
+                    </RectButton>
+                  </Animated.View>
+                );
+              }}
+            >
+              <LongPressGestureHandler
+                onHandlerStateChange={({ nativeEvent }) => {
+                  if (nativeEvent.state === State.ACTIVE) {
+                    // Haptisches Feedback beim Long Press
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    handleEntryActions(entry);
                   }
                 }}
-                friction={2}      // Höherer Wert = langsameres Schwingen
-                leftThreshold={80} // Schwellenwert für automatische Aktion (Bearbeiten)
-                rightThreshold={80} // Schwellenwert für automatische Aktion (Löschen)
-                overshootLeft={false}  // Keine Überschwingung nach links
-                overshootRight={false} // Keine Überschwingung nach rechts
-                onSwipeableOpen={(direction) => {
-                  if (direction === 'left') {
-                    handleOpenFoodDetails(entry);
-                  } else if (direction === 'right') {
-                    handleRemoveEntry(entry.id);
-                  }
-                }}
-                // Nach rechts wischen zeigt den Löschen-Button
-                renderRightActions={(progress, dragX) => {
-                  // Animation für Löschen (nach rechts wischen)
-                  const trans = dragX.interpolate({
-                    inputRange: [-80, 0],
-                    outputRange: [0, 80],
-                    extrapolate: 'clamp',
-                  });
-                  
-                  // Farbübergang: Je weiter gewischt, desto intensiver
-                  const opacity = progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 1],
-                  });
-                  
-                  return (
-                    <Animated.View 
-                      style={[
-                        styles.swipeActionContainer,
-                        {
-                          backgroundColor: theme.colors.error,
-                          opacity,
-                        }
-                      ]}
-                    >
-                      <RectButton
-                        style={styles.swipeActionButton}
-                        onPress={() => handleRemoveEntry(entry.id)}
-                      >
-                        <Animated.View
-                          style={[
-                            styles.swipeActionContent,
-                            { transform: [{ translateX: trans }] }
-                          ]}
-                        >
-                          <Trash2 size={theme.typography.fontSize.l} color="white" />
-                          <Text style={styles.swipeActionText}>
-                            Löschen
-                          </Text>
-                        </Animated.View>
-                      </RectButton>
-                    </Animated.View>
-                  );
-                }}
-                // Nach links wischen zeigt den Bearbeiten-Button
-                renderLeftActions={(progress, dragX) => {
-                  // Animation für Bearbeiten (nach links wischen)
-                  const trans = dragX.interpolate({
-                    inputRange: [0, 80],
-                    outputRange: [-80, 0],
-                    extrapolate: 'clamp',
-                  });
-                  
-                  // Farbübergang: Je weiter gewischt, desto intensiver
-                  const opacity = progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 1],
-                  });
-                  
-                  return (
-                    <Animated.View 
-                      style={[
-                        styles.swipeActionContainer,
-                        {
-                          backgroundColor: theme.colors.accent,
-                          opacity,
-                        }
-                      ]}
-                    >
-                      <RectButton
-                        style={styles.swipeActionButton}
-                        onPress={() => handleOpenFoodDetails(entry)}
-                      >
-                        <Animated.View
-                          style={[
-                            styles.swipeActionContent,
-                            { transform: [{ translateX: trans }] }
-                          ]}
-                        >
-                          <Edit2 size={theme.typography.fontSize.l} color="white" />
-                          <Text style={styles.swipeActionText}>
-                            Bearbeiten
-                          </Text>
-                        </Animated.View>
-                      </RectButton>
-                    </Animated.View>
-                  );
-                }}
+                minDurationMs={400}
               >
-                <LongPressGestureHandler
-                  onHandlerStateChange={({ nativeEvent }) => {
-                    if (nativeEvent.state === State.ACTIVE) {
-                      // Haptisches Feedback beim Long Press
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      handleEntryActions(entry);
-                    }
-                  }}
-                  minDurationMs={400}
-                >
-                  <View style={styles.foodEntryContainer}>
-                    <View style={styles.foodEntryLeftSection}>
-                      <Text style={styles.foodName}>
-                        {entry.foodItem.name}
-                      </Text>
-                      <Text style={styles.foodServing}>
-                        {entry.servingAmount}{entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('ml') || entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
-                      </Text>
-                    </View>
-                    <Text style={styles.foodCalories}>
-                      {Math.round((entry.foodItem.nutrition?.calories ?? 0) * (entry.servingAmount / 100))} kcal
+                <View style={[styles.foodEntryContainer, index === array.length - 1 ? styles.lastFoodEntryContainer : null]}>
+                  <View style={styles.foodEntryLeftSection}>
+                    <Text style={styles.foodName}>
+                      {entry.foodItem.name}
+                    </Text>
+                    <Text style={styles.foodServing}>
+                      {entry.servingAmount}{entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('ml') || entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
                     </Text>
                   </View>
-                </LongPressGestureHandler>
-              </Swipeable>
-            ))}
-            
-            {/* Button zum Hinzufügen weiterer Einträge */}
-            <View style={styles.addEntryContainer}>
-              <AddEntryButton mealType={mealType} label="Weitere Einträge hinzufügen" iconSize={theme.typography.fontSize.m} fontSize={theme.typography.fontSize.xs} />
-            </View>
-          </>
+                  <Text style={styles.foodCalories}>
+                    {Math.round((entry.foodItem.nutrition?.calories ?? 0) * (entry.servingAmount / 100))} kcal
+                  </Text>
+                </View>
+              </LongPressGestureHandler>
+            </Swipeable>
+          ))
         ) : (
-          <View style={styles.addEntryContainer}>
-            <AddEntryButton mealType={mealType} label="Eintrag hinzufügen" iconSize={theme.typography.fontSize.l} fontSize={theme.typography.fontSize.s} />
+          // Wenn keine Einträge vorhanden sind, eine Meldung anzeigen
+          <View style={styles.noEntriesContainer}>
+            <Text style={styles.noEntriesText}>Keine Einträge vorhanden</Text>
           </View>
         )}
       </Animated.View>
