@@ -46,3 +46,6 @@ android/
 
 # typescript
 *.tsbuildinfo
+
+#claude
+.claude

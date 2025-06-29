@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { getDailyLogs } from '../services/storage-service';
 import { fetchUserProfile } from '../services/profile-api';
 import LineChartCard, { DataPoint } from '../components/charts/line-chart-card';
 import { ChevronsUp, ChevronsDown, Minus } from 'lucide-react-native';
+import * as Animatable from 'react-native-animatable';
 
 // Definiere den Typen für Weight-History-Screen
 type WeightHistoryScreenProps = {
@@ -36,6 +37,10 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
   const [weightData, setWeightData] = useState<WeightDataPoint[]>([]);
   const [defaultWeight, setDefaultWeight] = useState<number | null>(null);
   const [timeRange, setTimeRange] = useState<number>(14); // Standardmäßig 14 Tage
+  
+  // Animation state management
+  const animationTriggered = useRef<boolean>(false);
+  const [showAnimations, setShowAnimations] = useState(false);
   
   // Funktion zum Laden der Gewichtsdaten
   const loadWeightData = async () => {
@@ -128,6 +133,39 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
     }
   };
   
+  // Focus detection for smooth animations
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset animation state when screen is focused
+      animationTriggered.current = false;
+      setShowAnimations(false);
+      
+      // Wait for screen to be properly in focus, then trigger animations
+      const focusTimer = setTimeout(() => {
+        if (!animationTriggered.current && !isLoading) {
+          animationTriggered.current = true;
+          setShowAnimations(true);
+        }
+      }, 150); // Short delay to ensure smooth focus transition
+
+      return () => {
+        clearTimeout(focusTimer);
+      };
+    }, [isLoading])
+  );
+
+  // Trigger animations when loading is complete and screen is focused
+  useEffect(() => {
+    if (!isLoading && !animationTriggered.current) {
+      const animationTimer = setTimeout(() => {
+        animationTriggered.current = true;
+        setShowAnimations(true);
+      }, 100);
+      
+      return () => clearTimeout(animationTimer);
+    }
+  }, [isLoading]);
+
   // Lade Daten beim ersten Render und bei Änderungen des Zeitraums
   useEffect(() => {
     loadWeightData();
@@ -232,98 +270,111 @@ export default function WeightHistoryScreen({ navigation, route }: WeightHistory
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Zeitraum Auswahl */}
-        <View style={styles.timeRangeSelector}>
-          {timeRangeOptions.map((option) => (
-            <TouchableOpacity
-              key={option.value}
-              style={[
-                styles.timeRangeButton,
-                timeRange === option.value && styles.timeRangeButtonActive
-              ]}
-              onPress={() => setTimeRange(option.value)}
+        {/* Show content only after animations are ready */}
+        {showAnimations && (
+          <>
+            {/* Zeitraum Auswahl */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={100}
+              style={styles.timeRangeSelector}
             >
-              <Text style={[
-                styles.timeRangeText,
-                timeRange === option.value && styles.timeRangeTextActive
-              ]}>
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        
-        {/* Statistiken */}
-        <View style={styles.statsCard}>
-          <Text style={styles.cardTitle}>
-            Zusammenfassung
-          </Text>
-          
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>
-                Startgewicht
-              </Text>
-              <Text style={styles.statValue}>
-                {stats.start.toFixed(2)}kg
-              </Text>
-            </View>
+              {timeRangeOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.timeRangeButton,
+                    timeRange === option.value && styles.timeRangeButtonActive
+                  ]}
+                  onPress={() => setTimeRange(option.value)}
+                >
+                  <Text style={[
+                    styles.timeRangeText,
+                    timeRange === option.value && styles.timeRangeTextActive
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Animatable.View>
             
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>
-                Aktuelles Gewicht
+            {/* Statistiken */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={200}
+              style={styles.statsCard}
+            >
+              <Text style={styles.cardTitle}>
+                Zusammenfassung
               </Text>
-              <Text style={styles.statValue}>
-                {stats.end.toFixed(2)}kg
-              </Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: theme.theme.colors.textLight }]}>
-                Veränderung
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {stats.trend === 'down' ? (
-                  <ChevronsDown 
-                    size={theme.theme.typography.fontSize.l} 
-                    color={theme.theme.colors.success} 
-                  />
-                ) : stats.trend === 'up' ? (
-                  <ChevronsUp 
-                    size={theme.theme.typography.fontSize.l} 
-                    color={theme.theme.colors.warning}
-                  />
-                ) : stats.trend === 'neutral' ? (
-                  <Minus 
-                    size={theme.theme.typography.fontSize.l} 
-                    color={theme.theme.colors.text} 
-                  />
-                ) : null}
-                <Text style={[styles.statValue, { 
-                  color: stats.trend === 'down' 
-                    ? theme.theme.colors.success
-                    : stats.trend === 'up'
-                      ? theme.theme.colors.warning
-                      : theme.theme.colors.text,
-                  fontFamily: theme.theme.typography.fontFamily.medium
-                }]}>
-                  {stats.trend === 'neutral' ? '0kg' : `${stats.change.toFixed(2)}kg`}
-                </Text>
+              
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>
+                    Startgewicht
+                  </Text>
+                  <Text style={styles.statValue}>
+                    {stats.start.toFixed(2)}kg
+                  </Text>
+                </View>
+                
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>
+                    Aktuelles Gewicht
+                  </Text>
+                  <Text style={styles.statValue}>
+                    {stats.end.toFixed(2)}kg
+                  </Text>
+                </View>
+                
+                <View style={styles.statItem}>
+                  <Text style={[styles.statLabel, { color: theme.theme.colors.textLight }]}>
+                    Veränderung
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {stats.trend === 'down' ? (
+                      <ChevronsDown 
+                        size={theme.theme.typography.fontSize.l} 
+                        color={theme.theme.colors.success} 
+                      />
+                    ) : stats.trend === 'up' ? (
+                      <ChevronsUp 
+                        size={theme.theme.typography.fontSize.l} 
+                        color={theme.theme.colors.warning}
+                      />
+                    ) : stats.trend === 'neutral' ? (
+                      <Minus 
+                        size={theme.theme.typography.fontSize.l} 
+                        color={theme.theme.colors.text} 
+                      />
+                    ) : null}
+                    <Text style={[styles.statValue, { 
+                      color: stats.trend === 'down' 
+                        ? theme.theme.colors.success
+                        : stats.trend === 'up'
+                          ? theme.theme.colors.warning
+                          : theme.theme.colors.text,
+                      fontFamily: theme.theme.typography.fontFamily.medium
+                    }]}>
+                      {stats.trend === 'neutral' ? '0kg' : `${stats.change.toFixed(2)}kg`}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
-        </View>
-        
-        {/* Chart */}
-        <View>
-          {isLoading ? (
-            <ActivityIndicator 
-              size="large" 
-              color={theme.theme.colors.primary} 
-              style={styles.loadingContainer}
-            />
-          ) : renderChart()}
-        </View>
+            </Animatable.View>
+            
+            {/* Chart */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={300}
+            >
+              {renderChart()}
+            </Animatable.View>
+          </>
+        )}
       </ScrollView>
     </View>
   );

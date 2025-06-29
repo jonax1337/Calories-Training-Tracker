@@ -54,6 +54,7 @@ const typography = {
     l: 18,
     xl: 20,
     xxl: 24,
+    xxxl: 32,
   },
 };
 

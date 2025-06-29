@@ -1,3 +1,7 @@
+// WICHTIG: Globale Variable außerhalb jeglicher Komponente
+// Garantiert, dass die Animation wirklich nur EINMAL in der gesamten App-Session abgespielt wird
+let HOME_ANIMATION_PLAYED = false;
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
 import * as Animatable from 'react-native-animatable';
@@ -12,6 +16,7 @@ import { DailyLog, HealthData, UserProfile, UserGoal, UserGoals } from '../types
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDateContext } from '../context/date-context';
+import { useSplash } from '../context/splash-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
 import { Minus, Plus, BarChart2, ChartSpline, ChartLine, ShieldCheck, ShieldOff, ShieldBan, Shield, ShieldX } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -57,12 +62,44 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [manualWaterAmount, setManualWaterAmount] = useState('');
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
-  const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
+  const [isScreenVisible, setIsScreenVisible] = useState(false); // Start hidden until first focus
+  const [hasBeenFocused, setHasBeenFocused] = useState(false); // Track if screen was ever focused
+  // Refs für den Mount-Status und Focus-Timing
   const isInitialMount = useRef(true);
   const lastFocusTime = useRef(0);
   
+  // Ref für einmalige Animation-Kontrolle - verhindert Race Conditions
+  const animationTriggered = useRef(false);
+  
   // Verwende den gemeinsamen DateContext statt lokalem State
   const { selectedDate, setSelectedDate } = useDateContext();
+  
+  // Zugriff auf den Splash-Status, um Animation erst nach Splash-Ende zu starten
+  const { isSplashComplete } = useSplash();
+
+  // Zentrale Funktion für einmalige Animation-Trigger
+  const triggerHomeAnimation = useCallback(() => {
+    // Absolute Garantie: Animation nur einmal triggern
+    if (animationTriggered.current || HOME_ANIMATION_PLAYED) {
+      return false;
+    }
+
+    // Prüfe ob alle Bedingungen erfüllt sind
+    if (!isSplashComplete) {
+      return false;
+    }
+    
+    // SOFORT beide Flags setzen - verhindert jede weitere Ausführung
+    animationTriggered.current = true;
+    HOME_ANIMATION_PLAYED = true;
+    
+    // Animation starten
+    setIsScreenVisible(true);
+    setHasBeenFocused(true);
+    setAnimationKey(prev => prev + 1);
+    
+    return true;
+  }, [isSplashComplete, isScreenVisible]);
 
   // Create a function to load user data that can be called when needed
   const loadUserData = async () => {
@@ -134,40 +171,40 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     loadUserData();
   }, [selectedDate]);
   
-  // Load data when screen comes into focus
+  // Focus Effect: Load data and handle screen visibility
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
+      // Lade Daten immer, egal ob neu montiert oder nicht
       loadUserData();
       
-      const currentTime = Date.now();
-      const timeSinceLastFocus = currentTime - lastFocusTime.current;
-      
-      // Only trigger animations on tab navigation (quick successive focus events)
-      // Stack navigation typically has longer delays between focus events
-      if (!isInitialMount.current && timeSinceLastFocus < 1000) {
-        // This is likely a tab navigation - hide content briefly, then show with animation
-        setIsScreenVisible(false);
-        const timer = setTimeout(() => {
-          setIsScreenVisible(true);
-          setAnimationKey(prev => prev + 1);
-        }, 50);
-        
-        lastFocusTime.current = currentTime;
-        return () => {
-          clearTimeout(timer);
-        };
-      } else {
-        // First mount or stack navigation return - no animation disruption
-        if (isInitialMount.current) {
-          isInitialMount.current = false;
-          setAnimationKey(prev => prev + 1);
-        }
-        lastFocusTime.current = currentTime;
+      // Zeige Screen sofort OHNE Animation wenn bereits abgespielt
+      if (HOME_ANIMATION_PLAYED || animationTriggered.current) {
+        setIsScreenVisible(true);
+        setHasBeenFocused(true);
+        return;
       }
       
-      return () => {};
-    }, [selectedDate])
+      // Versuche Animation zu triggern
+      triggerHomeAnimation();
+      
+      // Update focus time for reference
+      lastFocusTime.current = Date.now();
+      isInitialMount.current = false;
+
+      return () => {
+        // Hide screen when losing focus to prevent flicker
+        setIsScreenVisible(false);
+      };
+    }, [selectedDate, triggerHomeAnimation])
   );
+  
+  // Backup Effect: Falls useFocusEffect nicht triggert, versuche Animation bei Splash-Ende
+  useEffect(() => {
+    // Nur als Backup falls useFocusEffect noch nicht getriggert hat
+    if (isSplashComplete && !isScreenVisible && !animationTriggered.current && !HOME_ANIMATION_PLAYED) {
+      triggerHomeAnimation();
+    }
+  }, [isSplashComplete, isScreenVisible, triggerHomeAnimation]);
 
   // Calculate nutrition totals for today
   const calculateNutritionTotals = () => {
@@ -503,7 +540,6 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         style={styles.scrollContent}
         contentContainerStyle={styles.scrollContentContainer}
       >
-
       {isScreenVisible && (
         <>
         {/* Nutrition summary section */}
@@ -511,7 +547,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           key={`nutrition-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={50}
+          delay={200}
           style={styles.summaryCard}
         >
         <View style={styles.cardHeaderRow}>
@@ -582,7 +618,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         key={`water-${animationKey}`}
         animation="fadeInUp" 
         duration={600} 
-        delay={100}
+        delay={300}
         style={styles.summaryCard}
       >
         <Text style={styles.cardTitle}>Wasser</Text>
@@ -629,7 +665,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           key={`report-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={150}
+          delay={400}
           style={styles.summaryCard}
         >
           <View style={styles.nutritionReportHeaderRow}>
@@ -661,7 +697,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         key={`weight-${animationKey}`}
         animation="fadeInUp" 
         duration={600} 
-        delay={200}
+        delay={500}
         style={[styles.summaryCard, styles.weightContainer]}
       >
         <View style={styles.weightHeaderRow}>
@@ -728,9 +764,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           </View>
         </View>
       </Animatable.View>
-      </>
-      )}
-
+      
       {/* Modal zur manuellen Eingabe des Wasserstands */}
       <Modal
         animationType="fade"
@@ -786,6 +820,8 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           </View>
         </View>
       </Modal>
+      </>
+      )}
       </ScrollView>
     </View>
   );

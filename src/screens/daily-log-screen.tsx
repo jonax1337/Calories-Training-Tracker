@@ -335,7 +335,8 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
-  const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
+  const [isScreenVisible, setIsScreenVisible] = useState(false); // Start hidden until first focus
+  const [hasBeenFocused, setHasBeenFocused] = useState(false); // Track if screen was ever focused
   const isInitialMount = useRef(true);
   const lastFocusTime = useRef(0);
   
@@ -391,6 +392,11 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
       const currentTime = Date.now();
       const timeSinceLastFocus = currentTime - lastFocusTime.current;
       
+      // Mark screen as focused at least once
+      if (!hasBeenFocused) {
+        setHasBeenFocused(true);
+      }
+      
       // Only trigger animations on tab navigation (quick successive focus events)
       // Stack navigation typically has longer delays between focus events
       if (!isInitialMount.current && timeSinceLastFocus < 1000) {
@@ -409,13 +415,14 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         // First mount or stack navigation return - no animation disruption
         if (isInitialMount.current) {
           isInitialMount.current = false;
+          setIsScreenVisible(true);
           setAnimationKey(prev => prev + 1);
         }
         lastFocusTime.current = currentTime;
       }
       
       return () => {};
-    }, [loadDailyLog, selectedDate])
+    }, [loadDailyLog, selectedDate, hasBeenFocused])
   );
 
   // Also load on initial mount
@@ -657,7 +664,6 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         style={styles.scrollContent}
         contentContainerStyle={styles.scrollContentContainer}
       >
-
         {isScreenVisible && (
           <>
           {/* Daily summary */}

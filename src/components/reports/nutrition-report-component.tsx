@@ -15,6 +15,7 @@ import { useDateContext } from '../../context/date-context';
 import { getDailyLogs } from '../../services/storage-service';
 import { getTodayFormatted } from '../../utils/date-utils';
 import { createNutritionReportComponentStyles } from '../../styles/components/reports/nutrition-report-component-styles';
+import * as Animatable from 'react-native-animatable';
 
 interface NutritionReportProps {
   userProfile: UserProfile | null;
@@ -250,9 +251,10 @@ const NutritionReportComponent = ({
         alignItems: 'center', 
         height: screenHeight * 0.7, // 70% der Bildschirmhöhe
         width: '100%',
-        paddingVertical: theme.spacing.xl
+        paddingVertical: theme.spacing.xl,
+        backgroundColor: theme.colors.background
       }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <ActivityIndicator size="large" color={theme.colors.primary+"100"} />
       </View>
     );
   }
@@ -354,156 +356,186 @@ const NutritionReportComponent = ({
 
   return (
     <ScrollView style={styles.container}>
-      {/* Hauptchart mit Kalorienverlauf - Neue modulare Komponente */}
-      <LineChartCard 
-        title={`Kalorien`}
-        data={nutritionData}
-        lines={[
-          {
-            dataKey: "calories",
-            color: theme.colors.nutrition.calories,
-            label: "Kalorien",
-            showGoal: true,
-            goalValue: userGoals.dailyCalories,
-            showScatter: true
-          }
-        ]}
-        yAxis={{
-          unit: "Kilokalorien"
-        }}
-        height={200}
-        width={screenWidth}
-        style={{
-          container: styles.section,
-          title: styles.sectionTitle
-        }}
-      />
+      {/* Hauptchart mit Kalorienverlauf */}
+      <Animatable.View 
+        animation="fadeInUp" 
+        duration={600} 
+        delay={100}
+      >
+        <LineChartCard 
+          title={`Kalorien`}
+          data={nutritionData}
+          lines={[
+            {
+              dataKey: "calories",
+              color: theme.colors.nutrition.calories,
+              label: "Kalorien",
+              showGoal: true,
+              goalValue: userGoals.dailyCalories,
+              showScatter: true
+            }
+          ]}
+          yAxis={{
+            unit: "Kilokalorien"
+          }}
+          height={200}
+          width={screenWidth}
+          style={{
+            container: styles.section,
+            title: styles.sectionTitle
+          }}
+        />
+      </Animatable.View>
 
-      {/* Hauptchart mit Nährwerten - Neue modulare Komponente */}
-      <LineChartCard 
-        title={`Kohlenhydrate im Detail`}
-        data={nutritionData}
-        lines={[
-          {
-            dataKey: "carbs",
-            color: theme.colors.nutrition.carbs,
-            label: "Kohlenhydrate",
-            showGoal: true,
-            goalValue: userGoals.dailyCarbs,
-            showScatter: true
-          },
-          {
-            dataKey: "sugar",
-            color: theme.colors.warning,  // Akzentfarbe für Zucker
-            label: "Zucker",
-            showScatter: true
-          },
-          {
-            dataKey: "fiber",
-            color: theme.colors.success,  // Erfolgsfarbe für Ballaststoffe
-            label: "Ballaststoffe",
-            showScatter: true
-          },
-        ]}
-        yAxis={{
-          unit: "Gramm"
-        }}
-        height={200}
-        width={screenWidth}
-        style={{
-          container: styles.section,
-          title: styles.sectionTitle
-        }}
-      />
+      {/* Kohlenhydrate im Detail */}
+      <Animatable.View 
+        animation="fadeInUp" 
+        duration={600} 
+        delay={200}
+      >
+        <LineChartCard 
+          title={`Kohlenhydrate im Detail`}
+          data={nutritionData}
+          lines={[
+            {
+              dataKey: "carbs",
+              color: theme.colors.nutrition.carbs,
+              label: "Kohlenhydrate",
+              showGoal: true,
+              goalValue: userGoals.dailyCarbs,
+              showScatter: true
+            },
+            {
+              dataKey: "sugar",
+              color: theme.colors.warning,  // Akzentfarbe für Zucker
+              label: "Zucker",
+              showScatter: true
+            },
+            {
+              dataKey: "fiber",
+              color: theme.colors.success,  // Erfolgsfarbe für Ballaststoffe
+              label: "Ballaststoffe",
+              showScatter: true
+            },
+          ]}
+          yAxis={{
+            unit: "Gramm"
+          }}
+          height={200}
+          width={screenWidth}
+          style={{
+            container: styles.section,
+            title: styles.sectionTitle
+          }}
+        />
+      </Animatable.View>
 
-      {/* Zucker und Ballaststoffe Chart */}
-      <LineChartCard 
-        title={`Protein & Fett`}
-        data={nutritionData}
-        lines={[
-          {
-            dataKey: "protein",
-            color: theme.colors.nutrition.protein,
-            label: "Protein",
-            showGoal: true,
-            goalValue: userGoals.dailyProtein,
-            showScatter: true,
-          },
-          {
-            dataKey: "fat",
-            color: theme.colors.nutrition.fat,
-            label: "Fett",
-            showGoal: true,
-            goalValue: userGoals.dailyFat,
-            showScatter: true,
-          },
-        ]}
-        yAxis={{
-          unit: "Gramm"
-        }}
-        height={200}
-        width={screenWidth}
-        style={{
-          container: styles.section,
-          title: styles.sectionTitle
-        }}
-      />
+      {/* Protein & Fett */}
+      <Animatable.View 
+        animation="fadeInUp" 
+        duration={600} 
+        delay={300}
+      >
+        <LineChartCard 
+          title={`Protein & Fett`}
+          data={nutritionData}
+          lines={[
+            {
+              dataKey: "protein",
+              color: theme.colors.nutrition.protein,
+              label: "Protein",
+              showGoal: true,
+              goalValue: userGoals.dailyProtein,
+              showScatter: true,
+            },
+            {
+              dataKey: "fat",
+              color: theme.colors.nutrition.fat,
+              label: "Fett",
+              showGoal: true,
+              goalValue: userGoals.dailyFat,
+              showScatter: true,
+            },
+          ]}
+          yAxis={{
+            unit: "Gramm"
+          }}
+          height={200}
+          width={screenWidth}
+          style={{
+            container: styles.section,
+            title: styles.sectionTitle
+          }}
+        />
+      </Animatable.View>
 
       {/* Wasseraufnahme Chart */}
-      <LineChartCard 
-        title={`Wasser`}
-        data={nutritionData}
-        lines={[
-          {
-            dataKey: "water",
-            color: theme.colors.primary,
-            label: "Wasser",
-            showGoal: userGoals.dailyWater != null,
-            goalValue: userGoals.dailyWater,
-            showScatter: true,
-            ignoreCheatDay: true // Wasser zählt immer, auch an Cheat Days
-          }
-        ]}
-        yAxis={{
-          unit: "Mililiter"
-        }}
-        height={200}
-        width={screenWidth}
-        style={{
-          container: styles.section,
-          title: styles.sectionTitle
-        }}
-      />
+      <Animatable.View 
+        animation="fadeInUp" 
+        duration={600} 
+        delay={400}
+      >
+        <LineChartCard 
+          title={`Wasser`}
+          data={nutritionData}
+          lines={[
+            {
+              dataKey: "water",
+              color: theme.colors.primary,
+              label: "Wasser",
+              showGoal: userGoals.dailyWater != null,
+              goalValue: userGoals.dailyWater,
+              showScatter: true,
+              ignoreCheatDay: true // Wasser zählt immer, auch an Cheat Days
+            }
+          ]}
+          yAxis={{
+            unit: "Mililiter"
+          }}
+          height={200}
+          width={screenWidth}
+          style={{
+            container: styles.section,
+            title: styles.sectionTitle
+          }}
+        />
+      </Animatable.View>
 
-      {/* Natrium Chart */}
-      <LineChartCard 
-        title={`Elektrolyte`}
-        data={nutritionData}
-        lines={[
-          {
-            dataKey: "sodium",
-            color: theme.colors.error,  // Sekundärfarbe für Natrium
-            label: "Natrium",
-            showScatter: true
-          },
-          {
-            dataKey: "potassium",
-            color: theme.colors.info,  // Info-Farbe für Kalium
-            label: "Kalium",
-            showScatter: true
-          }
-        ]}
-        yAxis={{
-          unit: "Milligramm",
-          tickFormat: (t) => `${t && !isNaN(t) ? t.toFixed(0) : '0'}`
-        }}
-        height={200}
-        width={screenWidth}
-        style={{
-          container: styles.section,
-          title: styles.sectionTitle
-        }}
-      />
+      {/* Elektrolyte Chart */}
+      <Animatable.View 
+        animation="fadeInUp" 
+        duration={600} 
+        delay={500}
+      >
+        <LineChartCard 
+          title={`Elektrolyte`}
+          data={nutritionData}
+          lines={[
+            {
+              dataKey: "sodium",
+              color: theme.colors.error,  // Sekundärfarbe für Natrium
+              label: "Natrium",
+              showScatter: true
+            },
+            {
+              dataKey: "potassium",
+              color: theme.colors.info,  // Info-Farbe für Kalium
+              label: "Kalium",
+              showScatter: true
+            }
+          ]}
+          yAxis={{
+            unit: "Milligramm",
+            tickFormat: (t) => `${t && !isNaN(t) ? t.toFixed(0) : '0'}`
+          }}
+          height={200}
+          width={screenWidth}
+          style={{
+            container: styles.section,
+            title: styles.sectionTitle
+          }}
+        />
+      </Animatable.View>
     </ScrollView>
   );
 };

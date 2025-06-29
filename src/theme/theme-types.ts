@@ -85,6 +85,7 @@ export interface Typography {
     l: number;
     xl: number;
     xxl: number;
+    xxxl: number;
   };
 }
 

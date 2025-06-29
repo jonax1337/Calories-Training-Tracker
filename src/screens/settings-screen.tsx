@@ -26,7 +26,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [isWaterReminderEnabled, setIsWaterReminderEnabled] = useState(false);
   const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
-  const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
+  const [isScreenVisible, setIsScreenVisible] = useState(false); // Start hidden until first focus
+  const [hasBeenFocused, setHasBeenFocused] = useState(false); // Track if screen was ever focused
   const isInitialMount = useRef(true);
   const lastFocusTime = useRef(0);
   
@@ -55,6 +56,11 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       const currentTime = Date.now();
       const timeSinceLastFocus = currentTime - lastFocusTime.current;
       
+      // Mark screen as focused at least once
+      if (!hasBeenFocused) {
+        setHasBeenFocused(true);
+      }
+      
       // Only trigger animations on tab navigation (quick successive focus events)
       // Stack navigation typically has longer delays between focus events
       if (!isInitialMount.current && timeSinceLastFocus < 1000) {
@@ -73,13 +79,14 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         // First mount or stack navigation return - no animation disruption
         if (isInitialMount.current) {
           isInitialMount.current = false;
+          setIsScreenVisible(true);
           setAnimationKey(prev => prev + 1);
         }
         lastFocusTime.current = currentTime;
       }
       
       return () => {};
-    }, [])
+    }, [hasBeenFocused])
   );
 
   // Aktualisiere Wassererinnerungsstatus

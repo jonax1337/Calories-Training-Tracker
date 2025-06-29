@@ -1,14 +1,25 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import AppNavigation from './src/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { configureGoogleFitForAndroid, configureHealthKitForIOS } from './src/services/health-service';
 import * as NotificationsService from './src/services/notifications-service';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SoundWebView from './src/components/webview/sound-webview';
+import SplashScreen from './src/components/splash-screen/splash-screen';
+import { ThemeProvider } from './src/theme/theme-context';
+import { SplashProvider } from './src/context/splash-context';
 
 export default function App() {
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
+
+  // Handle splash screen completion
+  const handleSplashComplete = () => {
+    // Splash Screen ausblenden
+    setIsSplashVisible(false);
+  };
+  
   // Initialize health services based on platform
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -42,12 +53,19 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <View style={styles.container}>
-        <StatusBar style="auto" />
-        <AppNavigation />
-        {/* WebView für Sound-Erzeugung (unsichtbar) */}
-        <SoundWebView />
-      </View>
+      <ThemeProvider>
+        <SplashProvider>
+          <View style={styles.container}>
+            <StatusBar style="auto" />
+            <AppNavigation />
+            {/* WebView für Sound-Erzeugung (unsichtbar) */}
+            <SoundWebView />
+            {isSplashVisible && (
+              <SplashScreen onAnimationComplete={handleSplashComplete} />
+            )}
+          </View>
+        </SplashProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

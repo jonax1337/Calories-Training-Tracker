@@ -10,6 +10,7 @@ import { useTheme } from '../theme/theme-context';
 import { useDateContext } from '../context/date-context';
 import LoadingScreen from '../components/ui/loading-screen';
 import { createNutritionReportStyles } from '../styles/screens/nutrition-report-styles';
+import * as Animatable from 'react-native-animatable';
 
 const NutritionReportScreen = () => {
   const { theme } = useTheme();
@@ -62,14 +63,18 @@ const NutritionReportScreen = () => {
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.contentContainer}>
           {!isLoading && (
-            <View>
+            <Animatable.View 
+              animation="fadeInUp" 
+              duration={600} 
+              delay={50}
+            >
               <NutritionReportComponent 
                 userProfile={userProfile} 
                 userGoals={userGoals} 
                 days={days}
                 selectedDate={selectedDate}
               />
-            </View>
+            </Animatable.View>
           )}
         </View>
       </ScrollView>
