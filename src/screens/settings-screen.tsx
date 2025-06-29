@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, View, TouchableOpacity, ScrollView, Alert, Switch, Platform } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/theme-context';
@@ -10,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logout } from '../services/auth-service';
 import * as NotificationsService from '../services/notifications-service';
 import { createSettingsStyles } from '../styles/screens/settings-styles';
+import { useFocusEffect } from '@react-navigation/native';
 
 type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -23,6 +25,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   // State für Wassererinnerungen - simplifiziert
   const [isWaterReminderEnabled, setIsWaterReminderEnabled] = useState(false);
   const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
+  const isInitialMount = useRef(true);
   
   // Lade Wassererinnerungseinstellungen beim ersten Render
   useEffect(() => {
@@ -42,6 +47,31 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
     loadWaterSettings();
   }, []);
+
+  // Load data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Only trigger animations on tab navigation, not initial mount or stack navigation
+      if (!isInitialMount.current) {
+        // Hide content briefly, then show with animation
+        setIsScreenVisible(false);
+        const timer = setTimeout(() => {
+          setIsScreenVisible(true);
+          setAnimationKey(prev => prev + 1);
+        }, 50);
+        
+        return () => {
+          clearTimeout(timer);
+        };
+      } else {
+        // First mount - just trigger initial animation without hiding
+        isInitialMount.current = false;
+        setAnimationKey(prev => prev + 1);
+      }
+      
+      return () => {};
+    }, [])
+  );
 
   // Aktualisiere Wassererinnerungsstatus
   const handleWaterReminderToggle = async (value: boolean) => {
@@ -188,64 +218,146 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           paddingBottom: Math.max(theme.spacing.xs, insets.bottom) // Entweder Standard-Padding oder Safe Area
         }}
       >
-      <Text style={styles.sectionTitle}>
-        Theme-Einstellungen
-      </Text>
-      <Text style={styles.sectionDescription}>
-        Wähle dein bevorzugtes App-Theme aus
-      </Text>
+
+      {isScreenVisible && (
+        <>
+        <Animatable.View 
+          key={`theme-title-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={50}
+        >
+          <Text style={styles.sectionTitle}>
+            Theme-Einstellungen
+          </Text>
+        </Animatable.View>
+        <Animatable.View 
+          key={`theme-description-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={100}
+        >
+          <Text style={styles.sectionDescription}>
+            Wähle dein bevorzugtes App-Theme aus
+          </Text>
+        </Animatable.View>
       
-      {themeOptions.map(renderThemeOption)}
+        <Animatable.View 
+          key={`theme-options-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={150}
+        >
+          {themeOptions.map(renderThemeOption)}
+        </Animatable.View>
       
-      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
-        Konto
-      </Text>
+        <Animatable.View 
+          key={`account-title-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={200}
+        >
+          <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
+            Konto
+          </Text>
+        </Animatable.View>
 
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleLogout}
-      >
-        <Text style={styles.logoutText}>
-          Abmelden
-        </Text>
-      </TouchableOpacity>
+        <Animatable.View 
+          key={`logout-button-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={250}
+        >
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutText}>
+              Abmelden
+            </Text>
+          </TouchableOpacity>
+        </Animatable.View>
 
-      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
-        Benachrichtigungen
-      </Text>
-      <Text style={styles.sectionDescription}>
-        Erhalte intelligente Erinnerungen.
-      </Text>
+        <Animatable.View 
+          key={`notifications-title-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={300}
+        >
+          <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
+            Benachrichtigungen
+          </Text>
+        </Animatable.View>
+        <Animatable.View 
+          key={`notifications-description-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={350}
+        >
+          <Text style={styles.sectionDescription}>
+            Erhalte intelligente Erinnerungen.
+          </Text>
+        </Animatable.View>
 
-      <View style={[styles.settingCard, { marginTop: 0 }]}>
-        {/* Wassererinnerungen An/Aus */}
-        <View style={styles.settingRow}>
-          <View>
-            <Text style={styles.settingLabel}>Wassererinnerungen</Text>
+        <Animatable.View 
+          key={`notifications-settings-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={400}
+        >
+          <View style={[styles.settingCard, { marginTop: 0 }]}>
+            {/* Wassererinnerungen An/Aus */}
+            <View style={styles.settingRow}>
+              <View>
+                <Text style={styles.settingLabel}>Wassererinnerungen</Text>
+              </View>
+              <Switch
+                value={isWaterReminderEnabled}
+                onValueChange={handleWaterReminderToggle}
+                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                thumbColor={Platform.OS === 'android' ? theme.colors.surface : ''}
+              />
+            </View>
           </View>
-          <Switch
-            value={isWaterReminderEnabled}
-            onValueChange={handleWaterReminderToggle}
-            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-            thumbColor={Platform.OS === 'android' ? theme.colors.surface : ''}
-          />
-        </View>
-      </View>
+        </Animatable.View>
 
-      <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
-        App-Informationen & Feedback
-      </Text>
+        <Animatable.View 
+          key={`app-info-title-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={450}
+        >
+          <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
+            App-Informationen & Feedback
+          </Text>
+        </Animatable.View>
       
-      <Text style={[styles.sectionDescription, { marginBottom: theme.spacing.s }]}>Diese App befindet sich in der Beta-Phase. Wir freuen uns über dein Feedback!
-      </Text>
+        <Animatable.View 
+          key={`app-info-description-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={500}
+        >
+          <Text style={[styles.sectionDescription, { marginBottom: theme.spacing.s }]}>Diese App befindet sich in der Beta-Phase. Wir freuen uns über dein Feedback!
+          </Text>
+        </Animatable.View>
 
-      <Text style={[styles.sectionDescription, { marginBottom: 0 }]}>
-      <TouchableOpacity 
-        onPress={() => navigation.navigate('Feedback')}
-      >
-        <Text style={{ color: theme.colors.primary, textDecorationLine: 'underline' }}>Feedback geben</Text>
-      </TouchableOpacity>
-      </Text>
+        <Animatable.View 
+          key={`feedback-link-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={550}
+        >
+          <Text style={[styles.sectionDescription, { marginBottom: 0 }]}>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Feedback')}
+            >
+              <Text style={{ color: theme.colors.primary, textDecorationLine: 'underline' }}>Feedback geben</Text>
+            </TouchableOpacity>
+          </Text>
+        </Animatable.View>
+        </>
+        )}
       
       </ScrollView>
       </View>

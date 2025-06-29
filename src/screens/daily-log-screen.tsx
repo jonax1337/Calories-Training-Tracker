@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, View, FlatList, TouchableOpacity, Alert, ScrollView, Modal, Animated, Platform } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import * as Haptics from 'expo-haptics';
 import { Swipeable, RectButton, LongPressGestureHandler, State } from 'react-native-gesture-handler';
 import { ActionSheetProvider, useActionSheet } from '@expo/react-native-action-sheet';
@@ -333,6 +334,9 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
+  const isInitialMount = useRef(true);
   
   // State for tracking expanded meal sections
   const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
@@ -382,6 +386,25 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   useFocusEffect(
     useCallback(() => {
       loadDailyLog();
+      
+      // Only trigger animations on tab navigation, not initial mount or stack navigation
+      if (!isInitialMount.current) {
+        // Hide content briefly, then show with animation
+        setIsScreenVisible(false);
+        const timer = setTimeout(() => {
+          setIsScreenVisible(true);
+          setAnimationKey(prev => prev + 1);
+        }, 50);
+        
+        return () => {
+          clearTimeout(timer);
+        };
+      } else {
+        // First mount - just trigger initial animation without hiding
+        isInitialMount.current = false;
+        setAnimationKey(prev => prev + 1);
+      }
+      
       return () => {};
     }, [loadDailyLog, selectedDate])
   );
@@ -626,8 +649,16 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
         contentContainerStyle={styles.scrollContentContainer}
       >
 
-        {/* Daily summary */}
-        <View style={styles.summaryCard}>
+        {isScreenVisible && (
+          <>
+          {/* Daily summary */}
+          <Animatable.View 
+            key={`summary-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={50}
+            style={styles.summaryCard}
+          >
           <View style={styles.summaryHeaderRow}>
             <Text style={styles.summaryTitle}>
               Tagesübersicht
@@ -671,45 +702,67 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
               </Text>
             </View>
           </View>
-        </View>
+        </Animatable.View>
         
         {/* Alle Mahlzeiten */}
-        <MealCategory 
-          mealType="breakfast"
-          emoji="🥞"
-          title="Frühstück"
-          calories={totals.mealTotals.breakfast?.calories || 0}
-        />
+        <Animatable.View 
+          key={`breakfast-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={100}
+        >
+          <MealCategory 
+            mealType="breakfast"
+            emoji="🥞"
+            title="Frühstück"
+            calories={totals.mealTotals.breakfast?.calories || 0}
+          />
+        </Animatable.View>
         
-        <MealCategory 
-          mealType="lunch"
-          emoji="🌮"
-          title="Mittagessen"
-          calories={totals.mealTotals.lunch?.calories || 0}
-        />
+        <Animatable.View 
+          key={`lunch-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={150}
+        >
+          <MealCategory 
+            mealType="lunch"
+            emoji="🌮"
+            title="Mittagessen"
+            calories={totals.mealTotals.lunch?.calories || 0}
+          />
+        </Animatable.View>
         
-        <MealCategory 
-          mealType="dinner"
-          emoji="🍽️"
-          title="Abendessen"
-          calories={totals.mealTotals.dinner?.calories || 0}
-        />
+        <Animatable.View 
+          key={`dinner-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={200}
+        >
+          <MealCategory 
+            mealType="dinner"
+            emoji="🍽️"
+            title="Abendessen"
+            calories={totals.mealTotals.dinner?.calories || 0}
+          />
+        </Animatable.View>
         
-        <MealCategory 
-          mealType="snack"
-          emoji="🍪"
-          title="Snacks"
-          calories={totals.mealTotals.snack?.calories || 0}
-          isLast={false}
-        />
-        
-        <MealCategory 
-          mealType="drinks"
-          emoji="🥤"
-          title="Getränke"
-          calories={totals.mealTotals.drinks?.calories || 0}
-          isLast={true}
-        />
+        <Animatable.View 
+          key={`snack-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={250}
+        >
+          <MealCategory 
+            mealType="snack"
+            emoji="🍪"
+            title="Snacks"
+            calories={totals.mealTotals.snack?.calories || 0}
+            isLast={false}
+          />
+        </Animatable.View>
+        </>
+        )}
       </ScrollView>
     </View>
   );

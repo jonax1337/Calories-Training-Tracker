@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, View, ScrollView, TextInput, TouchableOpacity, Alert, Modal, Platform, ActivityIndicator, StatusBar } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { ArrowBigDown, ArrowBigDownDash, ArrowBigUpDash, ArrowDown, ArrowDownWideNarrow, ArrowUp, ArrowUpWideNarrow, Award, Bed, BedDouble, BicepsFlexed, Bike, ChevronDown, ChevronsDown, ChevronsUp, ChevronUp, Cog, Dumbbell, Footprints, Scale, Star, TrendingDown, TrendingUp, X } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
@@ -40,6 +41,9 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   
   const [isLoading, setIsLoading] = useState(true);
   const [healthPermission, setHealthPermission] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
+  const isInitialMount = useRef(true);
   
   // State für Slider-Werte
   const [weightSliderValue, setWeightSliderValue] = useState(70);
@@ -173,6 +177,25 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
   useFocusEffect(
     useCallback(() => {
       loadProfile();
+      
+      // Only trigger animations on tab navigation, not initial mount or stack navigation
+      if (!isInitialMount.current) {
+        // Hide content briefly, then show with animation
+        setIsScreenVisible(false);
+        const timer = setTimeout(() => {
+          setIsScreenVisible(true);
+          setAnimationKey(prev => prev + 1);
+        }, 50);
+        
+        return () => {
+          clearTimeout(timer);
+        };
+      } else {
+        // First mount - just trigger initial animation without hiding
+        isInitialMount.current = false;
+        setAnimationKey(prev => prev + 1);
+      }
+      
       return () => {};
     }, [])
   );
@@ -561,25 +584,56 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           paddingBottom: Math.max(theme.spacing.m, insets.bottom) // Entweder Standard-Padding oder Safe Area
         }}
       >
-        <Text style={styles.sectionTitle}>
-          Persönliche Daten
-        </Text>
 
-        <Text style={styles.sectionDescription}>
-          Persönliche Daten und Fitnessprofile
-        </Text>
+        {isScreenVisible && (
+          <>
+          <Animatable.View 
+            key={`section-title-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={50}
+          >
+            <Text style={styles.sectionTitle}>
+              Persönliche Daten
+            </Text>
+          </Animatable.View>
 
-      {/* Birth Date (statt Alter) */}
-      <DatePicker 
+          <Animatable.View 
+            key={`section-description-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={100}
+          >
+            <Text style={styles.sectionDescription}>
+              Persönliche Daten und Fitnessprofile
+            </Text>
+          </Animatable.View>
+
+          {/* Birth Date (statt Alter) */}
+          <Animatable.View 
+            key={`birth-date-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={150}
+          >
+            <DatePicker 
         label="Geburtsdatum"
         value={birthDate}
         onValueChange={updateBirthDate}
         ageLabel={true}
         customButtonText="Ändern"
         customModalTitle="Geburtsdatum auswählen"
-      />
-      {/* Gewicht mit wiederverwendbarer SliderWithInput-Komponente */}
-      <SliderWithInput
+            />
+          </Animatable.View>
+
+          {/* Gewicht mit wiederverwendbarer SliderWithInput-Komponente */}
+          <Animatable.View 
+            key={`weight-slider-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={200}
+          >
+            <SliderWithInput
         minValue={30}
         maxValue={200}
         middleValue={115}
@@ -596,10 +650,17 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         label="Gewicht"
         unit="Kilogramm"
         placeholder="70.00"
-      />
+            />
+          </Animatable.View>
       
-      {/* Körpergröße mit wiederverwendbarer SliderWithInput-Komponente */}
-      <SliderWithInput
+          {/* Körpergröße mit wiederverwendbarer SliderWithInput-Komponente */}
+          <Animatable.View 
+            key={`height-slider-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={250}
+          >
+            <SliderWithInput
         minValue={120}
         maxValue={240}
         middleValue={180}
@@ -616,10 +677,17 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
         label="Größe"
         unit="Zentimeter"
         placeholder="170"
-      />
+            />
+          </Animatable.View>
       
-      {/* BMI Indikator */}
-      <View style={[styles.inputContainer, {
+          {/* BMI Indikator */}
+          <Animatable.View 
+            key={`bmi-indicator-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={300}
+          >
+            <View style={[styles.inputContainer, {
         flexDirection: 'column', 
         width: '100%',          
         padding: theme.spacing.m,
@@ -789,10 +857,17 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             );
           })()}
         </View>
-      </View>
+            </View>
+          </Animatable.View>
       
-      {/* Gender Selection */}
-      <View style={[styles.inputContainer, {
+          {/* Gender Selection */}
+          <Animatable.View 
+            key={`gender-selection-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={350}
+          >
+            <View style={[styles.inputContainer, {
         flexDirection: 'column', 
         width: '100%',          
         padding: theme.spacing.m,
@@ -899,18 +974,39 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             Für genauere Kalorienberechnungen
           </Text>
         </View>
-      </View>
+            </View>
+          </Animatable.View>
       
-      {/* Activity Level */}
-      <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-        Aktivitätsstufe
-      </Text>
-      <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
-        Wählen Sie Ihre typische Aktivitätsstufe, um Ihre Kalorienbedarf zu berechnen
-      </Text>
+          {/* Activity Level */}
+          <Animatable.View 
+            key={`activity-level-title-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={400}
+          >
+            <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+              Aktivitätsstufe
+            </Text>
+          </Animatable.View>
+          <Animatable.View 
+            key={`activity-level-description-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={450}
+          >
+            <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight }]}>
+              Wählen Sie Ihre typische Aktivitätsstufe, um Ihre Kalorienbedarf zu berechnen
+            </Text>
+          </Animatable.View>
       
-      {/* Vertikales Layout für Aktivitätsstufen wie im Intro Screen */}
-      <View style={{ marginBottom: theme.spacing.m }}>
+          {/* Vertikales Layout für Aktivitätsstufen wie im Intro Screen */}
+          <Animatable.View 
+            key={`activity-level-buttons-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={500}
+          >
+            <View style={{ marginBottom: theme.spacing.m }}>
         {/* Sedentär Button */}
         <TouchableOpacity 
           style={{
@@ -1104,19 +1200,27 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
             </Text>
           </View>
         </TouchableOpacity>
-      </View>
+            </View>
+          </Animatable.View>
       
-      {/* U00dcberschrift fu00fcr Ziele */}
-      <View style={{ marginTop: theme.spacing.m, marginBottom: theme.spacing.s }}>
-      <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
-        Dein Ernährungsziel
-      </Text>
-        <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, marginBottom: theme.spacing.m }]}>
-          Wähle dein Ernährungsziel oder lege eigene Werte fest. Die Empfehlungen basieren auf deinen Körperdaten.
-        </Text>
-      </View>
+          {/* U00dcberschrift fu00fcr Ziele */}
+          <Animatable.View 
+            key={`goals-section-${animationKey}`}
+            animation="fadeInUp" 
+            duration={600} 
+            delay={550}
+          >
+            <View style={{ marginTop: theme.spacing.m, marginBottom: theme.spacing.s }}>
+              <Text style={[styles.sectionTitle, { fontFamily: theme.typography.fontFamily.bold, color: theme.colors.text }]}>
+                Dein Ernährungsziel
+              </Text>
+              <Text style={[styles.sectionDescription, { fontFamily: theme.typography.fontFamily.regular, color: theme.colors.textLight, marginBottom: theme.spacing.m }]}>
+                Wähle dein Ernährungsziel oder lege eigene Werte fest. Die Empfehlungen basieren auf deinen Körperdaten.
+              </Text>
+            </View>
+          </Animatable.View>
         
-      {profile.weight && profile.height && profile.gender && profile.activityLevel ? (
+          {profile.weight && profile.height && profile.gender && profile.activityLevel ? (
           <>
               {/* Ziel-Auswahl */}
               {(() => {
@@ -1685,6 +1789,8 @@ function ProfileScreen({ navigation }: ProfileTabScreenProps) {
           {isLoading ? 'Speichern...' : 'Profil speichern'}
         </Text>
       </TouchableOpacity>
+          </>
+          )}
       </ScrollView>
     </View>
   );

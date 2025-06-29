@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import { HomeTabScreenProps } from '../types/navigation-types';
 import { useFocusEffect } from '@react-navigation/native';
 import { getDailyLogByDate, saveUserProfile, saveDailyLog } from '../services/storage-service';
@@ -55,6 +56,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [showWaterModal, setShowWaterModal] = useState(false);
   const [manualWaterAmount, setManualWaterAmount] = useState('');
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
+  const isInitialMount = useRef(true);
+  const lastFocusTime = useRef(0);
   
   // Verwende den gemeinsamen DateContext statt lokalem State
   const { selectedDate, setSelectedDate } = useDateContext();
@@ -133,6 +138,33 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   useFocusEffect(
     React.useCallback(() => {
       loadUserData();
+      
+      const currentTime = Date.now();
+      const timeSinceLastFocus = currentTime - lastFocusTime.current;
+      
+      // Only trigger animations on tab navigation (quick successive focus events)
+      // Stack navigation typically has longer delays between focus events
+      if (!isInitialMount.current && timeSinceLastFocus < 1000) {
+        // This is likely a tab navigation - hide content briefly, then show with animation
+        setIsScreenVisible(false);
+        const timer = setTimeout(() => {
+          setIsScreenVisible(true);
+          setAnimationKey(prev => prev + 1);
+        }, 50);
+        
+        lastFocusTime.current = currentTime;
+        return () => {
+          clearTimeout(timer);
+        };
+      } else {
+        // First mount or stack navigation return - no animation disruption
+        if (isInitialMount.current) {
+          isInitialMount.current = false;
+          setAnimationKey(prev => prev + 1);
+        }
+        lastFocusTime.current = currentTime;
+      }
+      
       return () => {};
     }, [selectedDate])
   );
@@ -472,8 +504,16 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         contentContainerStyle={styles.scrollContentContainer}
       >
 
-      {/* Nutrition summary section */}
-      <View style={styles.summaryCard}>
+      {isScreenVisible && (
+        <>
+        {/* Nutrition summary section */}
+        <Animatable.View 
+          key={`nutrition-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={50}
+          style={styles.summaryCard}
+        >
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardTitle}>Heutige Nährwerte</Text>
           
@@ -535,10 +575,16 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           unit="g"
           isCheatDay={todayLog?.isCheatDay || false}
         />
-      </View>
+      </Animatable.View>
 
       {/* Water tracking section with wave animation */}
-      <View style={styles.summaryCard}>
+      <Animatable.View 
+        key={`water-${animationKey}`}
+        animation="fadeInUp" 
+        duration={600} 
+        delay={100}
+        style={styles.summaryCard}
+      >
         <Text style={styles.cardTitle}>Wasser</Text>
       
         <View style={styles.waterContainer}>
@@ -575,11 +621,17 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             </TouchableOpacity>
           ))}
         </View>
-      </View>
+      </Animatable.View>
       
       {/* Nutrition Report Section */}
       {userProfile && activeGoalTargets && (
-        <View style={styles.summaryCard}>
+        <Animatable.View 
+          key={`report-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={150}
+          style={styles.summaryCard}
+        >
           <View style={styles.nutritionReportHeaderRow}>
             <Text style={styles.cardTitle}>Ernährungsbericht</Text>
             
@@ -601,11 +653,17 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             compact={true}
             selectedDate={selectedDate} // Datum aus DateContext übergeben
           />
-        </View>
+        </Animatable.View>
       )}
 
       {/* Weight tracking section */}
-      <View style={[styles.summaryCard, styles.weightContainer]}>
+      <Animatable.View 
+        key={`weight-${animationKey}`}
+        animation="fadeInUp" 
+        duration={600} 
+        delay={200}
+        style={[styles.summaryCard, styles.weightContainer]}
+      >
         <View style={styles.weightHeaderRow}>
           <Text style={styles.cardTitle}>Gewicht</Text>
           
@@ -669,7 +727,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </Animatable.View>
+      </>
+      )}
 
       {/* Modal zur manuellen Eingabe des Wasserstands */}
       <Modal

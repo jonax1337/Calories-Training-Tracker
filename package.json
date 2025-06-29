@@ -31,6 +31,7 @@
     "expo-barcode-scanner": "^13.0.1",
     "expo-blur": "~14.1.5",
     "expo-camera": "~16.1.8",
+    "expo-dev-client": "~5.2.1",
     "expo-font": "^13.3.1",
     "expo-haptics": "^14.1.4",
     "expo-health": "^0.0.0",
@@ -47,6 +48,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.3",
+    "react-native-animatable": "^1.4.0",
     "react-native-appearance": "^0.0.0",
     "react-native-calendars": "^1.1312.0",
     "react-native-chart-kit": "^6.12.0",
@@ -67,8 +69,7 @@
     "use-sound": "^5.0.0",
     "uuid": "^11.1.0",
     "victory-native": "^36.9.2",
-    "vision-camera-code-scanner": "^0.2.0",
-    "expo-dev-client": "~5.2.1"
+    "vision-camera-code-scanner": "^0.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
