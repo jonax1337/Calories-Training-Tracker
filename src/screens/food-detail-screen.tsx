@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, Vibration, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -47,6 +48,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   
   const [customName, setCustomName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  
+  // Simple animation state for food detail screen
+  const [animationKey, setAnimationKey] = useState(0);
   
   // Add state for the selected date (use passed date or default to today)
   const [selectedDate, setSelectedDate] = useState<string>(passedDate || getTodayFormatted());
@@ -175,6 +179,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       }
     };
     loadFoodData();
+    
+    // Trigger initial animation when screen mounts
+    setAnimationKey(prev => prev + 1);
   }, [barcode, foodId, passedFoodItem]);
 
   const handleAddToLog = async () => {
@@ -364,7 +371,14 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
           </View>
         ) : (
           <>
-            {/* Abstand zur oberen Kante */}
+            {/* Food Item Name and Edit */}
+            <Animatable.View 
+              key={`food-name-${animationKey}`}
+              animation="fadeInUp" 
+              duration={600} 
+              delay={50}
+            >
+              {/* Abstand zur oberen Kante */}
             <View style={styles.topSpacer} />
             
             {/* Produktinformationen - Name und Marke */}
@@ -387,20 +401,33 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 </View>
               )}
             </View>
+            </Animatable.View>
 
             {/* Nutrition information */}
             {foodItem?.nutrition && (
-            <View style={styles.nutritionContainer}>
+            <Animatable.View 
+              key={`nutrition-${animationKey}`}
+              animation="fadeInUp" 
+              duration={600} 
+              delay={100}
+              style={styles.nutritionContainer}
+            >
               <NutritionalInfoCard
               nutrition={foodItem.nutrition}
               servingMultiplier={parseFloat(servings) / 100} 
             />
-            </View>
+            </Animatable.View>
             )}
 
             {/* Portionsinformationen */}
             {foodItem?.nutrition?.servingDescription && (
-              <View style={styles.portionInfoContainer}>
+              <Animatable.View 
+                key={`portion-info-${animationKey}`}
+                animation="fadeInUp" 
+                duration={600} 
+                delay={150}
+                style={styles.portionInfoContainer}
+              >
                 <Text style={styles.portionInfoTitle}>
                   Portionsinformationen:
                 </Text>
@@ -409,11 +436,17 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                     {foodItem.nutrition.servingDescription}
                   </Text>
                 )}
-              </View>
+              </Animatable.View>
             )}
 
             {/* Mengeneingabe mit wiederverwendbarem SliderWithInput */}
-            <SliderWithInput
+            <Animatable.View 
+              key={`serving-input-${animationKey}`}
+              animation="fadeInUp" 
+              duration={600} 
+              delay={200}
+            >
+              <SliderWithInput
               minValue={1}
               maxValue={1000}
               middleValue={500}
@@ -430,10 +463,17 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               unit={servingUnit}
               placeholder="100"
             />
+            </Animatable.View>
             
             {/* Mahlzeitenauswahl - nur im Bearbeitungsmodus anzeigen */}
             {isEditing && (
-              <View style={[styles.card, styles.mealSelectionCard]}>
+              <Animatable.View 
+                key={`meal-selection-${animationKey}`}
+                animation="fadeInUp" 
+                duration={600} 
+                delay={250}
+                style={[styles.card, styles.mealSelectionCard]}
+              >
                 <Text style={styles.sectionTitle}>
                   Mahlzeit auswählen
                 </Text>
@@ -463,16 +503,23 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                     </TouchableOpacity>
                   ))}
                 </View>
-              </View>
+              </Animatable.View>
             )}
 
             {/* Add to log button */}
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleAddToLog}
+            <Animatable.View 
+              key={`add-button-${animationKey}`}
+              animation="fadeInUp" 
+              duration={600} 
+              delay={300}
             >
-              <Text style={styles.addButtonText}>{isEditing ? 'Aktualisieren' : 'Hinzufügen'}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={handleAddToLog}
+              >
+                <Text style={styles.addButtonText}>{isEditing ? 'Aktualisieren' : 'Hinzufügen'}</Text>
+              </TouchableOpacity>
+            </Animatable.View>
           </>
         )}
       </ScrollView>
