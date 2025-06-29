@@ -337,6 +337,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
   const [animationKey, setAnimationKey] = useState(0);
   const [isScreenVisible, setIsScreenVisible] = useState(true); // Start visible
   const isInitialMount = useRef(true);
+  const lastFocusTime = useRef(0);
   
   // State for tracking expanded meal sections
   const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
@@ -387,22 +388,30 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
     useCallback(() => {
       loadDailyLog();
       
-      // Only trigger animations on tab navigation, not initial mount or stack navigation
-      if (!isInitialMount.current) {
-        // Hide content briefly, then show with animation
+      const currentTime = Date.now();
+      const timeSinceLastFocus = currentTime - lastFocusTime.current;
+      
+      // Only trigger animations on tab navigation (quick successive focus events)
+      // Stack navigation typically has longer delays between focus events
+      if (!isInitialMount.current && timeSinceLastFocus < 1000) {
+        // This is likely a tab navigation - hide content briefly, then show with animation
         setIsScreenVisible(false);
         const timer = setTimeout(() => {
           setIsScreenVisible(true);
           setAnimationKey(prev => prev + 1);
         }, 50);
         
+        lastFocusTime.current = currentTime;
         return () => {
           clearTimeout(timer);
         };
       } else {
-        // First mount - just trigger initial animation without hiding
-        isInitialMount.current = false;
-        setAnimationKey(prev => prev + 1);
+        // First mount or stack navigation return - no animation disruption
+        if (isInitialMount.current) {
+          isInitialMount.current = false;
+          setAnimationKey(prev => prev + 1);
+        }
+        lastFocusTime.current = currentTime;
       }
       
       return () => {};
