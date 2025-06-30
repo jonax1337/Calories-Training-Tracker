@@ -286,35 +286,6 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
       Vibration.vibrate([0, 100, 0, 100]);
       
-      // Bei der Getränke-Kategorie automatisch die Menge zum Wasserkonsum hinzufügen
-      if (!isEditing && selectedMeal === MealType.Drinks) {
-        // ML basierend auf der Portionsgröße
-        let waterAmount = Math.round(parseFloat(servings)); 
-        
-        // Sicherstellen, dass der Wasserwert sinnvoll ist (min. 50ml)
-        if (waterAmount >= 50) {
-          // Wasserstand im DailyLog aktualisieren
-          try {
-            dailyLog.waterIntake += waterAmount;
-            await saveDailyLog(dailyLog);
-            
-            // Kurze Info anzeigen
-            Alert.alert(
-              'Wasserstand aktualisiert',
-              `${waterAmount}ml wurden zum Wasserstand hinzugefügt.`,
-              [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
-          } catch (error) {
-            console.error('Fehler beim Aktualisieren des Wasserstands:', error);
-            navigation.goBack();
-          }
-        } else {
-          navigation.goBack();
-        }
-      } else {
-        // Bei anderen Kategorien einfach zurückgehen
-        navigation.goBack();
-      }
     } catch (err) {
       console.error('Error in handleAddToLog:', err);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten beim Hinzufügen des Lebensmittels');
