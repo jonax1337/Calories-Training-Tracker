@@ -3,7 +3,8 @@
     "allow": [
       "Bash(grep:*)",
       "Bash(rg:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

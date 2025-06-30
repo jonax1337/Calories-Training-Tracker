@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, Vibration, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import { Text, View, Vibration, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, KeyboardAvoidingView, Switch } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import SliderWithInput from '../components/ui/slider-with-input';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -62,6 +62,22 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Bestimme die Einheit intelligent basierend auf dem FoodItem
   const displayUnit = determineDisplayUnit(foodItem);
   const servingUnit = getDisplayUnitString(displayUnit);
+  
+  // Portionen-Modus: Bestimme ob wir Portionen anstatt Gramm anzeigen können
+  const canUsePortionMode = foodItem?.nutrition?.servingSizeGrams && foodItem.nutrition.servingSizeGrams !== 100;
+  const [usePortionMode, setUsePortionMode] = useState(false);
+  
+  // Debug-Log für Portionen-Modus
+  useEffect(() => {
+    if (foodItem?.nutrition) {
+      console.log('DEBUG: Portionen-Modus Analyse:', {
+        productName: foodItem.name,
+        servingSizeGrams: foodItem.nutrition.servingSizeGrams,
+        canUsePortionMode,
+        usePortionMode
+      });
+    }
+  }, [foodItem, canUsePortionMode, usePortionMode]);
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
@@ -481,13 +497,51 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               const servingSize = foodItem.nutrition.servingSize;
               const servingSizeGrams = foodItem.nutrition.servingSizeGrams;
               
-              // Intelligente Logik basierend auf quantity vs serving_size
+              // Im Edit-Modus: Zeige Portionsdaten aus der DB wenn sie nicht Standard-100g sind
+              if (isEditing) {
+                const isStandardServing = servingSizeGrams === 100;
+                
+                console.log('DEBUG: Edit-Modus Portionslogik:', {
+                  productName: foodItem.name,
+                  servingSizeGrams,
+                  isStandardServing,
+                  hasServingDescription: !!hasServingDescription
+                });
+                
+                // Zeige Portionsinformationen wenn nicht Standard-100g
+                if (isStandardServing) return null;
+                
+                // Im Edit-Modus zeigen wir die DB-Portionsdaten (OHNE Originalgröße)
+                const displayUnit = determineDisplayUnit(foodItem);
+                const portionText = hasServingDescription 
+                  ? foodItem.nutrition.servingDescription 
+                  : `Eine Portion entspricht ${servingSizeGrams}${getShortUnitString(displayUnit)}`;
+                
+                return (
+                  <Animatable.View 
+                    key={`portion-info-${animationKey}`}
+                    animation="fadeInUp" 
+                    duration={600} 
+                    delay={150}
+                    style={styles.portionInfoContainer}
+                  >
+                    <Text style={styles.portionInfoTitle}>
+                      Portionsinformationen:
+                    </Text>
+                    <Text style={styles.portionInfoDescription}>
+                      {portionText}
+                    </Text>
+                  </Animatable.View>
+                );
+              }
+              
+              // Nicht im Edit-Modus: Normale API-basierte Logik
               const productQuantity = foodItem.nutrition.productQuantity;
               const productSizeGrams = getProductSizeGrams(productQuantity);
               
               let shouldShowPortionInfo = false;
               
-              console.log('DEBUG: Portionslogik analysieren:', {
+              console.log('DEBUG: Portionslogik analysieren (Neu-Modus):', {
                 productName: foodItem.name,
                 servingSizeGrams,
                 productQuantity,
@@ -512,7 +566,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
                 console.log(`DEBUG: Unbekannte Produktgröße (${productQuantity}) - Portion: ${servingSizeGrams}g - ${isStandardServing ? 'STANDARD' : 'CUSTOM'}`);
               }
               
-              console.log('DEBUG: Portionsinformationen anzeigen?', shouldShowPortionInfo);
+              console.log('DEBUG: Portionsinformationen anzeigen (Neu-Modus)?', shouldShowPortionInfo);
               
               if (!shouldShowPortionInfo) return null;
               
@@ -548,22 +602,77 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
               duration={600} 
               delay={200}
             >
+              {/* Portionen-Modus Toggle */}
+              {canUsePortionMode && (
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: theme.borderRadius.medium,
+                  padding: theme.spacing.m,
+                  marginBottom: theme.spacing.m,
+                  borderColor: theme.colors.border,
+                  borderWidth: 1
+                }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      color: theme.colors.text,
+                      fontFamily: theme.typography.fontFamily.medium,
+                      fontSize: theme.typography.fontSize.m
+                    }}>
+                      {usePortionMode ? 'Portionen' : `${servingUnit}`}
+                    </Text>
+                    <Text style={{
+                      color: theme.colors.textLight,
+                      fontFamily: theme.typography.fontFamily.regular,
+                      fontSize: theme.typography.fontSize.s,
+                      marginTop: theme.spacing.xs
+                    }}>
+                      {usePortionMode 
+                        ? `1 Portion = ${foodItem.nutrition.servingSizeGrams}${getShortUnitString(displayUnit)}`
+                        : 'Direkte Gewichts-/Volumenangabe'
+                      }
+                    </Text>
+                  </View>
+                  <Switch
+                    value={usePortionMode}
+                    onValueChange={(newValue) => {
+                      // Beim Wechsel zwischen Modi den aktuellen Wert beibehalten
+                      setUsePortionMode(newValue);
+                      
+                      // Haptic feedback
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                    trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                    thumbColor="white"
+                  />
+                </View>
+              )}
+              
               <SliderWithInput
-              minValue={1}
-              maxValue={1000}
-              middleValue={500}
-              step={0.01}
-              decimalPlaces={2}
+              minValue={usePortionMode ? 0.5 : 1}
+              maxValue={usePortionMode ? 50 : 1000}
+              middleValue={usePortionMode ? 25 : 500}
+              step={usePortionMode ? 0.5 : 0.01}
+              decimalPlaces={usePortionMode ? 1 : 2}
               allowDecimals={true}
-              value={parseFloat(servings) || 100}
+              value={usePortionMode 
+                ? (parseFloat(servings) || 100) / (foodItem?.nutrition?.servingSizeGrams || 100)
+                : (parseFloat(servings) || 100)
+              }
               onValueChange={(value: number) => {
-                setServings(value.toFixed(2));  // Formatiere mit 2 Nachkommastellen
-                // Wir brauchen sliderValue für die Konsistenz im bestehenden Code
-                setSliderValue(value);
+                // Konvertiere zwischen Portionen und Gramm
+                const gramsValue = usePortionMode 
+                  ? value * (foodItem?.nutrition?.servingSizeGrams || 100)
+                  : value;
+                  
+                setServings(gramsValue.toFixed(2));
+                setSliderValue(gramsValue);
               }}
-              label="Menge"
-              unit={servingUnit}
-              placeholder="100"
+              label={usePortionMode ? "Anzahl Portionen" : "Menge"}
+              unit={usePortionMode ? "Portionen" : servingUnit}
+              placeholder={usePortionMode ? "1" : "100"}
             />
             </Animatable.View>
             

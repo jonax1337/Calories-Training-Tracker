@@ -5,6 +5,7 @@ let HOME_ANIMATION_PLAYED = false;
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
 import * as Animatable from 'react-native-animatable';
+import { PIConfetti, ConfettiMethods } from 'react-native-fast-confetti';
 import { HomeTabScreenProps } from '../types/navigation-types';
 import { useFocusEffect } from '@react-navigation/native';
 import { getDailyLogByDate, saveUserProfile, saveDailyLog } from '../services/storage-service';
@@ -430,6 +431,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     }
   };
 
+  // State für Cheat Day Animation
+  const confettiRef = useRef<ConfettiMethods>(null);
+  const cheatDayButtonRef = useRef<View>(null);
+
   // Funktion zum Umschalten des Cheat Day Status
   const handleToggleCheatDay = async () => {
     if (!todayLog) return;
@@ -437,17 +442,36 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     try {
       setIsUpdatingCheatDay(true);
       
-      // Haptisches Feedback
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const willActivateCheatDay = !todayLog.isCheatDay;
+      
+      // Unterschiedliches haptisches Feedback je nach Aktion (50ms verzögert)
+      if (willActivateCheatDay) {
+          // Stärkeres Feedback beim Aktivieren
+            setTimeout(() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }, 150);
+        } else {
+          // Sanfteres Feedback beim Deaktivieren
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
       
       // Neuen Status festlegen (umkehren des aktuellen Status)
       const updatedLog = {
         ...todayLog,
-        isCheatDay: !todayLog.isCheatDay
+        isCheatDay: willActivateCheatDay
       };
       
       // Log im State aktualisieren für sofortiges UI-Feedback
       setTodayLog(updatedLog);
+      
+      // Konfetti-Animation nur beim Aktivieren
+      if (willActivateCheatDay) {
+        // Starte Konfetti-Animation
+        if (confettiRef.current) {
+          confettiRef.current.restart();
+        }
+      }
       
       // In der Datenbank speichern
       await saveDailyLog(updatedLog);
@@ -463,6 +487,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   };
 
   // Funktion zum Öffnen des Modals mit aktuellem Wasserstand
+
   const openWaterModal = () => {
     if (todayLog) {
       setManualWaterAmount(todayLog.waterIntake.toString());
@@ -513,6 +538,15 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
 
   return (
     <View style={styles.container}>
+      {/* Konfetti Animation mit react-native-fast-confetti */}
+      <PIConfetti 
+        ref={confettiRef}
+        count={50}
+        blastPosition={{x: 200, y: -100}}
+        blastRadius={300}
+        fallDuration={3500}
+        colors={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#FD79A8', '#E17055']}
+      />
       {/* Sticky Header */}
       <View style={[
         styles.stickyHeader, 
@@ -554,26 +588,76 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           <Text style={styles.cardTitle}>Heutige Nährwerte</Text>
           
           {/* Cheat Day Button */}
-          <TouchableOpacity 
-            style={[
-              styles.cheatDayButton,
-              todayLog?.isCheatDay && styles.cheatDayButtonActive
-            ]}
-            onPress={handleToggleCheatDay}
-            disabled={isUpdatingCheatDay}
+          <Animatable.View
+            ref={cheatDayButtonRef}
+            animation={todayLog?.isCheatDay ? "pulse" : undefined}
+            iterationCount={todayLog?.isCheatDay ? "infinite" : 1}
+            duration={2000}
           >
-            {todayLog?.isCheatDay ? (
-              <ShieldX size={theme.theme.typography.fontSize.m} color="white" style={{ marginRight: theme.theme.spacing.xs }} />
-            ) : (
-              <ShieldCheck size={theme.theme.typography.fontSize.m} color={theme.theme.colors.primary} style={{ marginRight: theme.theme.spacing.xs }} />
-            )}
-            <Text style={[
-              styles.cheatDayText,
-              todayLog?.isCheatDay && styles.cheatDayTextActive
-            ]}>
-              {todayLog?.isCheatDay ? 'Cheat Day' : 'Normaler Tag'}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.cheatDayButton,
+                todayLog?.isCheatDay && styles.cheatDayButtonActive,
+                todayLog?.isCheatDay && {
+                  shadowColor: theme.theme.colors.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.6,
+                  shadowRadius: 8,
+                  elevation: 8,
+                }
+              ]}
+              onPress={handleToggleCheatDay}
+              disabled={isUpdatingCheatDay}
+            >
+              {todayLog?.isCheatDay ? (
+                <ShieldX size={theme.theme.typography.fontSize.m} color="white" style={{ marginRight: theme.theme.spacing.xs }} />
+              ) : (
+                <ShieldCheck size={theme.theme.typography.fontSize.m} color={theme.theme.colors.primary} style={{ marginRight: theme.theme.spacing.xs }} />
+              )}
+              <Text style={[
+                styles.cheatDayText,
+                todayLog?.isCheatDay && styles.cheatDayTextActive
+              ]}>
+                {todayLog?.isCheatDay ? 'Cheat Day' : 'Normaler Tag'}
+              </Text>
+              
+              {/* Konfetti-Partikel hinter dem Button */}
+              {todayLog?.isCheatDay && (
+                <View style={{
+                  position: 'absolute',
+                  top: -10,
+                  left: -10,
+                  right: -10,
+                  bottom: -10,
+                  zIndex: -1,
+                  pointerEvents: 'none'
+                }}>
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <Animatable.View
+                      key={i}
+                      animation={{
+                        0: { scaleX: 0, opacity: 0 },
+                        0.5: { scaleX: 1, opacity: 1 },
+                        1: { scaleX: 0, opacity: 0 }
+                      }}
+                      iterationCount="infinite"
+                      duration={1500}
+                      delay={i * 250}
+                      style={{
+                        position: 'absolute',
+                        width: 4,
+                        height: 4,
+                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FECA57', '#FF9FF3', '#54A0FF'][i],
+                        borderRadius: 2,
+                        top: Math.random() * 40,
+                        left: Math.random() * 80,
+                      }}
+                    />
+                  ))}
+                </View>
+              )}
+            </TouchableOpacity>
+          </Animatable.View>
         </View>
         
         <ProgressBar 
