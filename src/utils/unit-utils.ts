@@ -20,8 +20,12 @@ export function determineDisplayUnit(foodItem: FoodItem | null): 'ml' | 'g' {
 
   const servingSizeLower = servingSize.toLowerCase();
 
-  // 1. Direct ml/l unit detection from API data
+  // 1. Direct ml/cl/l unit detection from API data
   if (servingSizeLower.includes('ml') || servingSizeLower.includes('milliliter')) {
+    return 'ml';
+  }
+  
+  if (servingSizeLower.includes('cl') || servingSizeLower.includes('zentiliter')) {
     return 'ml';
   }
   
@@ -32,12 +36,22 @@ export function determineDisplayUnit(foodItem: FoodItem | null): 'ml' | 'g' {
   // 2. Analyze numerical relationship (if grams ≈ ml, likely liquid)
   if (servingSizeGrams) {
     const mlMatch = servingSize.match(/(\d+(?:[.,]\d+)?)\s*ml/i);
+    const clMatch = servingSize.match(/(\d+(?:[.,]\d+)?)\s*cl/i);
     const lMatch = servingSize.match(/(\d+(?:[.,]\d+)?)\s*l/i);
     
     if (mlMatch) {
       const mlValue = parseFloat(mlMatch[1].replace(',', '.'));
       // If ml value closely matches grams value (within 10% tolerance)
       if (Math.abs(mlValue - servingSizeGrams) <= Math.max(mlValue * 0.1, 2)) {
+        return 'ml';
+      }
+    }
+    
+    if (clMatch) {
+      const clValue = parseFloat(clMatch[1].replace(',', '.'));
+      const mlEquivalent = clValue * 10; // 1cl = 10ml
+      // If centiliter converted to ml closely matches grams value
+      if (Math.abs(mlEquivalent - servingSizeGrams) <= Math.max(mlEquivalent * 0.1, 2)) {
         return 'ml';
       }
     }
@@ -83,7 +97,7 @@ export function isLikelyLiquid(foodItem: FoodItem | null): boolean {
   
   // Check ONLY for unit indicators in serving size (no keywords)
   const liquidUnitIndicators = [
-    /\bml\b/, /\bmilliliter\b/, /\bliter\b/, /\bl\b/
+    /\bml\b/, /\bmilliliter\b/, /\bcl\b/, /\bzentiliter\b/, /\bliter\b/, /\bl\b/
   ];
   
   return liquidUnitIndicators.some(indicator => indicator.test(servingSize));

@@ -356,8 +356,8 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
     
     const quantityLower = quantity.toLowerCase();
     
-    // Match patterns like "345g", "1.5kg", "500ml", "2l"
-    const match = quantityLower.match(/(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l)\b/);
+    // Match patterns like "345g", "1.5kg", "500ml", "33cl", "2l"
+    const match = quantityLower.match(/(\d+(?:[.,]\d+)?)\s*(g|kg|ml|cl|l)\b/);
     if (match) {
       const amount = parseFloat(match[1].replace(',', '.'));
       const unit = match[2];
@@ -365,6 +365,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       // Convert to grams
       if (unit === 'kg') return amount * 1000;
       if (unit === 'l') return amount * 1000; // 1l ≈ 1000g for liquids
+      if (unit === 'cl') return amount * 10; // 1cl = 10ml ≈ 10g for liquids
       if (unit === 'ml') return amount; // 1ml ≈ 1g for liquids
       if (unit === 'g') return amount;
     }

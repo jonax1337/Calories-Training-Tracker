@@ -60,8 +60,8 @@ function createFoodItemFromProduct(product: ProductData): FoodItem | null {
   
   // 1. Bevorzuge serving_size aus der API, wenn vorhanden
   if (servingSize) {
-    // Erweiterte Suche nach allen Einheiten (g, ml, l, kg)
-    const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|gramm|ml|milliliter|l|liter|kg)/i);
+    // Erweiterte Suche nach allen Einheiten (g, ml, cl, l, kg)
+    const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|gramm|ml|milliliter|cl|zentiliter|l|liter|kg)/i);
     
     if (unitMatches && unitMatches.length >= 3) {
       const amount = parseFloat(unitMatches[1].replace(',', '.'));
@@ -74,6 +74,9 @@ function createFoodItemFromProduct(product: ProductData): FoodItem | null {
       } else if (unit === 'l' || unit === 'liter') {
         servingSizeGrams = amount * 1000; // 1l ≈ 1000g for liquids
         cleanedServingSize = `${amount} l`;
+      } else if (unit === 'cl' || unit === 'zentiliter') {
+        servingSizeGrams = amount * 10; // 1cl = 10ml ≈ 10g for liquids
+        cleanedServingSize = `${amount} cl`;
       } else if (unit === 'ml' || unit === 'milliliter') {
         servingSizeGrams = amount; // 1ml ≈ 1g for liquids
         cleanedServingSize = `${amount} ml`;
@@ -109,7 +112,7 @@ function createFoodItemFromProduct(product: ProductData): FoodItem | null {
       
       if (typeof servingSize === 'string') {
         // Suche direkt nach Zahlenwerten mit Einheiten wie "123g", "45 ml", "3.5 kg"
-        const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|ml|l|kg)/i);
+        const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|ml|cl|l|kg)/i);
         
         if (unitMatches && unitMatches.length >= 3) {
           // Nehme nur die Zahl und die Einheit
@@ -135,7 +138,7 @@ function createFoodItemFromProduct(product: ProductData): FoodItem | null {
   if (quantity && !servingDescription) {
     console.log(`DEBUG: Fallback zu quantity-Feld: ${quantity} g`);
     // Try to extract number from string like "400g"
-    const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|l)/i);
+    const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|cl|l)/i);
     if (match) {
       const amount = parseFloat(match[1].replace(',', '.'));
       const unit = match[2].toLowerCase();
@@ -143,9 +146,12 @@ function createFoodItemFromProduct(product: ProductData): FoodItem | null {
       // Convert to grams based on unit
       if (unit === 'kg') {
         servingSizeGrams = amount * 1000;
-      } else if (unit === 'ml' || unit === 'l') {
-        // Für Flüssigkeiten nehmen wir an, dass 1ml ≈ 1g
-        servingSizeGrams = unit === 'l' ? amount * 1000 : amount;
+      } else if (unit === 'l') {
+        servingSizeGrams = amount * 1000; // 1l ≈ 1000g
+      } else if (unit === 'cl') {
+        servingSizeGrams = amount * 10; // 1cl = 10ml ≈ 10g
+      } else if (unit === 'ml') {
+        servingSizeGrams = amount; // 1ml ≈ 1g
       } else {
         servingSizeGrams = amount;
       }
