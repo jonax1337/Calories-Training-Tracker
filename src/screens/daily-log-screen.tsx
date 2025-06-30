@@ -14,6 +14,7 @@ import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatToLocalISODate, formatDateForDisplay, getTodayFormatted } from '../utils/date-utils';
+import { determineDisplayUnit, getShortUnitString } from '../utils/unit-utils';
 import { useDateContext } from '../context/date-context';
 import { createDailyLogStyles } from '../styles/screens/daily-log-styles';
 
@@ -299,7 +300,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                       {entry.foodItem.name}
                     </Text>
                     <Text style={styles.foodServing}>
-                      {entry.servingAmount}{entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('ml') || entry.foodItem.nutrition?.servingSize?.toLowerCase().includes('l') ? 'ml' : 'g'}
+                      {entry.servingAmount}{getShortUnitString(determineDisplayUnit(entry.foodItem))}
                     </Text>
                   </View>
                   <Text style={styles.foodCalories}>

@@ -25,6 +25,7 @@ export interface NutritionInfo {
   servingSize: string;  // Beschreibung der Portion (z.B. "1 Riegel (25g)")
   servingSizeGrams: number; // Gewicht einer Portion in Gramm
   servingDescription?: string; // Zusätzliche Beschreibung zur Portionsgröße
+  productQuantity?: string; // Originalproduktgröße aus API (z.B. "345g", "20pcs")
 }
 
 export interface FoodItem {

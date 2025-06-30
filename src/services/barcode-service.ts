@@ -18,72 +18,84 @@ interface ProductData {
 }
 
 // Using the Open Food Facts API for nutrition data
-const API_URL = 'https://world.openfoodfacts.org/api/v2/product/';
-const SEARCH_API_URL = 'https://world.openfoodfacts.org/cgi/search.pl';
+const API_URL = 'https://world.openfoodfacts.net/api/v2/product/';
+const SEARCH_API_URL = 'https://world.openfoodfacts.net/cgi/search.pl';
 
 /**
  * Gemeinsame Funktion zur Erstellung eines FoodItem aus API-Produktdaten
  * @param product Das Produktobjekt aus der API
  * @returns Ein einheitlich formatiertes FoodItem
  */
-function createFoodItemFromProduct(product: ProductData): FoodItem {
-  // Debug-Log: Produktdaten
-  console.log('DEBUG: Produktdaten verarbeiten:', product.product_name,
-    'serving_size:', product.serving_size || 'nicht vorhanden',
-    'serving_quantity:', product.serving_quantity || 'nicht vorhanden',
-    'quantity:', product.quantity || 'nicht vorhanden',
-    'description:', product.description || product.generic_name || 'nicht vorhanden'
-  );
+function createFoodItemFromProduct(product: ProductData): FoodItem | null {
+  try {
+    // Validierung der Grunddaten
+    if (!product || !product.code || !product.product_name) {
+      console.error('FEHLER: Ungültiges Produktobjekt oder fehlende Grunddaten');
+      return null;
+    }
+    
+    // Debug-Log: Produktdaten
+    console.log('DEBUG: Verarbeite Produkt:', product.product_name);
+    console.log('DEBUG: API-Felder -', {
+      serving_size: product.serving_size || 'fehlt',
+      serving_quantity: product.serving_quantity || 'fehlt', 
+      quantity: product.quantity || 'fehlt'
+    });
   
   // Parse quantity to get serving size in grams
   let servingSizeGrams = 100; // Default to 100g
   let servingSize = product.serving_size || product.quantity || '';
   let servingDescription = "";
+  let cleanedServingSize = "100 g"; // Default value
   
   // 1. Bevorzuge serving_size aus der API, wenn vorhanden
   if (servingSize) {
-    console.log(`API serving size: ${servingSize}`);
+    // Erweiterte Suche nach allen Einheiten (g, ml, l, kg)
+    const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|gramm|ml|milliliter|l|liter|kg)/i);
     
-    // Versuche, die Gramm aus der Portionsgröße zu extrahieren
-    const servingSizeMatch = servingSize.match(/(\d+([.,]\d+)?)\s*(g|gramm)/i);
-    if (servingSizeMatch) {
-      servingSizeGrams = parseFloat(servingSizeMatch[1].replace(',', '.'));
-      console.log(`Parsed serving size from API: ${servingSizeGrams}g`);
+    if (unitMatches && unitMatches.length >= 3) {
+      const amount = parseFloat(unitMatches[1].replace(',', '.'));
+      const unit = unitMatches[2].toLowerCase();
       
-      // Extrahiere nur die relevanten Informationen: Zahl + Einheit (g, ml, etc.)
-      let cleanedServingSize = "100g"; // Standardwert falls nichts gefunden wird
-      
-      if (typeof servingSize === 'string') {
-        // Suche direkt nach Zahlenwerten mit Einheiten wie "123g", "45 ml", "3.5 kg"
-        const unitMatches = servingSize.match(/(\d+[.,]?\d*)\s*(g|ml|l|kg)/i);
-        
-        if (unitMatches && unitMatches.length >= 3) {
-          // Nehme nur die Zahl und die Einheit
-          const amount = unitMatches[1].replace(',', '.'); // Kommas zu Punkten konvertieren
-          const unit = unitMatches[2].toLowerCase();
-          cleanedServingSize = `${amount}${unit}`;
-        } else {
-          // Fallback: Suche nach Zahlen im String
-          const numberMatch = servingSize.match(/(\d+[.,]?\d*)/i);
-          if (numberMatch) {
-            // Wenn eine Zahl gefunden wurde, aber keine Einheit, nehmen wir g als Standard
-            cleanedServingSize = `${numberMatch[1].replace(',', '.')}g`;
-          }
-        }
+      // Convert to grams for internal storage
+      if (unit === 'kg') {
+        servingSizeGrams = amount * 1000;
+        cleanedServingSize = `${amount} kg`;
+      } else if (unit === 'l' || unit === 'liter') {
+        servingSizeGrams = amount * 1000; // 1l ≈ 1000g for liquids
+        cleanedServingSize = `${amount} l`;
+      } else if (unit === 'ml' || unit === 'milliliter') {
+        servingSizeGrams = amount; // 1ml ≈ 1g for liquids
+        cleanedServingSize = `${amount} ml`;
+      } else {
+        servingSizeGrams = amount;
+        cleanedServingSize = `${amount} g`;
       }
       
+      console.log(`DEBUG: Portionsgröße extrahiert: ${servingSizeGrams}g (${cleanedServingSize})`);
       servingDescription = `Eine Portion entspricht ${cleanedServingSize}`;
+    } else {
+      // Fallback: Search for grams only (old logic)
+      const gramsMatch = servingSize.match(/(\d+([.,]\d+)?)\s*(g|gramm)/i);
+      if (gramsMatch) {
+        servingSizeGrams = parseFloat(gramsMatch[1].replace(',', '.'));
+        cleanedServingSize = `${servingSizeGrams} g`;
+        servingDescription = `Eine Portion entspricht ${cleanedServingSize}`;
+        console.log(`DEBUG: Fallback Gramm-Parsing: ${servingSizeGrams} g`);
+      } else {
+        console.log(`DEBUG: Keine Einheit gefunden in serving_size: ${servingSize}`);
+      }
     }
   } 
   
   // 2. Falls serving_quantity direkt verfügbar ist, verwende diesen Wert
   if (product.serving_quantity) {
     servingSizeGrams = product.serving_quantity;
-    console.log(`API serving quantity: ${servingSizeGrams}g`);
+    console.log(`DEBUG: API serving_quantity übernommen: ${servingSizeGrams} g`);
     
     if (!servingDescription && servingSize) {
       // Extrahiere nur die relevanten Informationen: Zahl + Einheit (g, ml, etc.)
-      let cleanedServingSize = "100g"; // Standardwert falls nichts gefunden wird
+      let cleanedServingSize = "100 g"; // Standardwert falls nichts gefunden wird
       
       if (typeof servingSize === 'string') {
         // Suche direkt nach Zahlenwerten mit Einheiten wie "123g", "45 ml", "3.5 kg"
@@ -93,13 +105,13 @@ function createFoodItemFromProduct(product: ProductData): FoodItem {
           // Nehme nur die Zahl und die Einheit
           const amount = unitMatches[1].replace(',', '.'); // Kommas zu Punkten konvertieren
           const unit = unitMatches[2].toLowerCase();
-          cleanedServingSize = `${amount}${unit}`;
+          cleanedServingSize = `${amount} ${unit}`;
         } else {
           // Fallback: Suche nach Zahlen im String
           const numberMatch = servingSize.match(/(\d+[.,]?\d*)/i);
           if (numberMatch) {
             // Wenn eine Zahl gefunden wurde, aber keine Einheit, nehmen wir g als Standard
-            cleanedServingSize = `${numberMatch[1].replace(',', '.')}g`;
+            cleanedServingSize = `${numberMatch[1].replace(',', '.')} g`;
           }
         }
       }
@@ -111,7 +123,7 @@ function createFoodItemFromProduct(product: ProductData): FoodItem {
   // 3. Fallback: Analysiere das quantity-Feld für die Portionsgröße
   const quantity = product.quantity || "";
   if (quantity && !servingDescription) {
-    console.log(`API product quantity: ${quantity}`);
+    console.log(`DEBUG: Fallback zu quantity-Feld: ${quantity} g`);
     // Try to extract number from string like "400g"
     const match = quantity.match(/([\d.,]+)\s*(g|kg|ml|l)/i);
     if (match) {
@@ -128,8 +140,10 @@ function createFoodItemFromProduct(product: ProductData): FoodItem {
         servingSizeGrams = amount;
       }
       
-      console.log(`Parsed quantity to serving size: ${servingSizeGrams}g`);
-      servingDescription = `Eine Portion entspricht ${servingSizeGrams}g`;
+      console.log(`DEBUG: Quantity zu Portionsgröße: ${servingSizeGrams} g`);
+      servingDescription = `Eine Portion entspricht ${servingSizeGrams} g`;
+    } else {
+      console.log(`DEBUG: Quantity konnte nicht geparst werden: ${quantity}`);
     }
   }
   
@@ -178,24 +192,37 @@ function createFoodItemFromProduct(product: ProductData): FoodItem {
     magnesium: extractVitaminValue(['magnesium_100g', 'magnesium_value', 'mg_100g']),
     zinc: extractVitaminValue(['zinc_100g', 'zinc_value', 'zn_100g']),
     
-    servingSize: servingSize,
+    servingSize: cleanedServingSize, // Use the cleaned/parsed serving size with proper units
     servingSizeGrams: numericServingSizeGrams, // Verwende die numerische Version
-    servingDescription: servingDescription
+    servingDescription: servingDescription,
+    productQuantity: product.quantity // Store original product quantity from API
   };
   
-  // Debug-Log für das erstellte Nutrition-Objekt
-  console.log('Erstelltes Nutrition-Objekt:', JSON.stringify(nutrition, null, 2));
+  // Debug-Log für das finale Nutrition-Objekt
+  console.log('DEBUG: Nutrition-Objekt erstellt:', {
+    servingSize: nutrition.servingSize,
+    servingSizeGrams: nutrition.servingSizeGrams,
+    productQuantity: nutrition.productQuantity,
+    calories: nutrition.calories
+  });
   
   // Erstelle das FoodItem
-  return {
+  const foodItem: FoodItem = {
     id: `food_${product.code}`,
-    name: product.product_name || 'Unknown Product',
+    name: product.product_name,
     brand: product.brands,
     barcode: product.code,
     nutrition,
     image: product.image_url,
     description: product.description || product.generic_name || product.ingredients_text || ''
   };
+  
+  console.log('DEBUG: FoodItem erfolgreich erstellt für:', foodItem.name);
+  return foodItem;
+  } catch (error) {
+    console.error('FEHLER: createFoodItemFromProduct fehlgeschlagen:', error);
+    return null;
+  }
 }
 
 /**
@@ -205,43 +232,44 @@ function createFoodItemFromProduct(product: ProductData): FoodItem {
  */
 export async function getFoodDataByBarcode(barcode: string): Promise<FoodItem | null> {
   try {
-    console.log(`API request for barcode: ${barcode}`);
+    console.log(`DEBUG: Barcode-Anfrage gestartet: ${barcode}`);
     const response = await fetch(`${API_URL}${barcode}.json`);
     
     if (!response.ok) {
-      console.error(`API error: ${response.status} ${response.statusText}`);
+      console.error(`FEHLER: API Antwort fehlgeschlagen: ${response.status} ${response.statusText}`);
       return null;
     }
     
     const data: BarcodeApiResponse = await response.json();
-    console.log(`API response status: ${data.status}`);
     
     if (data.status === 1 && data.product) {
       const { product } = data;
       
-      // Debug: Vollständige API-Antwort loggen (für Portionsgrößen-Analyse)
-      console.log('DEBUG: API product object structure:', JSON.stringify(product, null, 2));
-      console.log('DEBUG: Vorhandene Portionsfelder:',
-        'serving_size:', product.serving_size || 'nicht vorhanden',
-        'serving_quantity:', product.serving_quantity || 'nicht vorhanden',
-        'quantity:', product.quantity || 'nicht vorhanden'
-      );
-
       // Überprüfe, ob das Produkt einen gültigen Namen hat
       if (!product.product_name) {
-        console.log(`Produkt gefunden, aber ohne gültigen Namen. Barcode: ${barcode}`);
+        console.log(`FEHLER: Produkt ohne Namen gefunden. Barcode: ${barcode}`);
         return null;
       }
       
-      console.log(`Product found: ${product.product_name}`);
+      console.log(`DEBUG: Produkt gefunden: ${product.product_name}`);
       
        // Verwende die gemeinsame Funktion zur Erstellung des FoodItem
-      return createFoodItemFromProduct(product as ProductData);
+      const foodItem = createFoodItemFromProduct(product as ProductData);
+      
+      if (!foodItem) {
+        console.error(`FEHLER: FoodItem konnte nicht erstellt werden für ${product.product_name}`);
+        return null;
+      }
+      
+      console.log(`DEBUG: FoodItem erfolgreich erstellt für ${foodItem.name}`);
+      return foodItem;
+    } else {
+      console.log(`DEBUG: Kein Produkt gefunden für Barcode: ${barcode} (Status: ${data.status})`);
     }
     
     return null;
   } catch (error) {
-    console.error('Error fetching food data:', error);
+    console.error('FEHLER: Barcode-Service Fehler:', error);
     return null;
   }
 }
@@ -306,43 +334,35 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
       ].join(',')
     });
     
-    console.log(`API search request for: ${SEARCH_API_URL}?${params.toString()}`);
+    console.log(`DEBUG: Suche gestartet für: "${query}"`);
     const response = await fetch(`${SEARCH_API_URL}?${params.toString()}`);
     
     if (!response.ok) {
-      console.error(`API error: ${response.status} ${response.statusText}`);
+      console.error(`FEHLER: Such-API fehlgeschlagen: ${response.status} ${response.statusText}`);
       return [];
     }
     
     const data: SearchApiResponse = await response.json();
-    console.log(`API search found ${data.products?.length || 0} products`);
+    const productCount = data.products?.length || 0;
+    console.log(`DEBUG: ${productCount} Produkte gefunden für "${query}"`);
     
     if (data.products && data.products.length > 0) {
-      // Log die ersten 2 Produkte vollständig für Debug-Zwecke
-      if (data.products.length >= 1) {
-        console.log('DEBUG: Erstes Suchprodukt (vollständig):', JSON.stringify(data.products[0], null, 2));
-      }
-      if (data.products.length >= 2) {
-        console.log('DEBUG: Zweites Suchprodukt (vollständig):', JSON.stringify(data.products[1], null, 2));
+      const foodItems: FoodItem[] = [];
+      
+      for (const product of data.products) {
+        const foodItem = createFoodItemFromProduct(product);
+        if (foodItem) {
+          foodItems.push(foodItem);
+        }
       }
       
-      return data.products.map(product => {
-        // Log serving_size und serving_quantity für jedes gefundene Produkt
-        console.log('DEBUG: Produkt Portionsinfo:', product.product_name,
-          'serving_size:', product.serving_size || 'nicht vorhanden',
-          'serving_quantity:', product.serving_quantity || 'nicht vorhanden',
-          'quantity:', product.quantity || 'nicht vorhanden',
-          'description:', product.description || product.generic_name || 'nicht vorhanden'
-        );
-        
-        // Verwende die gemeinsame Funktion zur Erstellung des FoodItem
-        return createFoodItemFromProduct(product);
-      });
+      console.log(`DEBUG: ${foodItems.length} FoodItems erfolgreich erstellt`);
+      return foodItems;
     }
     
     return [];
   } catch (error) {
-    console.error('Error searching food data:', error);
+    console.error('FEHLER: Such-Service Fehler:', error);
     return [];
   }
 }

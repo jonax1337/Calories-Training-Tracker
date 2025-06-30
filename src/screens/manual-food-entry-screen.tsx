@@ -9,6 +9,7 @@ import NutritionalInfoCard from '../components/ui/nutritional-info-card';
 import { saveFoodItem, getDailyLogByDate, saveDailyLog } from '../services/storage-service';
 import generateSimpleId from '../utils/id-generator';
 import { getTodayFormatted, dateToMySQLDateTime } from '../utils/date-utils';
+import { determineDisplayUnit, getDisplayUnitString } from '../utils/unit-utils';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDateContext } from '../context/date-context';
@@ -212,22 +213,72 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
         return;
       }
       
-      // Show success message
-      Alert.alert(
-        'Erfolg',
-        `${foodItem.name} wurde zu deiner ${getMealTypeLabel(selectedMeal.toString())} Liste hinzugefügt`,
-        [{ 
-          text: 'OK', 
-          onPress: () => {
-            // Navigate back
-            navigation.goBack();
-          }
-        }]
-      );
+      // Check if food item is liquid and prompt for water intake
+      if (displayUnit === 'ml') {
+        const waterAmount = Math.round(parseFloat(servings) || 0);
+        Alert.alert(
+          'Zu Wasserstand hinzufügen?',
+          `Möchten Sie ${waterAmount}ml zu Ihrem Wasserstand hinzufügen?`,
+          [
+            {
+              text: 'Nein',
+              style: 'cancel',
+              onPress: () => {
+                showSuccessAndNavigateBack(foodItem.name);
+              }
+            },
+            {
+              text: 'Ja',
+              onPress: async () => {
+                await addToWaterIntake(waterAmount);
+                showSuccessAndNavigateBack(foodItem.name);
+              }
+            }
+          ]
+        );
+      } else {
+        showSuccessAndNavigateBack(foodItem.name);
+      }
     } catch (err) {
       console.error('Error in handleAddToLog:', err);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten beim Hinzufügen des Lebensmittels');
     }
+  };
+
+  // Helper function to add water intake
+  const addToWaterIntake = async (amount: number) => {
+    try {
+      // Get current daily log
+      const currentLog = await getDailyLogByDate(selectedDate);
+      
+      // Add water amount to existing intake
+      const updatedLog = {
+        ...currentLog,
+        waterIntake: (currentLog.waterIntake || 0) + amount
+      };
+      
+      // Save updated log
+      await saveDailyLog(updatedLog);
+      console.log(`Added ${amount}ml to water intake for ${selectedDate}`);
+    } catch (error) {
+      console.error('Error adding to water intake:', error);
+      Alert.alert('Fehler', 'Konnte nicht zum Wasserstand hinzufügen');
+    }
+  };
+
+  // Helper function to show success message and navigate back
+  const showSuccessAndNavigateBack = (foodName: string) => {
+    Alert.alert(
+      'Erfolg',
+      `${foodName} wurde zu deiner ${getMealTypeLabel(selectedMeal.toString())} Liste hinzugefügt`,
+      [{ 
+        text: 'OK', 
+        onPress: () => {
+          // Navigate back
+          navigation.goBack();
+        }
+      }]
+    );
   };
 
   const renderMealTypeButton = (mealType: MealType, label: string) => (
@@ -250,6 +301,10 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
       </Text>
     </TouchableOpacity>
   );
+
+  // For manual entry, default to grams since we have no API serving size data
+  const displayUnit: 'ml' | 'g' = 'g';
+  const servingUnit = getDisplayUnitString(displayUnit);
 
   // Calculated nutrition values for preview (always per 100g for consistency)
   const nutritionValues = {
@@ -634,7 +689,7 @@ export default function ManualFoodEntryScreen({ route, navigation }: ManualFoodE
                   setSliderValue(value);
                 }}
                 label={isWholeProduct ? 'Gesamtgewicht' : 'Menge'}
-                unit="Gramm"
+                unit={servingUnit}
                 placeholder="100"
               />
             </Animatable.View>

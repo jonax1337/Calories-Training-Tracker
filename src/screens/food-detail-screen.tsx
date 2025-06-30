@@ -10,6 +10,7 @@ import { getFoodDataByBarcode } from '../services/barcode-service';
 import { saveFoodItem, getDailyLogByDate, saveDailyLog } from '../services/storage-service';
 import generateSimpleId from '../utils/id-generator';
 import { formatToLocalISODate, getTodayFormatted, dateToMySQLDateTime } from '../utils/date-utils';
+import { determineDisplayUnit, getDisplayUnitString, getShortUnitString } from '../utils/unit-utils';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createFoodDetailStyles } from '../styles/screens/food-detail-styles';
@@ -58,8 +59,9 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   // Flag to indicate if we're editing an existing entry
   const isEditing = Boolean(existingEntryId);
   
-  // Bestimme die Einheit basierend auf dem ausgewählten Mahlzeitentyp
-  const servingUnit = "Gramm";
+  // Bestimme die Einheit intelligent basierend auf dem FoodItem
+  const displayUnit = determineDisplayUnit(foodItem);
+  const servingUnit = getDisplayUnitString(displayUnit);
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
@@ -286,6 +288,31 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
 
       Vibration.vibrate([0, 100, 0, 100]);
       
+      // Check if food item is liquid and prompt for water intake
+      if (displayUnit === 'ml') {
+        const waterAmount = Math.round(parseFloat(servings) || 0);
+        Alert.alert(
+          `Getränk erkannt`,
+          `Möchten Sie ${waterAmount}ml zu Ihrem Wasserstand hinzufügen?`,
+          [
+            {
+              text: 'Nein',
+              style: 'cancel',
+              onPress: () => handleSuccessNavigation()
+            },
+            {
+              text: 'Ja',
+              onPress: async () => {
+                await addToWaterIntake(waterAmount);
+                handleSuccessNavigation();
+              }
+            }
+          ]
+        );
+      } else {
+        handleSuccessNavigation();
+      }
+      
     } catch (err) {
       console.error('Error in handleAddToLog:', err);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten beim Hinzufügen des Lebensmittels');
@@ -295,6 +322,57 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
       Vibration.vibrate([0, 500, 0, 500]);
     }
   };
+
+  // Helper function to add water intake
+  const addToWaterIntake = async (amount: number) => {
+    try {
+      // Get current daily log
+      const currentLog = await getDailyLogByDate(selectedDate);
+      
+      // Add water amount to existing intake
+      const updatedLog = {
+        ...currentLog,
+        waterIntake: (currentLog.waterIntake || 0) + amount
+      };
+      
+      // Save updated log
+      await saveDailyLog(updatedLog);
+      console.log(`Added ${amount}ml to water intake for ${selectedDate}`);
+    } catch (error) {
+      console.error('Error adding to water intake:', error);
+      Alert.alert('Fehler', 'Konnte nicht zum Wasserstand hinzufügen');
+    }
+  };
+
+  // Helper function to handle navigation after successful addition
+  const handleSuccessNavigation = () => {
+    // Always navigate back to previous screen to avoid stacking
+    navigation.goBack();
+  };
+
+  // Helper function to extract product size in grams from quantity string
+  const getProductSizeGrams = (quantity: string | undefined): number | null => {
+    if (!quantity) return null;
+    
+    const quantityLower = quantity.toLowerCase();
+    
+    // Match patterns like "345g", "1.5kg", "500ml", "2l"
+    const match = quantityLower.match(/(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l)\b/);
+    if (match) {
+      const amount = parseFloat(match[1].replace(',', '.'));
+      const unit = match[2];
+      
+      // Convert to grams
+      if (unit === 'kg') return amount * 1000;
+      if (unit === 'l') return amount * 1000; // 1l ≈ 1000g for liquids
+      if (unit === 'ml') return amount; // 1ml ≈ 1g for liquids
+      if (unit === 'g') return amount;
+    }
+    
+    // If we can't parse the quantity (like "20pcs"), return null
+    return null;
+  };
+
 
   const renderMealTypeButton = (mealType: MealType, label: string) => (
     <TouchableOpacity
@@ -390,25 +468,77 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
             </Animatable.View>
             )}
 
-            {/* Portionsinformationen */}
-            {foodItem?.nutrition?.servingDescription && (
-              <Animatable.View 
-                key={`portion-info-${animationKey}`}
-                animation="fadeInUp" 
-                duration={600} 
-                delay={150}
-                style={styles.portionInfoContainer}
-              >
-                <Text style={styles.portionInfoTitle}>
-                  Portionsinformationen:
-                </Text>
-                {foodItem.nutrition.servingDescription && (
-                  <Text style={styles.portionInfoDescription}>
-                    {foodItem.nutrition.servingDescription}
+            {/* Portionsinformationen - nur anzeigen wenn es sich um eine echte Portion handelt */}
+            {(() => {
+              // Null-Check für foodItem
+              if (!foodItem || !foodItem.nutrition) {
+                console.log('DEBUG: Keine Portionsinformationen - foodItem oder nutrition ist null');
+                return null;
+              }
+              
+              const hasServingDescription = foodItem.nutrition.servingDescription;
+              const servingSize = foodItem.nutrition.servingSize;
+              const servingSizeGrams = foodItem.nutrition.servingSizeGrams;
+              
+              // Intelligente Logik basierend auf quantity vs serving_size
+              const productQuantity = foodItem.nutrition.productQuantity;
+              const productSizeGrams = getProductSizeGrams(productQuantity);
+              
+              let shouldShowPortionInfo = false;
+              
+              console.log('DEBUG: Portionslogik analysieren:', {
+                productName: foodItem.name,
+                servingSizeGrams,
+                productQuantity,
+                productSizeGrams
+              });
+              
+              if (productSizeGrams !== null && servingSizeGrams) {
+                // Wir können das Produkt verstehen - vergleiche Portion vs Produkt
+                const tolerance = Math.max(productSizeGrams * 0.05, 5); // 5% Toleranz oder mindestens 5g
+                const isPortionSameAsProduct = Math.abs(servingSizeGrams - productSizeGrams) <= tolerance;
+                
+                // Zeige Portionsinformationen nur wenn Portion ≠ Produktgröße
+                shouldShowPortionInfo = !isPortionSameAsProduct;
+                
+                console.log(`DEBUG: Portion vs Produkt: ${servingSizeGrams}g vs ${productSizeGrams}g (${productQuantity}) - ${isPortionSameAsProduct ? 'GLEICH' : 'UNTERSCHIEDLICH'}`);
+              } else {
+                // Wir können das Produkt nicht verstehen (z.B. "20pcs") - Fallback auf 100g
+                // Zeige Portionsinformationen nur wenn sie nicht der Standard-100g entsprechen
+                const isStandardServing = servingSizeGrams === 100;
+                shouldShowPortionInfo = !isStandardServing;
+                
+                console.log(`DEBUG: Unbekannte Produktgröße (${productQuantity}) - Portion: ${servingSizeGrams}g - ${isStandardServing ? 'STANDARD' : 'CUSTOM'}`);
+              }
+              
+              console.log('DEBUG: Portionsinformationen anzeigen?', shouldShowPortionInfo);
+              
+              if (!shouldShowPortionInfo) return null;
+              
+              return (
+                <Animatable.View 
+                  key={`portion-info-${animationKey}`}
+                  animation="fadeInUp" 
+                  duration={600} 
+                  delay={150}
+                  style={styles.portionInfoContainer}
+                >
+                  <Text style={styles.portionInfoTitle}>
+                    Portionsinformationen:
                   </Text>
-                )}
-              </Animatable.View>
-            )}
+                  {hasServingDescription && (
+                    <Text style={styles.portionInfoDescription}>
+                      {foodItem.nutrition.servingDescription}
+                    </Text>
+                  )}
+                  {productQuantity && (
+                    <Text style={styles.portionInfoDescription}>
+                      Originalgröße: {productQuantity}
+                    </Text>
+                  )}
+                </Animatable.View>
+              );
+            })()}
 
             {/* Mengeneingabe mit wiederverwendbarem SliderWithInput */}
             <Animatable.View 
