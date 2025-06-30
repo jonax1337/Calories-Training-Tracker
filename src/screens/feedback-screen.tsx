@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,14 @@ import {
   Image
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation';
 import { useTheme } from '../theme/theme-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createFeedbackStyles } from '../styles/screens/feedback-styles';
 import { Bug, Brain, MessageCircleQuestion, Image as ImageIcon, Trash2, Plus } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Animatable from 'react-native-animatable';
 
 // Feedback-Typen
 type FeedbackType = 'bug' | 'feature' | 'other';
@@ -43,6 +45,31 @@ export default function FeedbackScreen({ navigation }: FeedbackScreenProps) {
     message?: string;
     attachments?: string;
   }>({});
+
+  // Animation state management
+  const animationTriggered = useRef<boolean>(false);
+  const [showAnimations, setShowAnimations] = useState(false);
+
+  // Focus detection for smooth animations
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset animation state when screen is focused
+      animationTriggered.current = false;
+      setShowAnimations(false);
+      
+      // Wait for screen to be properly in focus, then trigger animations
+      const focusTimer = setTimeout(() => {
+        if (!animationTriggered.current) {
+          animationTriggered.current = true;
+          setShowAnimations(true);
+        }
+      }, 150); // Short delay to ensure smooth focus transition
+
+      return () => {
+        clearTimeout(focusTimer);
+      };
+    }, [])
+  );
 
   // Validierung des Formulars
   const validateForm = () => {
@@ -200,87 +227,132 @@ export default function FeedbackScreen({ navigation }: FeedbackScreenProps) {
           paddingBottom: Math.max(theme.spacing.m, insets.bottom)
         }}
       >
-        <Text style={styles.sectionTitle}>Dein Feedback ist uns wichtig</Text>
-        <Text style={styles.sectionDescription}>
-          Hilf uns, die App zu verbessern, indem du Bugs meldest oder Vorschläge für neue Features machst.
-        </Text>
+        {/* Show content only after animations are ready */}
+        {showAnimations && (
+          <>
+            {/* Header Section */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={100}
+            >
+              <Text style={styles.sectionTitle}>Dein Feedback ist uns wichtig</Text>
+              <Text style={styles.sectionDescription}>
+                Hilf uns, die App zu verbessern, indem du Bugs meldest oder Vorschläge für neue Features machst.
+              </Text>
+            </Animatable.View>
 
-        <View style={styles.feedbackTypeContainer}>
-          <View style={{ flex: 1}}>
-            {renderFeedbackTypeButton('bug', 'Bug', Bug)}
-          </View>
-          <View style={{ flex: 1, marginHorizontal: theme.spacing.m }}>
-            {renderFeedbackTypeButton('feature', 'Feature', Brain)}
-          </View>
-          <View style={{ flex: 1}}>
-            {renderFeedbackTypeButton('other', 'Sonstiges', MessageCircleQuestion)}
-          </View>
-        </View>
-
-        <Text style={[styles.sectionTitle, { fontSize: theme.typography.fontSize.m }]}>Betreff *</Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={subject}
-            onChangeText={setSubject}
-          />
-          {errors.subject ? <Text style={styles.errorText}>{errors.subject}</Text> : null}
-        </View>
-
-        <Text style={[styles.sectionTitle, { fontSize: theme.typography.fontSize.m }]}>Beschreibung *</Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textArea}
-            value={message}
-            onChangeText={setMessage}
-            multiline={true}
-            numberOfLines={6}
-          />
-          {errors.message ? <Text style={styles.errorText}>{errors.message}</Text> : null}
-        </View>
-
-        {/* Bild-Anhänge */}
-        <Text style={[styles.sectionTitle, { fontSize: theme.typography.fontSize.m }]}>
-          Anhänge (optional)
-        </Text>
-        <Text style={styles.sectionDescription}>
-          Füge Screenshots oder andere Bilder hinzu, um dein Feedback zu erläutern (max. 3)
-        </Text>
-
-        <View style={styles.attachmentsContainer}>
-          {attachments.map((image, index) => (
-            <View key={index} style={styles.imageContainer}>
-              <Image source={{ uri: image.uri }} style={styles.attachmentImage} />
-              <TouchableOpacity
-                style={styles.removeImageButton}
-                onPress={() => removeImage(index)}
-              >
-                <Trash2 size={20} color="white" />
-              </TouchableOpacity>
-            </View>
-          ))}
-          
-          {attachments.length < 3 && (
-            <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
-              <View style={styles.addImageButtonInner}>
-                <Plus size={theme.typography.fontSize.l} color={theme.colors.text} />
-                <Text style={styles.addImageText}>Bild hinzufügen</Text>
+            {/* Feedback Type Selection */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={200}
+              style={styles.feedbackTypeContainer}
+            >
+              <View style={{ flex: 1}}>
+                {renderFeedbackTypeButton('bug', 'Bug', Bug)}
               </View>
-            </TouchableOpacity>
-          )}
-        </View>
+              <View style={{ flex: 1, marginHorizontal: theme.spacing.m }}>
+                {renderFeedbackTypeButton('feature', 'Feature', Brain)}
+              </View>
+              <View style={{ flex: 1}}>
+                {renderFeedbackTypeButton('other', 'Sonstiges', MessageCircleQuestion)}
+              </View>
+            </Animatable.View>
 
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmit}
-          disabled={!feedbackType || !subject || !message || isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.submitButtonText}>Feedback senden</Text>
-          )}
-        </TouchableOpacity>
+            {/* Subject Input */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={300}
+            >
+              <Text style={[styles.sectionTitle, { fontSize: theme.typography.fontSize.m }]}>Betreff *</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  value={subject}
+                  onChangeText={setSubject}
+                />
+                {errors.subject ? <Text style={styles.errorText}>{errors.subject}</Text> : null}
+              </View>
+            </Animatable.View>
+
+            {/* Message Input */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={400}
+            >
+              <Text style={[styles.sectionTitle, { fontSize: theme.typography.fontSize.m }]}>Beschreibung *</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textArea}
+                  value={message}
+                  onChangeText={setMessage}
+                  multiline={true}
+                  numberOfLines={6}
+                />
+                {errors.message ? <Text style={styles.errorText}>{errors.message}</Text> : null}
+              </View>
+            </Animatable.View>
+
+            {/* Attachments Section */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={500}
+            >
+              <Text style={[styles.sectionTitle, { fontSize: theme.typography.fontSize.m }]}>
+                Anhänge (optional)
+              </Text>
+              <Text style={styles.sectionDescription}>
+                Füge Screenshots oder andere Bilder hinzu, um dein Feedback zu erläutern (max. 3)
+              </Text>
+
+              <View style={styles.attachmentsContainer}>
+                {attachments.map((image, index) => (
+                  <View key={index} style={styles.imageContainer}>
+                    <Image source={{ uri: image.uri }} style={styles.attachmentImage} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => removeImage(index)}
+                    >
+                      <Trash2 size={20} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                
+                {attachments.length < 3 && (
+                  <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
+                    <View style={styles.addImageButtonInner}>
+                      <Plus size={theme.typography.fontSize.l} color={theme.colors.text} />
+                      <Text style={styles.addImageText}>Bild hinzufügen</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Animatable.View>
+
+            {/* Submit Button */}
+            <Animatable.View 
+              animation="fadeInUp"
+              duration={600}
+              delay={600}
+            >
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmit}
+                disabled={!feedbackType || !subject || !message || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Feedback senden</Text>
+                )}
+              </TouchableOpacity>
+            </Animatable.View>
+          </>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

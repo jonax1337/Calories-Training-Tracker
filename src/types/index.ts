@@ -59,8 +59,7 @@ export enum MealType {
   Breakfast = 'breakfast',
   Lunch = 'lunch',
   Dinner = 'dinner',
-  Snack = 'snack',
-  Drinks = 'drinks'
+  Snack = 'snack'
 }
 
 // User related types

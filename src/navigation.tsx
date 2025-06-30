@@ -349,7 +349,6 @@ function AppStack() {
               lunch: 'Mittagessen',
               dinner: 'Abendessen',
               snack: 'Snacks',
-              drinks: 'Getränke'
             };
             
             const label = mealLabels[mealType as keyof typeof mealLabels] || '';

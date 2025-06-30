@@ -59,7 +59,7 @@ export default function FoodDetailScreen({ route, navigation }: FoodDetailScreen
   const isEditing = Boolean(existingEntryId);
   
   // Bestimme die Einheit basierend auf dem ausgewählten Mahlzeitentyp
-  const servingUnit = selectedMeal === MealType.Drinks ? "Milliliter" : "Gramm";
+  const servingUnit = "Gramm";
 
   // Referenz zum ScrollView, um Scrollposition zu kontrollieren
   const scrollViewRef = useRef<ScrollView>(null);
@@ -533,7 +533,6 @@ function getMealTypeLabel(mealType: string): string {
     case 'lunch': return 'Mittagessen';
     case 'dinner': return 'Abendessen';
     case 'snack': return 'Snack';
-    case 'drinks': return 'Getränke';
     default: return 'Mahlzeit';
   }
 }
