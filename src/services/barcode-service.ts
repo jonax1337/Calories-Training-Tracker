@@ -29,8 +29,18 @@ const SEARCH_API_URL = 'https://world.openfoodfacts.net/cgi/search.pl';
 function createFoodItemFromProduct(product: ProductData): FoodItem | null {
   try {
     // Validierung der Grunddaten
-    if (!product || !product.code || !product.product_name) {
-      console.error('FEHLER: Ungültiges Produktobjekt oder fehlende Grunddaten');
+    if (!product) {
+      console.error('FEHLER: Produktobjekt ist null oder undefined');
+      return null;
+    }
+    
+    if (!product.code) {
+      console.error('FEHLER: Produktcode fehlt für:', product.product_name || 'Unbekanntes Produkt');
+      return null;
+    }
+    
+    if (!product.product_name || product.product_name.trim() === '') {
+      console.error('FEHLER: Produktname fehlt für Code:', product.code);
       return null;
     }
     
@@ -195,7 +205,7 @@ function createFoodItemFromProduct(product: ProductData): FoodItem | null {
     servingSize: cleanedServingSize, // Use the cleaned/parsed serving size with proper units
     servingSizeGrams: numericServingSizeGrams, // Verwende die numerische Version
     servingDescription: servingDescription,
-    productQuantity: product.quantity // Store original product quantity from API
+    productQuantity: product.quantity?.replace(/\s*[℮e]\s*$/i, '') || undefined // Store cleaned product quantity from API
   };
   
   // Debug-Log für das finale Nutrition-Objekt
@@ -349,7 +359,18 @@ export async function searchFoodByName(query: string): Promise<FoodItem[]> {
     if (data.products && data.products.length > 0) {
       const foodItems: FoodItem[] = [];
       
-      for (const product of data.products) {
+      console.log(`DEBUG: Verarbeite ${data.products.length} Produkte aus Suchergebnissen...`);
+      
+      for (let i = 0; i < data.products.length; i++) {
+        const product = data.products[i];
+        
+        // Log basic info about each product before processing
+        console.log(`DEBUG: Produkt ${i + 1}/${data.products.length}:`, {
+          code: product?.code || 'fehlt',
+          name: product?.product_name || 'fehlt',
+          hasProduct: !!product
+        });
+        
         const foodItem = createFoodItemFromProduct(product);
         if (foodItem) {
           foodItems.push(foodItem);
