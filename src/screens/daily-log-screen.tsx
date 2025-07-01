@@ -304,7 +304,7 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
                     </Text>
                   </View>
                   <Text style={styles.foodCalories}>
-                    {Math.round((entry.foodItem.nutrition?.calories ?? 0) * (entry.servingAmount / 100))} kcal
+                    {Math.round((entry.foodItem.nutrition?.calories || 0) * (entry.servingAmount / 100))} kcal
                   </Text>
                 </View>
               </LongPressGestureHandler>
@@ -603,15 +603,31 @@ function DailyLogScreenContent({ navigation }: JournalTabScreenProps) {
 
     return dailyLog.foodEntries.reduce(
       (totals, entry) => {
+        // Null-Safety für entry und foodItem
+        if (!entry || !entry.foodItem || !entry.foodItem.nutrition) {
+          return totals;
+        }
+
         const { nutrition } = entry.foodItem;
         const multiplier = entry.servingAmount;
         const mealType = entry.mealType as keyof typeof totals.mealTotals;
+        
+        // Check if mealType exists in our totals object (handle removed categories like 'drinks')
+        if (!totals.mealTotals[mealType]) {
+          console.log(`Unknown meal type: ${mealType}, skipping entry`);
+          return totals;
+        }
 
-        // Calculate nutrition values for this entry
-        const entryCalories = (nutrition?.calories ?? 0) * (multiplier / 100);
-        const entryProtein = (nutrition?.protein ?? 0) * (multiplier / 100);
-        const entryCarbs = (nutrition?.carbs ?? 0) * (multiplier / 100);
-        const entryFat = (nutrition?.fat ?? 0) * (multiplier / 100);
+        // Calculate nutrition values for this entry with proper null safety
+        if (typeof nutrition.calories !== 'number' || isNaN(nutrition.calories)) {
+          console.log(`Entry has invalid calories (${nutrition.calories}), skipping`);
+          return totals;
+        }
+        
+        const entryCalories = (nutrition.calories || 0) * (multiplier / 100);
+        const entryProtein = (nutrition.protein || 0) * (multiplier / 100);
+        const entryCarbs = (nutrition.carbs || 0) * (multiplier / 100);
+        const entryFat = (nutrition.fat || 0) * (multiplier / 100);
 
         // Update meal-specific totals
         totals.mealTotals[mealType].calories += entryCalories || 0;

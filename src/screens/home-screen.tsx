@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDateContext } from '../context/date-context';
 import { useSplash } from '../context/splash-context';
 import { createHomeStyles } from '../styles/screens/home-styles';
-import { Minus, Plus, BarChart2, ChartSpline, ChartLine, ShieldCheck, ShieldOff, ShieldBan, Shield, ShieldX } from 'lucide-react-native';
+import { Minus, Plus, BarChart2, ChartSpline, ChartLine, ShieldCheck, ShieldOff, ShieldBan, Shield, ShieldX, Flame } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import CalendarModal from '../components/ui/calendar-modal';
 import DateNavigationHeader from '../components/ui/date-navigation-header';
@@ -65,6 +65,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   const [animationKey, setAnimationKey] = useState(0);
   const [isScreenVisible, setIsScreenVisible] = useState(false); // Start hidden until first focus
   const [hasBeenFocused, setHasBeenFocused] = useState(false); // Track if screen was ever focused
+  
+  // Streak-States
+  const [streakDays, setStreakDays] = useState(0);
   // Refs für den Mount-Status und Focus-Timing
   const isInitialMount = useRef(true);
   const lastFocusTime = useRef(0);
@@ -167,10 +170,95 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     }
   };
 
+  // Einfache Streak-Berechnung basierend auf selectedDate
+  const calculateStreak = async () => {
+    console.log('=== STREAK CALCULATION START ===');
+    console.log('Selected date for streak calculation:', selectedDate);
+    
+    try {
+      const currentDate = new Date(selectedDate);
+      let streakCount = 0;
+      
+      // Prüfe jeden Tag beginnend vom selectedDate rückwärts
+      for (let i = 0; i <= 30; i++) {
+        const checkDate = new Date(currentDate);
+        checkDate.setDate(currentDate.getDate() - i);
+        const dateString = checkDate.toISOString().split('T')[0];
+        
+        console.log(`Checking streak day ${i}: ${dateString}`);
+        
+        try {
+          // Immer von der Datenbank laden für konsistente Ergebnisse
+          const dayLog = await getDailyLogByDate(dateString);
+          console.log(`Loaded dayLog for ${dateString}:`, !!dayLog);
+          
+          // Prüfe ob an diesem Tag etwas VALIDES eingetragen wurde
+          let hasValidFood = false;
+          
+          if (dayLog?.foodEntries && Array.isArray(dayLog.foodEntries) && dayLog.foodEntries.length > 0) {
+            console.log(`Checking ${dayLog.foodEntries.length} food entries for ${dateString}`);
+            
+            // Prüfe jede Food Entry auf gültige Kalorien
+            for (let j = 0; j < dayLog.foodEntries.length; j++) {
+              const entry = dayLog.foodEntries[j];
+              console.log(`Entry ${j} for ${dateString}:`, {
+                hasEntry: !!entry,
+                hasFoodItem: !!entry?.foodItem,
+                hasNutrition: !!entry?.foodItem?.nutrition,
+                calories: entry?.foodItem?.nutrition?.calories,
+                caloriesType: typeof entry?.foodItem?.nutrition?.calories
+              });
+              
+              // Nur zählen wenn entry komplett und calories eine gültige Zahl ist
+              if (entry && 
+                  entry.foodItem && 
+                  entry.foodItem.nutrition && 
+                  typeof entry.foodItem.nutrition.calories === 'number' && 
+                  !isNaN(entry.foodItem.nutrition.calories) &&
+                  entry.foodItem.nutrition.calories > 0) {
+                hasValidFood = true;
+                console.log(`Valid food entry found for ${dateString} with ${entry.foodItem.nutrition.calories} calories`);
+                break; // Ein gültiger Eintrag reicht
+              } else {
+                console.log(`Invalid/empty food entry ${j} for ${dateString} - skipping`);
+              }
+            }
+          }
+          
+          const hasWater = dayLog?.waterIntake && typeof dayLog.waterIntake === 'number' && dayLog.waterIntake > 0;
+          console.log(`Day ${dateString}: hasValidFood=${hasValidFood}, hasWater=${hasWater} (${dayLog?.waterIntake || 0}ml)`);
+          
+          // NUR zählen wenn dieser Tag wirklich Einträge hat
+          if (hasValidFood || hasWater) {
+            streakCount++;
+            console.log(`Streak continues for ${dateString}! Count: ${streakCount}`);
+          } else {
+            console.log(`No valid entries for ${dateString}. Final streak count: ${streakCount}`);
+            break; // Streak unterbrochen - Tag ohne Einträge
+          }
+        } catch (error) {
+          console.error(`Error processing streak day ${dateString}:`, error);
+          break; // Kein Log gefunden, Streak unterbrochen
+        }
+      }
+      
+      console.log('=== STREAK CALCULATION END ===');
+      console.log('Final streak count:', streakCount);
+      setStreakDays(streakCount);
+    } catch (error) {
+      console.error('Error in streak calculation:', error);
+    }
+  };
+
   // Load data when component mounts or date changes
   useEffect(() => {
     loadUserData();
   }, [selectedDate]);
+  
+  // Calculate streak when todayLog changes OR selectedDate changes
+  useEffect(() => {
+    calculateStreak();
+  }, [todayLog, selectedDate]);
   
   // Focus Effect: Load data and handle screen visibility
   useFocusEffect(
@@ -209,25 +297,61 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
 
   // Calculate nutrition totals for today
   const calculateNutritionTotals = () => {
-    if (!todayLog) {
-      return { calories: 0, protein: 0, carbs: 0, fat: 0, water: 0 };
+    console.log('=== NUTRITION CALCULATION START (HomeScreen) ===');
+    console.log('todayLog exists:', !!todayLog);
+    console.log('selectedDate:', selectedDate);
+    
+    if (!todayLog || !Array.isArray(todayLog.foodEntries)) {
+      console.log('No valid todayLog or foodEntries, returning zeros');
+      return { calories: 0, protein: 0, carbs: 0, fat: 0, water: todayLog?.waterIntake || 0 };
     }
 
-    return todayLog.foodEntries.reduce(
-      (totals, entry) => {
-        const { nutrition } = entry.foodItem;
-        const multiplier = entry.servingAmount;
+    console.log('Processing', todayLog.foodEntries.length, 'food entries');
 
-        return {
-          calories: totals.calories + (nutrition?.calories || 0) * (multiplier / 100),
-          protein: totals.protein + (nutrition?.protein || 0) * (multiplier / 100),
-          carbs: totals.carbs + (nutrition?.carbs || 0) * (multiplier / 100),
-          fat: totals.fat + (nutrition?.fat || 0) * (multiplier / 100),
-          water: totals.water,
-        };
-      },
-      { calories: 0, protein: 0, carbs: 0, fat: 0, water: todayLog.waterIntake }
-    );
+    try {
+      return todayLog.foodEntries.reduce(
+        (totals, entry, index) => {
+          console.log(`Processing nutrition entry ${index}:`, {
+            hasEntry: !!entry,
+            hasFoodItem: !!entry?.foodItem,
+            hasNutrition: !!entry?.foodItem?.nutrition,
+            calories: entry?.foodItem?.nutrition?.calories,
+            caloriesType: typeof entry?.foodItem?.nutrition?.calories
+          });
+          
+          // Null-Safety für entry und foodItem
+          if (!entry || !entry.foodItem || !entry.foodItem.nutrition) {
+            console.log(`Skipping invalid entry ${index}`);
+            return totals;
+          }
+          
+          const { nutrition } = entry.foodItem;
+          const multiplier = entry.servingAmount || 100;
+          
+          // Zusätzliche Validierung für undefined calories
+          if (typeof nutrition.calories !== 'number' || isNaN(nutrition.calories)) {
+            console.log(`Entry ${index} has invalid calories (${nutrition.calories}), skipping`);
+            return totals;
+          }
+
+          const entryCalories = nutrition.calories * (multiplier / 100);
+          console.log(`Entry ${index}: ${nutrition.calories} calories * ${multiplier}/100 = ${entryCalories}`);
+
+          return {
+            calories: totals.calories + entryCalories,
+            protein: totals.protein + (nutrition?.protein || 0) * (multiplier / 100),
+            carbs: totals.carbs + (nutrition?.carbs || 0) * (multiplier / 100),
+            fat: totals.fat + (nutrition?.fat || 0) * (multiplier / 100),
+            water: totals.water,
+          };
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0, water: todayLog.waterIntake || 0 }
+      );
+    } catch (error) {
+      console.error('=== ERROR in nutrition calculation (HomeScreen) ===');
+      console.error('Error:', error);
+      return { calories: 0, protein: 0, carbs: 0, fat: 0, water: todayLog.waterIntake || 0 };
+    }
   };
 
   // Get default goals or from user profile
@@ -586,8 +710,44 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         >
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardTitle}>Heutige Nährwerte</Text>
+          <View style={styles.headerRightContent}>
+            {streakDays >= 2 && (
+              <Animatable.View
+                animation="bounceIn"
+                duration={800}
+                delay={200}
+                style={styles.streakContainer}
+              >
+                <Animatable.View
+                  animation="pulse"
+                  iterationCount="infinite"
+                  duration={2000}
+                  style={styles.streakText}
+                >
+                  <Animatable.Text
+                    animation="fadeIn"
+                    duration={600}
+                    delay={400}
+                    style={styles.streakNumber}
+                  >
+                    {streakDays}
+                  </Animatable.Text>
+                  <Animatable.View
+                    iterationCount="infinite"
+                    duration={3000}
+                    style={styles.streakIconContainer}
+                  >
+                    <Flame 
+                      size={theme.theme.typography.fontSize.xs} 
+                      color={theme.theme.colors.primary}
+                      style={styles.streakIcon}
+                    />
+                  </Animatable.View>
+                </Animatable.View>
+              </Animatable.View>
+            )}
           
-          {/* Cheat Day Button */}
+            {/* Cheat Day Button */}
           <Animatable.View
             ref={cheatDayButtonRef}
             animation={todayLog?.isCheatDay ? "pulse" : undefined}
@@ -658,6 +818,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
               )}
             </TouchableOpacity>
           </Animatable.View>
+          </View>
         </View>
         
         <ProgressBar 
@@ -705,7 +866,9 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         delay={300}
         style={styles.summaryCard}
       >
-        <Text style={styles.cardTitle}>Wasser</Text>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.cardTitle}>Wasser</Text>
+        </View>
       
         <View style={styles.waterContainer}>
           <TouchableOpacity

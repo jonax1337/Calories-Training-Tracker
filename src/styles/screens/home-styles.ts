@@ -24,6 +24,12 @@ interface HomeStyles {
   summaryCard: ViewStyle;
   cardTitle: TextStyle;
   cardHeaderRow: ViewStyle;
+  headerRightContent: ViewStyle;
+  streakContainer: ViewStyle;
+  streakText: ViewStyle;
+  streakIconContainer: ViewStyle;
+  streakIcon: TextStyle;
+  streakNumber: TextStyle;
   cheatDayButton: ViewStyle;
   cheatDayButtonActive: ViewStyle;
   cheatDayText: TextStyle;
@@ -192,13 +198,47 @@ export const createHomeStyles = (theme: Theme): HomeStyles => StyleSheet.create(
     fontSize: theme.typography.fontSize.l,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.text,
-    marginBottom: theme.spacing.m,
   },
   cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.m,
+  },
+  headerRightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  streakContainer: {
+    marginRight: theme.spacing.xs,
+    borderRadius: theme.borderRadius.medium,
+    borderColor: theme.colors.primary,
+    borderWidth: 1,
+    backgroundColor: theme.colors.primary + '15',
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs / 2,
+  },
+  streakText: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginLeft: theme.spacing.xs,
+  },
+  streakIconContainer: {
+    marginRight: theme.spacing.xs,
+  },
+  streakIcon: {
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+  },
+  streakNumber: {
+    fontSize: theme.typography.fontSize.xs,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.primary,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   cheatDayButton: {
     flexDirection: 'row',
@@ -209,7 +249,6 @@ export const createHomeStyles = (theme: Theme): HomeStyles => StyleSheet.create(
     borderWidth: 1,
     paddingVertical: theme.spacing.xs,
     paddingHorizontal: theme.spacing.xs,
-    marginTop: -theme.spacing.m,
   },
   cheatDayButtonActive: {
     backgroundColor: theme.colors.primary,
