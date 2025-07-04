@@ -10,22 +10,22 @@ import { House, Utensils, Dumbbell, User, Settings, Apple, UserRound, BicepsFlex
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screen imports
-import HomeScreen from './screens/home-screen';
-import ProfileScreen from './screens/profile-screen';
-import BarcodeScannerScreen from './screens/barcode-scanner-screen';
-import DailyLogScreen from './screens/daily-log-screen';
-import SettingsScreen from './screens/settings-screen';
-import FoodDetailScreen from './screens/food-detail-screen';
-import LoginScreen from './screens/login-screen';
-import RegisterScreen from './screens/register-screen';
-import IntroScreen from './screens/intro-screen';
-import TrainingScreen from './screens/training-screen';
-import HIITTimerScreen from './screens/hiit-timer-screen';
-import HIITTimerSettingsScreen from './screens/hiit-timer-settings-screen';
-import ManualFoodEntryScreen from './screens/manual-food-entry-screen';
-import NutritionReportScreen from './screens/nutrition-report-screen';
-import WeightHistoryScreen from './screens/weight-history-screen';
-import FeedbackScreen from './screens/feedback-screen';
+import HomeScreen from './screens/HomeScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import BarcodeScannerScreen from './screens/BarcodeScannerScreen';
+import DailyLogScreen from './screens/DailyLogScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import FoodDetailScreen from './screens/FoodDetailScreen';
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
+import IntroScreen from './screens/IntroScreen';
+import TrainingScreen from './screens/TrainingScreen';
+import HIITTimerScreen from './screens/HiitTimerScreen';
+import HIITTimerSettingsScreen from './screens/HiitTimerSettingsScreen';
+import ManualFoodEntryScreen from './screens/ManualFoodEntryScreen';
+import NutritionReportScreen from './screens/NutritionReportScreen';
+import WeightHistoryScreen from './screens/WeightHistoryScreen';
+import FeedbackScreen from './screens/FeedbackScreen';
 
 // Types for HIIT Timer
 export interface HIITSettings {
@@ -36,11 +36,11 @@ export interface HIITSettings {
 }
 
 // Auth service
-import { isAuthenticated } from './services/auth-service';
-import { resetAuthState } from './services/reset-auth';
+import { isAuthenticated } from './services/authService';
+import { resetAuthState } from './services/resetAuth';
 
 // Profile services
-import { fetchUserProfile } from './services/profile-api';
+import { fetchUserProfile } from './services/profileApi';
 
 // Helper functions
 function isProfileComplete(profile: any): boolean {
@@ -60,8 +60,8 @@ function isProfileComplete(profile: any): boolean {
 }
 
 // Theme provider
-import { ThemeProvider, useTheme } from './theme/theme-context';
-import LoadingScreen from './components/ui/loading-screen';
+import { ThemeProvider, useTheme } from './theme/ThemeContext';
+import LoadingScreen from './components/ui/LoadingScreen';
 
 // Define the combined navigator param list types
 export type RootStackParamList = {
@@ -491,7 +491,7 @@ function NavigationContent() {
 }
 
 // Importiere DateProvider
-import { DateProvider } from './context/date-context';
+import { DateProvider } from './context/DateContext';
 
 // App Navigation Component
 export default function AppNavigation() {

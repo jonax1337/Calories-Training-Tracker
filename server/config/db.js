@@ -61,7 +61,7 @@ async function executeQuery(queryFn) {
   const MAX_RETRIES = 3;
   let lastError;
   
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       return await queryFn();
     } catch (error) {

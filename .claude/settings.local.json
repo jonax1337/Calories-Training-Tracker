@@ -5,7 +5,9 @@
       "Bash(rg:*)",
       "Bash(ls:*)",
       "WebFetch(domain:github.com)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(mv:*)",
+      "Bash(npm run web:*)"
     ],
     "deny": []
   }

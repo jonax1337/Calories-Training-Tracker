@@ -1,15 +1,15 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
-import AppNavigation from './src/navigation';
+import AppNavigation from './src/Navigation';
 import { useEffect, useState } from 'react';
-import { configureGoogleFitForAndroid, configureHealthKitForIOS } from './src/services/health-service';
-import * as NotificationsService from './src/services/notifications-service';
+import { configureGoogleFitForAndroid, configureHealthKitForIOS } from './src/services/healthService';
+import * as NotificationsService from './src/services/notificationsService';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import SoundWebView from './src/components/webview/sound-webview';
-import SplashScreen from './src/components/splash-screen/splash-screen';
-import { ThemeProvider } from './src/theme/theme-context';
-import { SplashProvider } from './src/context/splash-context';
+import SoundWebView from './src/components/webview/SoundWebView';
+import SplashScreen from './src/components/splash-screen/SplashScreen';
+import { ThemeProvider } from './src/theme/ThemeContext';
+import { SplashProvider } from './src/context/SplashContext';
 
 export default function App() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
