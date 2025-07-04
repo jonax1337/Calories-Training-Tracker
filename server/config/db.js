@@ -39,7 +39,7 @@ async function testConnection() {
 }
 
 // Implement a ping mechanism to keep connections alive
-const pingInterval = 30000; // 30 seconds
+const PING_INTERVAL = 30000; // 30 seconds
 const pingTimer = setInterval(async () => {
   try {
     await pool.query('SELECT 1');
@@ -47,7 +47,7 @@ const pingTimer = setInterval(async () => {
   } catch (error) {
     console.error('Database ping failed:', error);
   }
-}, pingInterval);
+}, PING_INTERVAL);
 
 // Handle application shutdown
 process.on('SIGINT', () => {
@@ -58,7 +58,7 @@ process.on('SIGINT', () => {
 
 // Helper function to execute queries with retry mechanism
 async function executeQuery(queryFn) {
-  const maxRetries = 3;
+  const MAX_RETRIES = 3;
   let lastError;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -69,7 +69,7 @@ async function executeQuery(queryFn) {
       
       // Only retry on connection errors
       if (error.code === 'ECONNRESET' || error.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.log(`Connection error (${error.code}), retry attempt ${attempt}/${maxRetries}`);
+        console.log(`Connection error (${error.code}), retry attempt ${attempt}/${MAX_RETRIES}`);
         
         // Wait before retry (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)));

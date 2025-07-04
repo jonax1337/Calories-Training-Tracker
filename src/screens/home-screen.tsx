@@ -1,6 +1,6 @@
 // WICHTIG: Globale Variable außerhalb jeglicher Komponente
 // Garantiert, dass die Animation wirklich nur EINMAL in der gesamten App-Session abgespielt wird
-let HOME_ANIMATION_PLAYED = false;
+let HAS_HOME_ANIMATION_PLAYED = false;
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
@@ -84,7 +84,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   // Zentrale Funktion für einmalige Animation-Trigger
   const triggerHomeAnimation = useCallback(() => {
     // Absolute Garantie: Animation nur einmal triggern
-    if (animationTriggered.current || HOME_ANIMATION_PLAYED) {
+    if (animationTriggered.current || HAS_HOME_ANIMATION_PLAYED) {
       return false;
     }
 
@@ -95,7 +95,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     
     // SOFORT beide Flags setzen - verhindert jede weitere Ausführung
     animationTriggered.current = true;
-    HOME_ANIMATION_PLAYED = true;
+    HAS_HOME_ANIMATION_PLAYED = true;
     
     // Animation starten
     setIsScreenVisible(true);
@@ -290,7 +290,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
   // Backup Effect: Falls useFocusEffect nicht triggert, versuche Animation bei Splash-Ende
   useEffect(() => {
     // Nur als Backup falls useFocusEffect noch nicht getriggert hat
-    if (isSplashComplete && !isScreenVisible && !animationTriggered.current && !HOME_ANIMATION_PLAYED) {
+    if (isSplashComplete && !isScreenVisible && !animationTriggered.current && !HAS_HOME_ANIMATION_PLAYED) {
       triggerHomeAnimation();
     }
   }, [isSplashComplete, isScreenVisible, triggerHomeAnimation]);
@@ -310,7 +310,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
 
     try {
       return todayLog.foodEntries.reduce(
-        (totals, entry, index) => {
+        (nutritionAccumulator, entry, index) => {
           console.log(`Processing nutrition entry ${index}:`, {
             hasEntry: !!entry,
             hasFoodItem: !!entry?.foodItem,
@@ -322,7 +322,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           // Null-Safety für entry und foodItem
           if (!entry || !entry.foodItem || !entry.foodItem.nutrition) {
             console.log(`Skipping invalid entry ${index}`);
-            return totals;
+            return nutritionAccumulator;
           }
           
           const { nutrition } = entry.foodItem;
@@ -331,18 +331,18 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           // Zusätzliche Validierung für undefined calories
           if (typeof nutrition.calories !== 'number' || isNaN(nutrition.calories)) {
             console.log(`Entry ${index} has invalid calories (${nutrition.calories}), skipping`);
-            return totals;
+            return nutritionAccumulator;
           }
 
           const entryCalories = nutrition.calories * (multiplier / 100);
           console.log(`Entry ${index}: ${nutrition.calories} calories * ${multiplier}/100 = ${entryCalories}`);
 
           return {
-            calories: totals.calories + entryCalories,
-            protein: totals.protein + (nutrition?.protein || 0) * (multiplier / 100),
-            carbs: totals.carbs + (nutrition?.carbs || 0) * (multiplier / 100),
-            fat: totals.fat + (nutrition?.fat || 0) * (multiplier / 100),
-            water: totals.water,
+            calories: nutritionAccumulator.calories + entryCalories,
+            protein: nutritionAccumulator.protein + (nutrition?.protein || 0) * (multiplier / 100),
+            carbs: nutritionAccumulator.carbs + (nutrition?.carbs || 0) * (multiplier / 100),
+            fat: nutritionAccumulator.fat + (nutrition?.fat || 0) * (multiplier / 100),
+            water: nutritionAccumulator.water,
           };
         },
         { calories: 0, protein: 0, carbs: 0, fat: 0, water: todayLog.waterIntake || 0 }
@@ -376,7 +376,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     return defaultGoals;
   };
 
-  const totals = calculateNutritionTotals();
+  const nutritionTotals = calculateNutritionTotals();
   const goals = getGoals();
   
   // Funktion zum Aktualisieren des Gewichts - mit verbesserter Geburtsdatumsbehandlung
@@ -709,43 +709,32 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
           style={styles.summaryCard}
         >
         <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>Heutige Nährwerte</Text>
-          <View style={styles.headerRightContent}>
+          <View style={styles.titleWithBadge}>
+            <Text style={styles.cardTitle}>Tägliche Nährwerte</Text>
             {streakDays >= 2 && (
               <Animatable.View
                 animation="bounceIn"
                 duration={800}
                 delay={200}
-                style={styles.streakContainer}
+                style={styles.titleStreakBadge}
               >
-                <Animatable.View
-                  animation="pulse"
-                  iterationCount="infinite"
-                  duration={2000}
-                  style={styles.streakText}
-                >
-                  <Animatable.Text
-                    animation="fadeIn"
-                    duration={600}
-                    delay={400}
-                    style={styles.streakNumber}
-                  >
-                    {streakDays}
-                  </Animatable.Text>
                   <Animatable.View
-                    iterationCount="infinite"
-                    duration={3000}
-                    style={styles.streakIconContainer}
-                  >
-                    <Flame 
-                      size={theme.theme.typography.fontSize.xs} 
-                      color={theme.theme.colors.primary}
-                      style={styles.streakIcon}
-                    />
+                  animation="fadeIn"
+                  duration={200}
+                  delay={400}
+                  style={styles.titleBadgeContent}
+                >
+                  <Flame 
+                    size={theme.theme.typography.fontSize.xs} 
+                    color={theme.theme.colors.error}
+                    style={styles.titleBadgeIcon}
+                  />
+                  <Text style={styles.titleBadgeNumber}>{streakDays}</Text>
                   </Animatable.View>
                 </Animatable.View>
-              </Animatable.View>
             )}
+          </View>
+          <View style={styles.headerRightContent}>
           
             {/* Cheat Day Button */}
           <Animatable.View
@@ -823,7 +812,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         
         <ProgressBar 
           label="🔥 Kalorien"
-          current={Math.round(totals.calories)}
+          current={Math.round(nutritionTotals.calories)}
           target={goals.dailyCalories}
           color={theme.theme.colors.nutrition.calories}
           unit="kcal"
@@ -832,7 +821,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         
         <ProgressBar 
           label="🍗 Protein"
-          current={Math.round(totals.protein)}
+          current={Math.round(nutritionTotals.protein)}
           target={goals.dailyProtein || 50}
           color={theme.theme.colors.nutrition.protein}
           unit="g"
@@ -841,7 +830,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         
         <ProgressBar 
           label="🍞 Kohlenhydrate"
-          current={Math.round(totals.carbs)}
+          current={Math.round(nutritionTotals.carbs)}
           target={goals.dailyCarbs || 250}
           color={theme.theme.colors.nutrition.carbs}
           unit="g"
@@ -850,7 +839,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         
         <ProgressBar 
           label="🧈 Fett"
-          current={Math.round(totals.fat)}
+          current={Math.round(nutritionTotals.fat)}
           target={goals.dailyFat || 65}
           color={theme.theme.colors.nutrition.fat}
           unit="g"
@@ -877,8 +866,8 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
             style={{ width: '100%', height: '100%' }}
           >
             <WaveAnimation 
-              fillPercentage={Math.min((totals.water / (goals.dailyWater || 2000)) * 100, 100)} 
-              text={`${totals.water} / ${goals.dailyWater || 2000} ml`}
+              fillPercentage={Math.min((nutritionTotals.water / (goals.dailyWater || 2000)) * 100, 100)} 
+              text={`${nutritionTotals.water} / ${goals.dailyWater || 2000} ml`}
               color={theme.theme.colors.primary}
               textColor={theme.theme.colors.text}
             />
@@ -1070,6 +1059,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
       </>
       )}
       </ScrollView>
+      
     </View>
   );
 }

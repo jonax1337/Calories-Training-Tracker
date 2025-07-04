@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Flame } from 'lucide-react-native';
+import * as Animatable from 'react-native-animatable';
 import { useTheme } from '../../theme/theme-context';
 import { getTodayFormatted, formatToLocalISODate } from '../../utils/date-utils';
 import { createDateNavigationHeaderStyles } from '../../styles/components/ui/date-navigation-header-styles';
@@ -11,6 +12,7 @@ interface DateNavigationHeaderProps {
   onDateChange: (date: string) => void;
   onCalendarOpen: () => void;
   style?: object;
+  streakDays?: number;
 }
 
 /**
@@ -24,7 +26,8 @@ function DateNavigationHeader({
   selectedDate, 
   onDateChange,
   onCalendarOpen,
-  style 
+  style,
+  streakDays = 0
 }: DateNavigationHeaderProps) {
   // Theme aus dem Kontext holen
   const { theme } = useTheme();
@@ -59,17 +62,19 @@ function DateNavigationHeader({
       </TouchableOpacity>
       
       <TouchableOpacity onPress={onCalendarOpen} style={styles.dateButton}>
-        <Text style={[
-          styles.dateText,
-          selectedDate === getTodayFormatted() && styles.dateTextToday
-        ]}>
-          {new Date(selectedDate).toLocaleDateString('de-DE', { 
-            weekday: 'long', 
-            day: 'numeric',
-            month: 'long', 
-            year: 'numeric'
-          })}
-        </Text>
+        <View style={styles.dateContainer}>
+          <Text style={[
+            styles.dateText,
+            selectedDate === getTodayFormatted() && styles.dateTextToday
+          ]}>
+            {new Date(selectedDate).toLocaleDateString('de-DE', { 
+              weekday: 'long', 
+              day: 'numeric',
+              month: 'long', 
+              year: 'numeric'
+            })}
+          </Text>
+        </View>
       </TouchableOpacity>
       
       <TouchableOpacity 

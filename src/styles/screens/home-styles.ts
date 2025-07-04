@@ -25,11 +25,11 @@ interface HomeStyles {
   cardTitle: TextStyle;
   cardHeaderRow: ViewStyle;
   headerRightContent: ViewStyle;
-  streakContainer: ViewStyle;
-  streakText: ViewStyle;
-  streakIconContainer: ViewStyle;
-  streakIcon: TextStyle;
-  streakNumber: TextStyle;
+  titleWithBadge: ViewStyle;
+  titleStreakBadge: ViewStyle;
+  titleBadgeContent: ViewStyle;
+  titleBadgeIcon: TextStyle;
+  titleBadgeNumber: TextStyle;
   cheatDayButton: ViewStyle;
   cheatDayButtonActive: ViewStyle;
   cheatDayText: TextStyle;
@@ -209,36 +209,48 @@ export const createHomeStyles = (theme: Theme): HomeStyles => StyleSheet.create(
     flexDirection: 'row',
     alignItems: 'center',
   },
-  streakContainer: {
-    marginRight: theme.spacing.xs,
-    borderRadius: theme.borderRadius.medium,
-    borderColor: theme.colors.primary,
-    borderWidth: 1,
-    backgroundColor: theme.colors.primary + '15',
-    paddingHorizontal: theme.spacing.xs,
-    paddingVertical: theme.spacing.xs / 2,
-  },
-  streakText: {
-    alignItems: 'center',
+  titleWithBadge: {
     flexDirection: 'row',
-    marginLeft: theme.spacing.xs,
+    alignItems: 'center',
+    position: 'relative',
   },
-  streakIconContainer: {
-    marginRight: theme.spacing.xs,
-  },
-  streakIcon: {
-    shadowColor: theme.colors.primary,
+  titleStreakBadge: {
+    position: 'absolute',
+    right: -theme.spacing.xxl + theme.spacing.xs * 2,
+    minWidth: 20,
+    height: 20,
+    borderRadius: theme.borderRadius.l,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xs,
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.2,
     shadowRadius: 2,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: theme.colors.error,
   },
-  streakNumber: {
-    fontSize: theme.typography.fontSize.xs,
+  titleBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  titleBadgeIcon: {
+    shadowColor: 'rgba(0, 0, 0, 0.2)',
+    shadowOffset: { width: 0, height: 0.5 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+  },
+  titleBadgeNumber: {
+    fontSize: theme.typography.fontSize.xs ,
     fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.primary,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    marginRight: theme.spacing.xs,
+    color: theme.colors.error,
+    textAlign: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   cheatDayButton: {
     flexDirection: 'row',

@@ -31,10 +31,10 @@ const authenticate = (req, res, next) => {
     // In diesem Fall senden wir ein frisches Token zuru00fcck
     const tokenExp = decoded.exp;
     const currentTime = Math.floor(Date.now() / 1000);
-    const sevenDaysInSeconds = 7 * 24 * 60 * 60; // 7 Tage in Sekunden
+    const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60; // 7 Tage in Sekunden
     
     // Wenn das Token in weniger als 7 Tagen abläuft, erstellen wir ein neues
-    if (tokenExp - currentTime < sevenDaysInSeconds) {
+    if (tokenExp - currentTime < SEVEN_DAYS_IN_SECONDS) {
       // Erstelle ein neues Token mit neuer Ablaufzeit
       const newToken = jwt.sign(
         { userId: decoded.userId, email: decoded.email },
