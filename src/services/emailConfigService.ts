@@ -142,3 +142,37 @@ export const getOutboundEmailConfiguration = async (): Promise<EmailConfiguratio
     throw error;
   }
 };
+
+// Send a test email using the outbound configuration
+export const sendTestEmail = async (to: string, subject: string, message: string): Promise<void> => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await axios.post(`${API_BASE_URL}/api/email-config/send-test`, {
+      to,
+      subject,
+      message
+    }, { headers });
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Fehler beim Senden der Test-E-Mail');
+    }
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    throw error;
+  }
+};
+
+// Test SMTP connection for a specific email configuration
+export const testEmailConfiguration = async (configId: string): Promise<void> => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await axios.get(`${API_BASE_URL}/api/email-config/${configId}/test`, { headers });
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Fehler beim Testen der E-Mail-Konfiguration');
+    }
+  } catch (error) {
+    console.error('Error testing email configuration:', error);
+    throw error;
+  }
+};

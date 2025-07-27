@@ -10,6 +10,11 @@ const {
   getOutboundEmailConfiguration
 } = require('../controllers/emailConfigController');
 
+const {
+  sendTestEmail,
+  testEmailConfiguration
+} = require('../controllers/emailSendController');
+
 // All routes require authentication
 router.use(authenticate);
 
@@ -30,5 +35,11 @@ router.delete('/:id', deleteEmailConfiguration);
 
 // PUT /api/email-config/:id/outbound - Set an email configuration as outbound
 router.put('/:id/outbound', setOutboundEmail);
+
+// POST /api/email-config/send-test - Send a test email using outbound configuration
+router.post('/send-test', sendTestEmail);
+
+// GET /api/email-config/:id/test - Test SMTP connection for a specific configuration
+router.get('/:id/test', testEmailConfiguration);
 
 module.exports = router;

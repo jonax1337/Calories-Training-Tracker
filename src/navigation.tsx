@@ -27,6 +27,7 @@ import NutritionReportScreen from './screens/NutritionReportScreen';
 import WeightHistoryScreen from './screens/WeightHistoryScreen';
 import FeedbackScreen from './screens/FeedbackScreen';
 import EmailConfigScreen from './screens/EmailConfigScreen';
+import AddEmailConfigScreen from './screens/AddEmailConfigScreen';
 
 // Types for HIIT Timer
 export interface HIITSettings {
@@ -462,6 +463,15 @@ function AppStack() {
           title: 'E-Mail-Konfiguration',
           animation: 'slide_from_right',
           headerBackTitle: 'Einstellungen'
+        }}
+      />
+      <Stack.Screen 
+        name="AddEmailConfiguration" 
+        component={AddEmailConfigScreen} 
+        options={{
+          title: 'E-Mail-Konto hinzufügen',
+          animation: 'slide_from_right',
+          headerBackTitle: 'Zurück'
         }}
       />
     </Stack.Navigator>

@@ -21,7 +21,8 @@ import {
   EmailConfiguration,
   getUserEmailConfigurations,
   deleteEmailConfiguration,
-  setOutboundEmail
+  sendTestEmail,
+  testEmailConfiguration
 } from '../services/emailConfigService';
 import { Mail, Plus, Settings, Trash2, Check } from 'lucide-react-native';
 
