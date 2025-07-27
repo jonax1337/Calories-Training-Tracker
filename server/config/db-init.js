@@ -129,6 +129,27 @@ async function initializeDatabase() {
       );
     `);
 
+    // Create email_configurations table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS email_configurations (
+        id VARCHAR(36) PRIMARY KEY,
+        user_id VARCHAR(36) NOT NULL,
+        email_address VARCHAR(255) NOT NULL,
+        display_name VARCHAR(255),
+        smtp_host VARCHAR(255),
+        smtp_port INT DEFAULT 587,
+        smtp_username VARCHAR(255),
+        smtp_password VARCHAR(500),
+        smtp_security ENUM('none', 'ssl', 'tls') DEFAULT 'tls',
+        is_outbound BOOLEAN DEFAULT FALSE,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_user_email (user_id, email_address)
+      );
+    `);
+
     // Insert default goal types
     const defaultGoalTypes = [
         { id: 'gain', name: 'Gesunde Gewichtszunahme', description: 'Für Personen mit Untergewicht oder Muskelaufbau-Ziel.', is_custom: false },

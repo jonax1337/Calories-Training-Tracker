@@ -26,6 +26,7 @@ import ManualFoodEntryScreen from './screens/ManualFoodEntryScreen';
 import NutritionReportScreen from './screens/NutritionReportScreen';
 import WeightHistoryScreen from './screens/WeightHistoryScreen';
 import FeedbackScreen from './screens/FeedbackScreen';
+import EmailConfigScreen from './screens/EmailConfigScreen';
 
 // Types for HIIT Timer
 export interface HIITSettings {
@@ -80,6 +81,9 @@ export type RootStackParamList = {
   NutritionReport: { days?: number };
   WeightHistory: { days?: number };
   Feedback: undefined;
+  EmailConfiguration: undefined;
+  AddEmailConfiguration: undefined;
+  EditEmailConfiguration: { configId: string };
   // Tab screens (for backwards compatibility)
   Home: undefined;
   Profile: undefined;
@@ -449,6 +453,15 @@ function AppStack() {
           title: 'Gewichtsverlauf',
           animation: 'slide_from_bottom',
           headerBackTitle: 'Zurück'
+        }}
+      />
+      <Stack.Screen 
+        name="EmailConfiguration" 
+        component={EmailConfigScreen} 
+        options={{
+          title: 'E-Mail-Konfiguration',
+          animation: 'slide_from_right',
+          headerBackTitle: 'Einstellungen'
         }}
       />
     </Stack.Navigator>

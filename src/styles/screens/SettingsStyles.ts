@@ -32,6 +32,9 @@ interface SettingsStyles {
   timeRangeContainer: ViewStyle;
   timeValue: TextStyle;
   timeLabel: TextStyle;
+  settingButton: ViewStyle;
+  settingButtonText: TextStyle;
+  settingButtonDescription: TextStyle;
 }
 
 // Erstellt und gibt die Styles zurück, basierend auf dem aktuellen Theme
@@ -223,5 +226,30 @@ export const createSettingsStyles = (theme: Theme): SettingsStyles => StyleSheet
     color: theme.colors.textLight,
     textAlign: 'center',
     marginTop: theme.spacing.xs/2, // Half of xs instead of xxs
+  },
+  settingButton: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.m,
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  settingButtonText: {
+    fontFamily: theme.typography.fontFamily.semiBold,
+    fontSize: theme.typography.fontSize.l,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  settingButtonDescription: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.s,
+    color: theme.colors.textSecondary,
+    lineHeight: theme.typography.fontSize.s * 1.4,
   },
 });

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { ThemeType } from '../theme/themeTypes';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../Navigation';
+import { RootStackParamList } from '../navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logout } from '../services/authService';
 import * as NotificationsService from '../services/notificationsService';
@@ -273,6 +273,36 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           delay={200}
         >
           <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
+            E-Mail & Benachrichtigungen
+          </Text>
+        </Animatable.View>
+
+        <Animatable.View 
+          key={`email-config-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={250}
+        >
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => navigation.navigate('EmailConfiguration')}
+          >
+            <Text style={styles.settingButtonText}>
+              E-Mail-Konfiguration
+            </Text>
+            <Text style={styles.settingButtonDescription}>
+              E-Mail-Konten für ausgehende Nachrichten verwalten
+            </Text>
+          </TouchableOpacity>
+        </Animatable.View>
+
+        <Animatable.View 
+          key={`account-title-${animationKey}`}
+          animation="fadeInUp" 
+          duration={600} 
+          delay={300}
+        >
+          <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
             Konto
           </Text>
         </Animatable.View>
@@ -281,7 +311,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           key={`logout-button-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={250}
+          delay={350}
         >
           <TouchableOpacity
             style={styles.logoutButton}
@@ -297,7 +327,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           key={`notifications-title-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={300}
+          delay={400}
         >
           <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
             Benachrichtigungen
@@ -307,7 +337,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           key={`notifications-description-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={350}
+          delay={450}
         >
           <Text style={styles.sectionDescription}>
             Erhalte intelligente Erinnerungen.
@@ -318,7 +348,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           key={`notifications-settings-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={400}
+          delay={500}
         >
           <View style={[styles.settingCard, { marginTop: 0 }]}>
             {/* Wassererinnerungen An/Aus */}
@@ -340,7 +370,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           key={`app-info-title-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={450}
+          delay={550}
         >
           <Text style={[styles.sectionTitle, { marginTop: theme.spacing.l }]}>
             App-Informationen & Feedback
@@ -351,7 +381,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           key={`app-info-description-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={500}
+          delay={600}
         >
           <Text style={[styles.sectionDescription, { marginBottom: theme.spacing.s }]}>Diese App befindet sich in der Beta-Phase. Wir freuen uns über dein Feedback!
           </Text>
@@ -361,7 +391,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           key={`feedback-link-${animationKey}`}
           animation="fadeInUp" 
           duration={600} 
-          delay={550}
+          delay={650}
         >
           <Text style={[styles.sectionDescription, { marginBottom: 0 }]}>
             <TouchableOpacity 
